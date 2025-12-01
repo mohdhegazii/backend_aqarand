@@ -76,12 +76,13 @@ class DistrictController extends Controller
 
         $slug = Str::slug($validated['name_en']);
         $validated['is_active'] = $request->has('is_active');
+        $validated['slug'] = $slug;
 
-        if ($slug !== $district->slug) {
+        // Check uniqueness if slug changed OR if city changed
+        if ($slug !== $district->slug || $validated['city_id'] != $district->city_id) {
              if (District::where('city_id', $validated['city_id'])->where('slug', $slug)->where('id', '!=', $district->id)->exists()) {
                  return back()->withInput()->withErrors(['name_en' => 'Slug generated from Name (EN) already exists in this city.']);
              }
-             $validated['slug'] = $slug;
         }
 
         $district->update($validated);
