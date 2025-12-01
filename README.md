@@ -140,3 +140,58 @@ I will give you precise prompts for AI Agents in the next steps, one task at a t
   - notifications
   - contracts & invoices
 - All tables are InnoDB, UTF8MB4, and optimized for MySQL on XAMPP.
+
+## 5. Phase 2 Implementation (Admin & Localization)
+
+### Setup Instructions
+1.  **Install Dependencies**:
+    ```bash
+    composer install
+    npm install
+    npm run build
+    ```
+2.  **Install Breeze**:
+    ```bash
+    php artisan breeze:install blade
+    ```
+    *Note: This generates the authentication views and controllers.*
+3.  **Run Migrations**:
+    ```bash
+    php artisan migrate
+    ```
+4.  **Seed Database**:
+    ```bash
+    php artisan db:seed
+    ```
+    *This creates the admin user.*
+
+### Admin Access
+- **URL**: `/admin`
+- **Email**: `admin@aqarand.test`
+- **Password**: `password`
+
+### Localization
+- The admin panel supports **English (LTR)** and **Arabic (RTL)**.
+- Use the language switcher in the top navigation bar to toggle languages.
+- The interface automatically adjusts text direction and alignment.
+
+### implemented Modules (CRUD)
+- **Locations**:
+    - Countries
+    - Regions
+    - Cities
+    - Districts
+- **Lookups**:
+    - Property Types
+    - Unit Types
+    - Amenities
+
+### Admin Routes
+- `/admin` (Dashboard)
+- `/admin/countries`
+- `/admin/regions`
+- `/admin/cities`
+- `/admin/districts`
+- `/admin/property-types`
+- `/admin/unit-types`
+- `/admin/amenities`
