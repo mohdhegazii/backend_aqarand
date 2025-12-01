@@ -16,6 +16,7 @@ class Amenity extends Model
         'name_local',
         'slug',
         'icon_class',
+        'image_url',
         'amenity_type',
         'is_active',
         'sort_order',

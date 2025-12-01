@@ -36,6 +36,16 @@
                     <textarea name="description" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">{{ old('description', $unitType->description) }}</textarea>
                 </div>
 
+                <div class="mb-4">
+                    <label class="block text-gray-700 text-sm font-bold mb-2">Icon Class</label>
+                    <input type="text" name="icon_class" value="{{ old('icon_class', $unitType->icon_class) }}" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
+                </div>
+
+                <div class="mb-4">
+                    <label class="block text-gray-700 text-sm font-bold mb-2">Image URL</label>
+                    <input type="text" name="image_url" value="{{ old('image_url', $unitType->image_url) }}" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
+                </div>
+
                 <div class="mb-4 grid grid-cols-1 md:grid-cols-2 gap-4">
                     @foreach(['requires_land_area', 'requires_built_up_area', 'requires_garden_area', 'requires_roof_area', 'requires_indoor_area', 'requires_outdoor_area'] as $field)
                         <label class="inline-flex items-center">

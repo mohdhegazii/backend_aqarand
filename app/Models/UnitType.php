@@ -16,6 +16,8 @@ class UnitType extends Model
         'name',
         'code',
         'description',
+        'icon_class',
+        'image_url',
         'is_core_type',
         'requires_land_area',
         'requires_built_up_area',

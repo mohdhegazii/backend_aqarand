@@ -16,6 +16,8 @@ class PropertyType extends Model
         'name_local',
         'slug',
         'category',
+        'icon_class',
+        'image_url',
         'is_active',
         'sort_order',
     ];
@@ -23,6 +25,15 @@ class PropertyType extends Model
     protected $casts = [
         'is_active' => 'boolean',
         'sort_order' => 'integer',
+    ];
+
+    public const CATEGORIES = [
+        'residential',
+        'commercial',
+        'administrative',
+        'medical',
+        'mixed',
+        'other'
     ];
 
     public function unitTypes()

@@ -34,16 +34,23 @@ class PropertyTypeController extends Controller
         $validated = $request->validate([
             'name_en' => 'required|string|max:100',
             'name_local' => 'required|string|max:100',
-            'category' => 'required|in:residential,commercial,administrative,medical,mixed,other',
+            'category' => 'required|in:' . implode(',', PropertyType::CATEGORIES),
+            'icon_class' => 'nullable|string|max:120',
+            'image_url' => 'nullable|url|max:255',
             'is_active' => 'boolean',
         ]);
 
-        $validated['slug'] = Str::slug($validated['name_en']);
-        $validated['is_active'] = $request->has('is_active');
-
-        if (PropertyType::where('slug', $validated['slug'])->exists()) {
-             return back()->withInput()->withErrors(['name_en' => 'Slug generated from Name (EN) already exists.']);
+        $slug = Str::slug($validated['name_en']);
+        // Ensure slug uniqueness by appending a suffix if needed
+        $originalSlug = $slug;
+        $counter = 1;
+        while (PropertyType::where('slug', $slug)->exists()) {
+            $slug = $originalSlug . '-' . $counter;
+            $counter++;
         }
+        $validated['slug'] = $slug;
+
+        $validated['is_active'] = $request->has('is_active');
 
         PropertyType::create($validated);
 
@@ -61,19 +68,25 @@ class PropertyTypeController extends Controller
         $validated = $request->validate([
             'name_en' => 'required|string|max:100',
             'name_local' => 'required|string|max:100',
-            'category' => 'required|in:residential,commercial,administrative,medical,mixed,other',
+            'category' => 'required|in:' . implode(',', PropertyType::CATEGORIES),
+            'icon_class' => 'nullable|string|max:120',
+            'image_url' => 'nullable|url|max:255',
             'is_active' => 'boolean',
         ]);
 
+        // Regenerate slug if name changed, but ensure uniqueness
         $slug = Str::slug($validated['name_en']);
-        $validated['is_active'] = $request->has('is_active');
-
         if ($slug !== $propertyType->slug) {
-             if (PropertyType::where('slug', $slug)->where('id', '!=', $propertyType->id)->exists()) {
-                 return back()->withInput()->withErrors(['name_en' => 'Slug generated from Name (EN) already exists.']);
+             $originalSlug = $slug;
+             $counter = 1;
+             while (PropertyType::where('slug', $slug)->where('id', '!=', $propertyType->id)->exists()) {
+                 $slug = $originalSlug . '-' . $counter;
+                 $counter++;
              }
              $validated['slug'] = $slug;
         }
+
+        $validated['is_active'] = $request->has('is_active');
 
         $propertyType->update($validated);
 
