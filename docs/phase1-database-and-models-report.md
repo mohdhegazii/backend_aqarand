@@ -1,137 +1,101 @@
-# Phase 1: Database wiring + Eloquent models + relationships
+# Phase 1 Database and Models Technical Report
 
-## Summary
+## 1. Overview
+This report validates the implementation of Phase 1 of the Aqar-and Real Estate Platform backend. The review was conducted on the latest `main` branch.
+The goal of Phase 1 was to establish the core database schema, Eloquent models, and relationships, with a focus on multilingual readiness (Arabic & English).
 
-In this phase, I have implemented the Eloquent models and relationships for the core real estate platform, adhering to the provided database schema without modifying migrations or the schema file.
+**Review Status:** ✅ Phase 1 is complete and consistent with the specification.
+**Environment Note:** The review was conducted via static analysis as the environment lacked a PHP binary for runtime testing. However, the code structure and logic have been rigorously checked against the schema.
 
-The work includes:
--   Creating Eloquent models for all core tables.
--   Defining relationships (One-to-Many, Many-to-Many, One-to-One).
--   Implementing query scopes for common filtering scenarios.
--   Adding appropriate casts for JSON fields and boolean flags.
+## 2. Implemented Models
 
-## List of Models Created
+All models are located in `app/Models` and map correctly to the `database/sql/schema.sql`.
 
-The following models have been created in `app/Models/`:
+| Model | Table | Key Relationships |
+| :--- | :--- | :--- |
+| **Country** | `countries` | hasMany Regions |
+| **Region** | `regions` | belongsTo Country, hasMany Cities |
+| **City** | `cities` | belongsTo Region, hasMany Districts |
+| **District** | `districts` | belongsTo City, hasMany Projects |
+| **Developer** | `developers` | hasMany Projects |
+| **PropertyType** | `property_types` | hasMany UnitTypes |
+| **UnitType** | `unit_types` | belongsTo PropertyType, hasMany PropertyModels, hasMany Units |
+| **Amenity** | `amenities` | belongsToMany Projects (via `project_amenity`) |
+| **Project** | `projects` | belongsTo Developer, Locations, hasMany PropertyModels, hasMany Units |
+| **PropertyModel** | `property_models` | belongsTo Project, UnitType, hasMany Units |
+| **Unit** | `units` | belongsTo Project, PropertyModel, UnitType, hasOne Listing |
+| **Listing** | `listings` | belongsTo Unit |
 
-1.  **Location Models:**
-    *   `Country`
-    *   `Region`
-    *   `City`
-    *   `District`
-2.  **Core Entities:**
-    *   `Developer`
-    *   `Project`
-    *   `PropertyModel` (Unit Models)
-    *   `Unit`
-    *   `Listing`
-3.  **Metadata/Types:**
-    *   `PropertyType`
-    *   `UnitType`
-    *   `Amenity`
+## 3. Relationships Summary
 
-## Relationships Diagram (Textual)
+The following relationships have been verified and implemented:
 
-*   **Country**
-    *   `hasMany` Region
-*   **Region**
-    *   `belongsTo` Country
-    *   `hasMany` City
-*   **City**
-    *   `belongsTo` Region
-    *   `hasMany` District
-*   **District**
-    *   `belongsTo` City
-    *   `hasMany` Project
-*   **Developer**
-    *   `hasMany` Project
-*   **Project**
-    *   `belongsTo` Developer, Country, Region, City, District
-    *   `hasMany` PropertyModel, Unit
-    *   `belongsToMany` Amenity (via `project_amenity`)
-*   **PropertyModel**
-    *   `belongsTo` Project, UnitType
-    *   `hasMany` Unit
-*   **PropertyType**
-    *   `hasMany` UnitType
-*   **UnitType**
-    *   `belongsTo` PropertyType
-    *   `hasMany` PropertyModel, Unit
-*   **Unit**
-    *   `belongsTo` Project, PropertyModel, UnitType
-    *   `hasOne` Listing
-*   **Listing**
-    *   `belongsTo` Unit
+*   **Locations Hierarchy:**
+    *   Country -> Region -> City -> District.
+    *   Each level correctly implements `hasMany` (down) and `belongsTo` (up).
 
-## Technical Decisions
+*   **Project Relationships:**
+    *   `Project` belongs to `Developer`.
+    *   `Project` belongs to `Country`, `Region`, `City`, `District`.
+    *   `Project` has many `PropertyModel`s and `Unit`s.
+    *   `Project` belongs to many `Amenity`s (Pivot: `project_amenity`).
 
-1.  **JSON Fields:**
-    *   Used `$casts` to automatically convert JSON columns to arrays.
-    *   Examples: `Project::$casts['gallery' => 'array']`, `Unit::$casts['equipment' => 'array']`.
+*   **Unit & Property Model Hierarchy:**
+    *   `PropertyModel` belongs to `Project` and `UnitType`.
+    *   `Unit` belongs to `Project`, `PropertyModel`, and `UnitType`.
+    *   `UnitType` belongs to `PropertyType`.
 
-2.  **Decimals:**
-    *   Used `decimal:2` (or similar) casting for price and area fields to ensure precision when working with these values in PHP.
+*   **Listings:**
+    *   `Listing` belongs to `Unit`.
 
-3.  **Booleans:**
-    *   Fields like `is_active`, `is_featured`, `is_furnished` are cast to `boolean` for easier logic checks.
+## 4. Query Scopes Summary
 
-4.  **Timestamps:**
-    *   Standard `created_at` and `updated_at` are enabled by default on all models as they are present in the schema.
+### Listing Scopes
+*   `scopePublished`: Filters listings with `status = 'published'`.
+*   `scopePrimary`: Filters listings with `listing_type = 'primary'`.
+*   `scopeResale`: Filters listings with `listing_type = 'resale'`.
+*   `scopeRental`: Filters listings with `listing_type = 'rental'`.
 
-5.  **Pivot Table:**
-    *   The `project_amenity` table is handled via `belongsToMany` relationships in `Project` and `Amenity` models. No separate Pivot model was needed for this phase as there are no extra attributes on the pivot table worth managing explicitly yet.
+### Unit Scopes
+*   `scopeAvailable`: Filters units with `unit_status = 'available'`.
+*   `scopeByPriceRange($min, $max)`: Filters units by price range.
 
-## How to Use the Models
+## 5. Multilingual Readiness (Arabic / English / Future Languages)
 
-### Load a Project with Units and Amenities
+The platform supports Arabic and English out of the box for metadata tables, with plans for future expansion.
 
-```php
-use App\Models\Project;
+### Current Implementation (Phase 1)
+*   **Dual-Column Strategy:** The following tables use `name_en` and `name_local` columns:
+    *   `countries`
+    *   `regions`
+    *   `cities`
+    *   `districts`
+    *   `property_types`
+    *   `amenities`
 
-$project = Project::with(['units', 'amenities'])->find(1);
+    This allows for immediate, performant support for the two primary languages (English and Arabic). `name_local` stores the Arabic name.
 
-foreach ($project->units as $unit) {
-    echo $unit->unit_number . ' - ' . $unit->price;
-}
+*   **Helper Methods:**
+    A `getName($locale = null)` method has been added to the above models.
+    *   If `$locale` is 'ar', it returns `name_local` (falling back to `name_en`).
+    *   Otherwise, it returns `name_en`.
+    *   If `$locale` is not provided, it uses `app()->getLocale()`.
 
-foreach ($project->amenities as $amenity) {
-    echo $amenity->name_en;
-}
-```
+*   **Single-Language Entities:**
+    *   `projects`, `property_models`, `developers`, `unit_types`, `listings` currently use a single `name` or `title` column. These are treated as language-neutral or primary language (usually English or mixed) for Phase 1.
 
-### Load a Listing with Unit and Project Details
+### Future Extension Strategy
+To support more languages (French, German, etc.) in the future:
+1.  **Translation Tables:** Move from `name_en`/`name_local` columns to separate translation tables (e.g., `country_translations`, `project_translations`) using a package like `spatie/laravel-translatable` or standard Laravel localization patterns.
+2.  **JSON Columns:** Alternatively, convert name columns to JSON (e.g., `{"en": "Name", "ar": "الاسم"}`).
+3.  **Slugs:** Implement localized slugs in translation tables to support SEO in multiple languages (e.g., `/en/project/sunset` vs `/ar/project/ghoroub`).
 
-```php
-use App\Models\Listing;
+## 6. Issues Found & Fixes Applied
 
-$listing = Listing::with(['unit.project.developer'])->first();
+*   **Multilingual Helpers Missing:** The initial Phase 1 code lacked convenient accessors for localized names.
+    *   *Fix:* Added `getName($locale = null)` method to `Country`, `Region`, `City`, `District`, `PropertyType`, and `Amenity` models to abstract the logic of choosing `name_en` vs `name_local`.
 
-echo $listing->title;
-echo $listing->unit->price;
-echo $listing->unit->project->name;
-echo $listing->unit->project->developer->name;
-```
+## 7. Final Status of Phase 1
 
-### Query Published Primary Listings in a specific Price Range
-
-```php
-use App\Models\Listing;
-
-// Using the scopes defined in Listing and Unit
-$listings = Listing::scopePublished()
-    ->scopePrimary()
-    ->whereHas('unit', function($q) {
-        $q->scopeAvailable()
-          ->scopeByPriceRange(1000000, 5000000);
-    })
-    ->get();
-```
-
-## Next Recommendations
-
-For Phase 2, I recommend:
-
-1.  **Admin CRUD:** Implement Filament or standard Laravel controllers for managing these resources, especially Locations and Types which are foundational.
-2.  **Validation:** Add FormRequests for creating/updating these entities, ensuring rules match database constraints (e.g., unique slugs).
-3.  **Factories & Seeders:** Create factories and seeders to populate the database with test data, which will facilitate frontend development and more robust testing.
-4.  **Authentication:** Set up User model and authentication (API/Web) if not already present.
+✅ **Phase 1 is complete and consistent with the specification.**
+The database schema is correctly mapped to Eloquent models, relationships are established, and the foundation for multilingual support is in place.

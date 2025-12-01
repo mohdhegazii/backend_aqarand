@@ -30,4 +30,19 @@ class Amenity extends Model
     {
         return $this->belongsToMany(Project::class, 'project_amenity', 'amenity_id', 'project_id');
     }
+
+    /**
+     * Get the name based on the locale.
+     *
+     * @param string|null $locale
+     * @return string
+     */
+    public function getName($locale = null)
+    {
+        $locale = $locale ?? app()->getLocale();
+        if ($locale === 'ar') {
+            return $this->name_local ?? $this->name_en;
+        }
+        return $this->name_en;
+    }
 }
