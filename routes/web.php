@@ -10,6 +10,7 @@ use App\Http\Controllers\Admin\DistrictController;
 use App\Http\Controllers\Admin\PropertyTypeController;
 use App\Http\Controllers\Admin\UnitTypeController;
 use App\Http\Controllers\Admin\AmenityController;
+use App\Http\Controllers\Admin\DeveloperController;
 
 Route::get('/', function () {
     return view('welcome');
@@ -33,15 +34,8 @@ Route::middleware(['auth', 'is_admin'])
         Route::resource('property-types', PropertyTypeController::class);
         Route::resource('unit-types', UnitTypeController::class);
         Route::resource('amenities', AmenityController::class);
+        Route::resource('developers', DeveloperController::class);
     });
-
-// Fallback logout if Breeze is not fully setup
-Route::post('logout', function () {
-    auth()->logout();
-    request()->session()->invalidate();
-    request()->session()->regenerateToken();
-    return redirect('/');
-})->name('logout');
 
 // Breeze Authentication Routes
 if (file_exists(__DIR__.'/auth.php')) {

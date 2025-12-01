@@ -1,0 +1,50 @@
+@extends('admin.layouts.app')
+
+@section('header', __('admin.edit') . ' ' . __('admin.developers'))
+
+@section('content')
+    <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
+        <div class="p-6 bg-white border-b border-gray-200">
+            <form action="{{ route('admin.developers.update', $developer->id) }}" method="POST">
+                @csrf
+                @method('PUT')
+
+                <div class="mb-4">
+                    <label class="block text-gray-700 text-sm font-bold mb-2">@lang('admin.name')</label>
+                    <input type="text" name="name" value="{{ old('name', $developer->name) }}" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" required>
+                </div>
+
+                <div class="mb-4">
+                    <label class="block text-gray-700 text-sm font-bold mb-2">@lang('admin.description')</label>
+                    <textarea name="description" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" rows="4">{{ old('description', $developer->description) }}</textarea>
+                </div>
+
+                <div class="mb-4">
+                    <label class="block text-gray-700 text-sm font-bold mb-2">@lang('admin.logo_url')</label>
+                    <input type="url" name="logo_url" value="{{ old('logo_url', $developer->logo_url) }}" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
+                </div>
+
+                <div class="mb-4">
+                    <label class="block text-gray-700 text-sm font-bold mb-2">@lang('admin.website_url')</label>
+                    <input type="url" name="website_url" value="{{ old('website_url', $developer->website_url) }}" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
+                </div>
+
+                <div class="mb-4">
+                    <label class="inline-flex items-center">
+                        <input type="checkbox" name="is_active" value="1" class="form-checkbox" {{ old('is_active', $developer->is_active) ? 'checked' : '' }}>
+                        <span class="mx-2">@lang('admin.active')</span>
+                    </label>
+                </div>
+
+                <div class="flex items-center justify-end space-x-4 rtl:space-x-reverse">
+                    <a href="{{ route('admin.developers.index') }}" class="text-gray-600 hover:text-gray-900">
+                        @lang('admin.cancel')
+                    </a>
+                    <button type="submit" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline">
+                        @lang('admin.save')
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+@endsection

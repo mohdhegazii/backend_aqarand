@@ -14,6 +14,8 @@ return [
     'unit_type' => 'نوع الوحدة',
     'amenity' => 'ميزة',
     'developers' => 'المطورون',
+    'logo_url' => 'رابط الشعار',
+    'website_url' => 'رابط الموقع',
     'logout' => 'تسجيل الخروج',
     'language' => 'اللغة',
     'english' => 'الإنجليزية',
