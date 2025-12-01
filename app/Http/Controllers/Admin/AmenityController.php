@@ -36,15 +36,21 @@ class AmenityController extends Controller
             'name_local' => 'required|string|max:120',
             'amenity_type' => 'required|in:project,unit,both',
             'icon_class' => 'nullable|string|max:120',
+            'image_url' => 'nullable|url|max:255',
             'is_active' => 'boolean',
         ]);
 
-        $validated['slug'] = Str::slug($validated['name_en']);
-        $validated['is_active'] = $request->has('is_active');
-
-        if (Amenity::where('slug', $validated['slug'])->exists()) {
-             return back()->withInput()->withErrors(['name_en' => 'Slug generated from Name (EN) already exists.']);
+        $slug = Str::slug($validated['name_en']);
+        // Ensure slug uniqueness
+        $originalSlug = $slug;
+        $counter = 1;
+        while (Amenity::where('slug', $slug)->exists()) {
+            $slug = $originalSlug . '-' . $counter;
+            $counter++;
         }
+        $validated['slug'] = $slug;
+
+        $validated['is_active'] = $request->has('is_active');
 
         Amenity::create($validated);
 
@@ -64,18 +70,22 @@ class AmenityController extends Controller
             'name_local' => 'required|string|max:120',
             'amenity_type' => 'required|in:project,unit,both',
             'icon_class' => 'nullable|string|max:120',
+            'image_url' => 'nullable|url|max:255',
             'is_active' => 'boolean',
         ]);
 
         $slug = Str::slug($validated['name_en']);
-        $validated['is_active'] = $request->has('is_active');
-
         if ($slug !== $amenity->slug) {
-             if (Amenity::where('slug', $slug)->where('id', '!=', $amenity->id)->exists()) {
-                 return back()->withInput()->withErrors(['name_en' => 'Slug generated from Name (EN) already exists.']);
+             $originalSlug = $slug;
+             $counter = 1;
+             while (Amenity::where('slug', $slug)->where('id', '!=', $amenity->id)->exists()) {
+                 $slug = $originalSlug . '-' . $counter;
+                 $counter++;
              }
              $validated['slug'] = $slug;
         }
+
+        $validated['is_active'] = $request->has('is_active');
 
         $amenity->update($validated);
 

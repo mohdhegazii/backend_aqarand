@@ -19,6 +19,8 @@
         <table class="min-w-full table-auto">
             <thead>
                 <tr class="bg-gray-200 text-gray-600 uppercase text-sm leading-normal">
+                    <th class="py-3 px-6 text-start">ID</th>
+                    <th class="py-3 px-6 text-start">Image</th>
                     <th class="py-3 px-6 text-start">@lang('admin.name_en')</th>
                     <th class="py-3 px-6 text-start">@lang('admin.name_local')</th>
                     <th class="py-3 px-6 text-start">@lang('admin.category')</th>
@@ -29,6 +31,16 @@
             <tbody class="text-gray-600 text-sm font-light">
                 @foreach($propertyTypes as $type)
                     <tr class="border-b border-gray-200 hover:bg-gray-100">
+                        <td class="py-3 px-6 text-start">{{ $type->id }}</td>
+                        <td class="py-3 px-6 text-start">
+                            @if($type->image_url)
+                                <img src="{{ $type->image_url }}" class="h-8 w-8 object-cover rounded-full" alt="Icon">
+                            @elseif($type->icon_class)
+                                <i class="{{ $type->icon_class }}"></i>
+                            @else
+                                -
+                            @endif
+                        </td>
                         <td class="py-3 px-6 text-start">
                             {{ $type->name_en }}
                         </td>

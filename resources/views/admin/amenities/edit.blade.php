@@ -34,6 +34,11 @@
                 </div>
 
                 <div class="mb-4">
+                    <label class="block text-gray-700 text-sm font-bold mb-2">Image URL</label>
+                    <input type="text" name="image_url" value="{{ old('image_url', $amenity->image_url) }}" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
+                </div>
+
+                <div class="mb-4">
                     <label class="inline-flex items-center">
                         <input type="checkbox" name="is_active" value="1" class="form-checkbox" {{ old('is_active', $amenity->is_active) ? 'checked' : '' }}>
                         <span class="mx-2">@lang('admin.active')</span>
