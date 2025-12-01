@@ -78,12 +78,13 @@ class RegionController extends Controller
 
         $slug = Str::slug($validated['name_en']);
         $validated['is_active'] = $request->has('is_active');
+        $validated['slug'] = $slug;
 
-        if ($slug !== $region->slug) {
+        // Check uniqueness if slug changed OR if country changed
+        if ($slug !== $region->slug || $validated['country_id'] != $region->country_id) {
              if (Region::where('country_id', $validated['country_id'])->where('slug', $slug)->where('id', '!=', $region->id)->exists()) {
                  return back()->withInput()->withErrors(['name_en' => 'Slug generated from Name (EN) already exists in this country.']);
              }
-             $validated['slug'] = $slug;
         }
 
         $region->update($validated);

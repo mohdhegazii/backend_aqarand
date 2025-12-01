@@ -37,3 +37,13 @@ This repository contains the backend for the Aqar-and real estate listing platfo
 
 - **Run Migrations:** `php artisan migrate`
 - **Seed Database:** `php artisan db:seed` (Creates the admin user)
+
+### Entities Implemented (Phase 2)
+- **Countries**
+- **Regions**
+- **Cities**
+- **Districts**
+- **Property Types**
+- **Unit Types**
+- **Amenities**
+- **Developers**

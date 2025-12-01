@@ -76,12 +76,13 @@ class CityController extends Controller
 
         $slug = Str::slug($validated['name_en']);
         $validated['is_active'] = $request->has('is_active');
+        $validated['slug'] = $slug;
 
-        if ($slug !== $city->slug) {
+        // Check uniqueness if slug changed OR if region changed
+        if ($slug !== $city->slug || $validated['region_id'] != $city->region_id) {
              if (City::where('region_id', $validated['region_id'])->where('slug', $slug)->where('id', '!=', $city->id)->exists()) {
                  return back()->withInput()->withErrors(['name_en' => 'Slug generated from Name (EN) already exists in this region.']);
              }
-             $validated['slug'] = $slug;
         }
 
         $city->update($validated);
