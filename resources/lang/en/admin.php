@@ -14,6 +14,8 @@ return [
     'unit_type' => 'Unit Type',
     'amenity' => 'Amenity',
     'developers' => 'Developers',
+    'logo_url' => 'Logo URL',
+    'website_url' => 'Website URL',
     'logout' => 'Logout',
     'language' => 'Language',
     'english' => 'English',
