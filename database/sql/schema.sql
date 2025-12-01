@@ -130,13 +130,7 @@ CREATE TABLE amenities (
     UNIQUE KEY uq_amenities_slug (slug)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
-CREATE TABLE project_amenity (
-    project_id BIGINT UNSIGNED NOT NULL,
-    amenity_id BIGINT UNSIGNED NOT NULL,
-    PRIMARY KEY (project_id, amenity_id),
-    CONSTRAINT fk_project_amenity_project FOREIGN KEY (project_id) REFERENCES projects(id) ON DELETE CASCADE,
-    CONSTRAINT fk_project_amenity_amenity FOREIGN KEY (amenity_id) REFERENCES amenities(id) ON DELETE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 
 -- NOTE: 'projects' table is defined below; this FK will work if run in an engine that ignores order, 
 -- otherwise you can move this block after projects creation.
