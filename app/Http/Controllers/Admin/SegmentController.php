@@ -50,7 +50,7 @@ class SegmentController extends Controller
 
         Segment::create($validated);
 
-        return redirect()->route('admin.segments.index')->with('success', __('admin.created_successfully'));
+        return redirect()->route('admin.segments.index', ['locale' => app()->getLocale()])->with('success', __('admin.created_successfully'));
     }
 
     public function edit(Segment $segment)
@@ -95,13 +95,13 @@ class SegmentController extends Controller
 
         $segment->update($validated);
 
-        return redirect()->route('admin.segments.index')->with('success', __('admin.updated_successfully'));
+        return redirect()->route('admin.segments.index', ['locale' => app()->getLocale()])->with('success', __('admin.updated_successfully'));
     }
 
     public function destroy(Segment $segment)
     {
         $segment->update(['is_active' => false]);
-        return redirect()->route('admin.segments.index')->with('success', __('admin.deleted_successfully'));
+        return redirect()->route('admin.segments.index', ['locale' => app()->getLocale()])->with('success', __('admin.deleted_successfully'));
     }
 
     public function bulk(Request $request)

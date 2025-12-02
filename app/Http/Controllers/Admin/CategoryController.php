@@ -51,7 +51,7 @@ class CategoryController extends Controller
 
         Category::create($validated);
 
-        return redirect()->route('admin.categories.index')->with('success', __('admin.created_successfully'));
+        return redirect()->route('admin.categories.index', ['locale' => app()->getLocale()])->with('success', __('admin.created_successfully'));
     }
 
     public function edit(Category $category)
@@ -93,13 +93,13 @@ class CategoryController extends Controller
 
         $category->update($validated);
 
-        return redirect()->route('admin.categories.index')->with('success', __('admin.updated_successfully'));
+        return redirect()->route('admin.categories.index', ['locale' => app()->getLocale()])->with('success', __('admin.updated_successfully'));
     }
 
     public function destroy(Category $category)
     {
         $category->update(['is_active' => false]);
-        return redirect()->route('admin.categories.index')->with('success', __('admin.deleted_successfully'));
+        return redirect()->route('admin.categories.index', ['locale' => app()->getLocale()])->with('success', __('admin.deleted_successfully'));
     }
 
     public function bulk(Request $request)

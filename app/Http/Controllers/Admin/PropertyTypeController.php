@@ -66,7 +66,7 @@ class PropertyTypeController extends Controller
 
         PropertyType::create($validated);
 
-        return redirect()->route('admin.property-types.index')
+        return redirect()->route('admin.property-types.index', ['locale' => app()->getLocale()])
             ->with('success', __('admin.created_successfully'));
     }
 
@@ -110,7 +110,7 @@ class PropertyTypeController extends Controller
 
         $propertyType->update($validated);
 
-        return redirect()->route('admin.property-types.index')
+        return redirect()->route('admin.property-types.index', ['locale' => app()->getLocale()])
             ->with('success', __('admin.updated_successfully'));
     }
 
@@ -118,7 +118,7 @@ class PropertyTypeController extends Controller
     {
         $propertyType->update(['is_active' => false]);
 
-        return redirect()->route('admin.property-types.index')
+        return redirect()->route('admin.property-types.index', ['locale' => app()->getLocale()])
             ->with('success', __('admin.deleted_successfully'));
     }
 
