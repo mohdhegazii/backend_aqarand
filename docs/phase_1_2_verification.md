@@ -12,6 +12,7 @@ This document confirms the verification and stabilization of Phase 1 (Database &
   - Lookups: `property_types`, `unit_types`, `amenities`
   - Core Entities: `projects`, `property_models`, `units`, `listings`
   - Pivot: `project_amenity`
+- **Updated:** Phase 2.5 enhancements add bilingual name/description fields and `logo_path` to `developers` (while keeping the legacy `name` column) so the table matches the current model and locale-aware display logic.
 
 ### Eloquent Models
 - **Verified:** All models exist in `app/Models/` and match the schema.
@@ -21,7 +22,7 @@ This document confirms the verification and stabilization of Phase 1 (Database &
   - `PropertyType`, `UnitType`, `Amenity`
 - **Verified:** Mass assignment protection (`$fillable`) is configured for all models.
 - **Verified:** Casts (e.g., `boolean`, `array`, `decimal`) are present.
-- **Note:** `Developer` model uses a single `name` column as per schema, unlike location models which use `name_en` and `name_local`.
+- **Note:** `Developer` now supports bilingual fields (`name_en`/`name_ar`, `description_en`/`description_ar`) alongside the legacy `name` column for backward compatibility and fallback during display.
 
 ## Phase 2: Auth, Admin, Localization & CRUDs
 
