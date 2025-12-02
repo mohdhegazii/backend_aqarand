@@ -29,10 +29,9 @@
                         <input type="checkbox" id="select-all">
                     </th>
                     <th class="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ID</th>
-                    <th class="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Image</th>
-                    <th class="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name (EN)</th>
-                    <th class="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name (AR)</th>
-                    <th class="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Segment</th>
+                    <th class="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">@lang('admin.image')</th>
+                    <th class="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">@lang('admin.name')</th>
+                    <th class="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">@lang('admin.segments')</th>
                     <th class="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
                 </tr>
             </thead>
@@ -48,9 +47,8 @@
                             <img src="{{ asset('storage/' . $category->image_path) }}" alt="" class="h-10 w-10 object-cover rounded">
                         @endif
                     </td>
-                    <td class="px-6 py-4 whitespace-nowrap">{{ $category->name_en }}</td>
-                    <td class="px-6 py-4 whitespace-nowrap">{{ $category->name_ar }}</td>
-                    <td class="px-6 py-4 whitespace-nowrap">{{ $category->segment->name_en ?? '-' }}</td>
+                    <td class="px-6 py-4 whitespace-nowrap">{{ $category->display_name }}</td>
+                    <td class="px-6 py-4 whitespace-nowrap">{{ $category->segment->display_name ?? '-' }}</td>
                     <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
                         <a href="{{ route('admin.categories.edit', $category) }}" class="text-indigo-600 hover:text-indigo-900">@lang('admin.edit')</a>
                     </td>

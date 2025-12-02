@@ -48,8 +48,7 @@
                              <input type="checkbox" id="select-all">
                         </th>
                         <th class="py-3 px-6 text-start">@lang('admin.city')</th>
-                        <th class="py-3 px-6 text-start">@lang('admin.name_en')</th>
-                        <th class="py-3 px-6 text-start">@lang('admin.name_ar')</th>
+                        <th class="py-3 px-6 text-start">@lang('admin.name')</th>
                         <th class="py-3 px-6 text-center">@lang('admin.status')</th>
                         <th class="py-3 px-6 text-center">@lang('admin.actions')</th>
                     </tr>
@@ -61,13 +60,10 @@
                                 <input type="checkbox" name="ids[]" value="{{ $district->id }}" class="row-checkbox">
                             </td>
                             <td class="py-3 px-6 text-start">
-                                 {{ $district->city->getName() }} ({{ $district->city->region->getName() }})
+                                 {{ $district->city->display_name }} ({{ $district->city->region->display_name }})
                             </td>
                             <td class="py-3 px-6 text-start">
-                                {{ $district->name_en }}
-                            </td>
-                            <td class="py-3 px-6 text-start">
-                                {{ $district->name_local }}
+                                {{ $district->display_name }}
                             </td>
                             <td class="py-3 px-6 text-center">
                                 @if($district->is_active)

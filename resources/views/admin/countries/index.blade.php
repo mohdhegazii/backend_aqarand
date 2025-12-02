@@ -40,8 +40,7 @@
                             <input type="checkbox" id="select-all">
                         </th>
                         <th class="py-3 px-6 text-start">@lang('admin.country_code_iso')</th>
-                        <th class="py-3 px-6 text-start">@lang('admin.name_en')</th>
-                        <th class="py-3 px-6 text-start">@lang('admin.name_ar')</th>
+                        <th class="py-3 px-6 text-start">@lang('admin.name')</th>
                         <th class="py-3 px-6 text-center">@lang('admin.actions')</th>
                     </tr>
                 </thead>
@@ -55,10 +54,7 @@
                                 <span class="font-medium">{{ $country->code }}</span>
                             </td>
                             <td class="py-3 px-6 text-start">
-                                {{ $country->name_en }}
-                            </td>
-                            <td class="py-3 px-6 text-start">
-                                {{ $country->name_local }}
+                                {{ $country->display_name }}
                             </td>
                             <td class="py-3 px-6 text-center">
                                 <div class="flex item-center justify-center space-x-2 rtl:space-x-reverse">
