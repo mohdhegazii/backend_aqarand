@@ -36,7 +36,7 @@ class AmenityController extends Controller
             'name_local' => 'required|string|max:120',
             'amenity_type' => 'required|in:project,unit,both',
             'icon_class' => 'nullable|string|max:120',
-            'image_url' => 'nullable|url|max:255',
+            'image_url' => 'nullable|string|max:255',
             'is_active' => 'boolean',
         ]);
 

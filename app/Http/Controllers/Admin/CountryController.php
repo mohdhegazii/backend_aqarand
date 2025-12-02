@@ -35,6 +35,8 @@ class CountryController extends Controller
             'code' => 'required|string|max:3|unique:countries,code',
             'name_en' => 'required|string|max:100',
             'name_local' => 'required|string|max:100',
+            'lat' => 'nullable|numeric|between:-90,90',
+            'lng' => 'nullable|numeric|between:-180,180',
         ]);
 
         Country::create($validated);
@@ -54,6 +56,8 @@ class CountryController extends Controller
             'code' => 'required|string|max:3|unique:countries,code,' . $country->id,
             'name_en' => 'required|string|max:100',
             'name_local' => 'required|string|max:100',
+            'lat' => 'nullable|numeric|between:-90,90',
+            'lng' => 'nullable|numeric|between:-180,180',
         ]);
 
         $country->update($validated);

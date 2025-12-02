@@ -42,6 +42,8 @@ class DistrictController extends Controller
             'city_id' => 'required|exists:cities,id',
             'name_en' => 'required|string|max:100',
             'name_local' => 'required|string|max:100',
+            'lat' => 'nullable|numeric|between:-90,90',
+            'lng' => 'nullable|numeric|between:-180,180',
             'is_active' => 'boolean',
         ]);
 
@@ -71,6 +73,8 @@ class DistrictController extends Controller
             'city_id' => 'required|exists:cities,id',
             'name_en' => 'required|string|max:100',
             'name_local' => 'required|string|max:100',
+            'lat' => 'nullable|numeric|between:-90,90',
+            'lng' => 'nullable|numeric|between:-180,180',
             'is_active' => 'boolean',
         ]);
 

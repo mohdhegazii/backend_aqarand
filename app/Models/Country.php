@@ -15,6 +15,13 @@ class Country extends Model
         'code',
         'name_en',
         'name_local',
+        'lat',
+        'lng',
+    ];
+
+    protected $casts = [
+        'lat' => 'decimal:7',
+        'lng' => 'decimal:7',
     ];
 
     public function regions()

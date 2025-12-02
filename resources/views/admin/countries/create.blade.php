@@ -23,6 +23,17 @@
                     <input type="text" name="name_local" value="{{ old('name_local') }}" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" required>
                 </div>
 
+                <div class="mb-4 grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-gray-700 text-sm font-bold mb-2">@lang('admin.lat')</label>
+                        <input type="text" name="lat" value="{{ old('lat') }}" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" placeholder="e.g. 30.0444">
+                    </div>
+                    <div>
+                        <label class="block text-gray-700 text-sm font-bold mb-2">@lang('admin.lng')</label>
+                        <input type="text" name="lng" value="{{ old('lng') }}" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" placeholder="e.g. 31.2357">
+                    </div>
+                </div>
+
                 <div class="flex items-center justify-end space-x-4 rtl:space-x-reverse">
                     <a href="{{ route('admin.countries.index') }}" class="text-gray-600 hover:text-gray-900">
                         @lang('admin.cancel')
