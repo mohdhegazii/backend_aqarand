@@ -103,3 +103,4 @@ This phase introduced UX improvements and additional features for the admin pane
 - **Sessions:** Increased admin session lifetime to 24 hours.
 - **Developers:** Split Create/Edit form into English/Arabic tabs with per-language SEO settings.
 - **SEO Plugin:** Added traffic-light indicators for SEO rules (Title length, Description length, Keyphrase).
+- **Migrations:** Fixed seo_meta migration (create or extend table safely) and added lat/lng columns to countries for location map support. Remember to run php artisan migrate after pulling.
