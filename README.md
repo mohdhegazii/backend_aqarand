@@ -39,11 +39,17 @@ This repository contains the backend for the Aqar-and real estate listing platfo
 - **Seed Database:** `php artisan db:seed` (Creates the admin user)
 
 ### Entities Implemented (Phase 2)
-- **Countries**
-- **Regions**
-- **Cities**
-- **Districts**
-- **Property Types**
-- **Unit Types**
-- **Amenities**
+- **Countries** (Added optional lat/lng)
+- **Regions** (Added optional lat/lng)
+- **Cities** (Added optional lat/lng)
+- **Districts** (Added optional lat/lng)
+- **Property Types** (Added icon_class and image_url)
+- **Unit Types** (Added icon_class and image_url)
+- **Amenities** (Added image_url)
 - **Developers**
+
+### Business Logic Alignment (Phase 1+2 Audit)
+- **Lookups:** Slug is no longer required or relied upon for lookup entities (Property Types, Amenities, etc.).
+- **Locations:** Hierarchical integrity enforced (Country -> Region -> City -> District).
+- **Icons/Images:** Lookup entities now support icon classes and image URLs.
+- **Coordinates:** All location entities support latitude and longitude storage.

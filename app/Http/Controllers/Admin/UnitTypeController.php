@@ -43,7 +43,7 @@ class UnitTypeController extends Controller
             'code' => 'nullable|string|max:50',
             'description' => 'nullable|string',
             'icon_class' => 'nullable|string|max:120',
-            'image_url' => 'nullable|url|max:255',
+            'image_url' => 'nullable|string|max:255',
             // Booleans are checked below
         ]);
 
@@ -81,7 +81,7 @@ class UnitTypeController extends Controller
             'code' => 'nullable|string|max:50',
             'description' => 'nullable|string',
             'icon_class' => 'nullable|string|max:120',
-            'image_url' => 'nullable|url|max:255',
+            'image_url' => 'nullable|string|max:255',
         ]);
 
         $booleans = [

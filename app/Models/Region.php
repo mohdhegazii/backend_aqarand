@@ -16,11 +16,15 @@ class Region extends Model
         'name_en',
         'name_local',
         'slug',
+        'lat',
+        'lng',
         'is_active',
     ];
 
     protected $casts = [
         'is_active' => 'boolean',
+        'lat' => 'decimal:7',
+        'lng' => 'decimal:7',
     ];
 
     public function country()

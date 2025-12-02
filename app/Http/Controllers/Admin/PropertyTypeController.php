@@ -36,7 +36,7 @@ class PropertyTypeController extends Controller
             'name_local' => 'required|string|max:100',
             'category' => 'required|in:' . implode(',', PropertyType::CATEGORIES),
             'icon_class' => 'nullable|string|max:120',
-            'image_url' => 'nullable|url|max:255',
+            'image_url' => 'nullable|string|max:255', // Changed from url validation to string to allow relative paths or simple filenames if needed, though URL is better if full URL
             'is_active' => 'boolean',
         ]);
 
@@ -70,7 +70,7 @@ class PropertyTypeController extends Controller
             'name_local' => 'required|string|max:100',
             'category' => 'required|in:' . implode(',', PropertyType::CATEGORIES),
             'icon_class' => 'nullable|string|max:120',
-            'image_url' => 'nullable|url|max:255',
+            'image_url' => 'nullable|string|max:255',
             'is_active' => 'boolean',
         ]);
 

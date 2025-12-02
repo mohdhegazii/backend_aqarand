@@ -36,12 +36,12 @@
                 </div>
 
                 <div class="mb-4">
-                    <label class="block text-gray-700 text-sm font-bold mb-2">Icon Class</label>
+                    <label class="block text-gray-700 text-sm font-bold mb-2">@lang('admin.icon_class')</label>
                     <input type="text" name="icon_class" value="{{ old('icon_class') }}" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
                 </div>
 
                 <div class="mb-4">
-                    <label class="block text-gray-700 text-sm font-bold mb-2">Image URL</label>
+                    <label class="block text-gray-700 text-sm font-bold mb-2">@lang('admin.image_url')</label>
                     <input type="text" name="image_url" value="{{ old('image_url') }}" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
                 </div>
 
