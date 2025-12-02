@@ -12,7 +12,6 @@ use App\Http\Controllers\Admin\PropertyTypeController;
 use App\Http\Controllers\Admin\UnitTypeController;
 use App\Http\Controllers\Admin\AmenityController;
 use App\Http\Controllers\Admin\DeveloperController;
-use App\Http\Controllers\Admin\SegmentController;
 use App\Http\Controllers\Admin\CategoryController;
 use App\Http\Controllers\Admin\LocationHelperController;
 use Illuminate\Support\Facades\Auth;
@@ -86,12 +85,16 @@ Route::group([
     Route::post('developers/bulk', [DeveloperController::class, 'bulk'])->name('developers.bulk');
     Route::resource('developers', DeveloperController::class);
 
-    Route::post('segments/bulk', [SegmentController::class, 'bulk'])->name('segments.bulk');
-    Route::resource('segments', SegmentController::class);
-
     Route::post('categories/bulk', [CategoryController::class, 'bulk'])->name('categories.bulk');
     Route::resource('categories', CategoryController::class)
         ->parameters(['categories' => 'category']);
+
+    // Backward compatibility: legacy segments route now redirects to categories.
+    Route::get('segments', function () {
+        \Log::debug('Deprecated segments index route accessed; redirecting to categories.');
+
+        return redirect()->route('admin.categories.index', ['locale' => app()->getLocale()]);
+    })->name('segments.index');
 
     Route::resource('amenity-categories', \App\Http\Controllers\Admin\AmenityCategoryController::class)
         ->parameters(['amenity-categories' => 'amenityCategory']);

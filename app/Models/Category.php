@@ -12,7 +12,6 @@ class Category extends Model
     protected $table = 'categories';
 
     protected $fillable = [
-        'segment_id',
         'name_en',
         'name_ar',
         'slug',
@@ -34,19 +33,16 @@ class Category extends Model
     }
 
     /**
-     * A category belongs to a segment.
-     */
-    public function segment()
-    {
-        return $this->belongsTo(Segment::class);
-    }
-
-    /**
      * A category has many amenities.
      */
     public function amenities()
     {
         return $this->hasMany(Amenity::class);
+    }
+
+    public function propertyTypes()
+    {
+        return $this->hasMany(PropertyType::class);
     }
 
     public function getDisplayNameAttribute(): string

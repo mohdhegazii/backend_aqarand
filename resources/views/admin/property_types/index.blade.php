@@ -43,6 +43,7 @@
                         <th class="py-3 px-6 text-start">@lang('admin.image')</th>
                         <th class="py-3 px-6 text-start">@lang('admin.name')</th>
                         <th class="py-3 px-6 text-start">@lang('admin.category')</th>
+                        <th class="py-3 px-6 text-start">Group Key</th>
                         <th class="py-3 px-6 text-center">@lang('admin.status')</th>
                         <th class="py-3 px-6 text-center">@lang('admin.actions')</th>
                     </tr>
@@ -67,7 +68,10 @@
                                 {{ $type->display_name }}
                             </td>
                             <td class="py-3 px-6 text-start">
-                                {{ ucfirst($type->category) }}
+                                {{ $type->category?->display_name ?? '-' }}
+                            </td>
+                            <td class="py-3 px-6 text-start">
+                                {{ $type->group_key ? ucfirst(str_replace('_', ' ', $type->group_key)) : '-' }}
                             </td>
                             <td class="py-3 px-6 text-center">
                                 @if($type->is_active)

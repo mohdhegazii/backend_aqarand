@@ -4,7 +4,6 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Category;
-use App\Models\Segment;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Storage;
@@ -13,20 +12,18 @@ class CategoryController extends Controller
 {
     public function index()
     {
-        $categories = Category::where('is_active', true)->with('segment')->get();
+        $categories = Category::where('is_active', true)->get();
         return view('admin.categories.index', compact('categories'));
     }
 
     public function create()
     {
-        $segments = Segment::where('is_active', true)->get();
-        return view('admin.categories.create', compact('segments'));
+        return view('admin.categories.create');
     }
 
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'segment_id' => 'required|exists:segments,id',
             'name_en' => 'required|string|max:255',
             'name_ar' => 'required|string|max:255',
             'is_active' => 'nullable|boolean',
@@ -56,14 +53,12 @@ class CategoryController extends Controller
 
     public function edit(Category $category)
     {
-        $segments = Segment::where('is_active', true)->get();
-        return view('admin.categories.edit', compact('category', 'segments'));
+        return view('admin.categories.edit', compact('category'));
     }
 
     public function update(Request $request, Category $category)
     {
         $validated = $request->validate([
-            'segment_id' => 'required|exists:segments,id',
             'name_en' => 'required|string|max:255',
             'name_ar' => 'required|string|max:255',
             'is_active' => 'nullable|boolean',

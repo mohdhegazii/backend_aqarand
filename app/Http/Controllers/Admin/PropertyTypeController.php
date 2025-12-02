@@ -3,16 +3,18 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\Category;
 use App\Models\PropertyType;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Validation\Rule;
 
 class PropertyTypeController extends Controller
 {
     public function index(Request $request)
     {
-        $query = PropertyType::query();
+        $query = PropertyType::query()->with('category');
 
         if (!$request->has('filter') || $request->filter === 'active') {
              $query->where('is_active', true);
@@ -33,7 +35,12 @@ class PropertyTypeController extends Controller
 
     public function create()
     {
-        return view('admin.property_types.create');
+        $categories = Category::orderBy('name_en')->get();
+
+        return view('admin.property_types.create', [
+            'categories' => $categories,
+            'groupKeys' => PropertyType::GROUP_KEYS,
+        ]);
     }
 
     public function store(Request $request)
@@ -41,7 +48,8 @@ class PropertyTypeController extends Controller
         $validated = $request->validate([
             'name_en' => 'required|string|max:100',
             'name_local' => 'required|string|max:100',
-            'category' => 'required|in:' . implode(',', PropertyType::CATEGORIES),
+            'category_id' => 'required|exists:categories,id',
+            'group_key' => ['nullable', 'string', 'max:100', Rule::in(PropertyType::GROUP_KEYS)],
             'icon_class' => 'nullable|string|max:120',
             'image' => 'nullable|image|max:2048',
             'is_active' => 'boolean',
@@ -73,7 +81,13 @@ class PropertyTypeController extends Controller
     public function edit(PropertyType $propertyType)
     {
         try {
-            return view('admin.property_types.edit', compact('propertyType'))->render();
+            $categories = Category::orderBy('name_en')->get();
+
+            return view('admin.property_types.edit', [
+                'propertyType' => $propertyType,
+                'categories' => $categories,
+                'groupKeys' => PropertyType::GROUP_KEYS,
+            ])->render();
         } catch (\Throwable $e) {
             dd('DEBUG CAUGHT ERROR IN PropertyTypeController::edit', $e->getMessage(), $e->getFile(), $e->getLine(), $e->getTraceAsString());
         }
@@ -84,7 +98,8 @@ class PropertyTypeController extends Controller
         $validated = $request->validate([
             'name_en' => 'required|string|max:100',
             'name_local' => 'required|string|max:100',
-            'category' => 'required|in:' . implode(',', PropertyType::CATEGORIES),
+            'category_id' => 'required|exists:categories,id',
+            'group_key' => ['nullable', 'string', 'max:100', Rule::in(PropertyType::GROUP_KEYS)],
             'icon_class' => 'nullable|string|max:120',
             'image' => 'nullable|image|max:2048',
             'is_active' => 'boolean',
