@@ -88,7 +88,8 @@ Route::group([
     Route::resource('segments', SegmentController::class);
 
     Route::post('categories/bulk', [CategoryController::class, 'bulk'])->name('categories.bulk');
-    Route::resource('categories', CategoryController::class);
+    Route::resource('categories', CategoryController::class)
+        ->parameters(['categories' => 'category']);
 
     Route::resource('amenity-categories', \App\Http\Controllers\Admin\AmenityCategoryController::class)
         ->parameters(['amenity-categories' => 'amenityCategory']);
