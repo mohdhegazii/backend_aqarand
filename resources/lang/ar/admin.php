@@ -78,4 +78,8 @@ return [
     'is_active' => 'مفعل',
     'image' => 'صورة',
     'select_segment' => 'اختر التقسيم',
+    'amenity_categories' => 'تصنيفات وسائل الراحة والخدمات',
+    'amenity_category' => 'تصنيف وسيلة الراحة',
+    'sort_order' => 'ترتيب',
+    'select_option' => 'اختر من القائمة',
 ];

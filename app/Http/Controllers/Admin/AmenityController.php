@@ -4,7 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Amenity;
-use App\Models\Category;
+use App\Models\AmenityCategory;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Storage;
@@ -34,14 +34,19 @@ class AmenityController extends Controller
 
     public function create()
     {
-        $categories = Category::where('is_active', true)->get();
+        // Using AmenityCategory instead of Category
+        $categories = AmenityCategory::where('is_active', true)
+            ->orderBy('sort_order')
+            ->orderBy('name_en')
+            ->get();
+
         return view('admin.amenities.create', compact('categories'));
     }
 
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'category_id' => 'nullable|exists:categories,id',
+            'amenity_category_id' => 'nullable|exists:amenity_categories,id',
             'name_en' => 'required|string|max:120',
             'name_local' => 'required|string|max:120',
             'amenity_type' => 'required|in:project,unit,both',
@@ -75,14 +80,18 @@ class AmenityController extends Controller
 
     public function edit(Amenity $amenity)
     {
-        $categories = Category::where('is_active', true)->get();
+        $categories = AmenityCategory::where('is_active', true)
+            ->orderBy('sort_order')
+            ->orderBy('name_en')
+            ->get();
+
         return view('admin.amenities.edit', compact('amenity', 'categories'));
     }
 
     public function update(Request $request, Amenity $amenity)
     {
         $validated = $request->validate([
-            'category_id' => 'nullable|exists:categories,id',
+            'amenity_category_id' => 'nullable|exists:amenity_categories,id',
             'name_en' => 'required|string|max:120',
             'name_local' => 'required|string|max:120',
             'amenity_type' => 'required|in:project,unit,both',

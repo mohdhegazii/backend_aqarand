@@ -77,6 +77,11 @@
                 </div>
                 <a href="{{ route('admin.segments.index', ['locale' => $locale]) }}" class="block px-4 py-2 text-gray-700 hover:bg-gray-100 rounded">@lang('admin.segments')</a>
                 <a href="{{ route('admin.categories.index', ['locale' => $locale]) }}" class="block px-4 py-2 text-gray-700 hover:bg-gray-100 rounded">@lang('admin.categories')</a>
+
+                <div class="mt-4 px-4 text-xs font-semibold text-gray-500 uppercase">
+                    @lang('admin.amenity_categories')
+                </div>
+                <a href="{{ route('admin.amenity-categories.index', ['locale' => $locale]) }}" class="block px-4 py-2 text-gray-700 hover:bg-gray-100 rounded">@lang('admin.amenity_categories')</a>
             </nav>
         </aside>
 
@@ -92,27 +97,30 @@
                         <!-- Language Switcher -->
                         @php
                             $currentLocale = app()->getLocale();
-                            $otherLocale = $currentLocale === 'en' ? 'ar' : 'en';
-                            $routeName = \Illuminate\Support\Facades\Route::currentRouteName();
-                            $params = request()->route()->parameters();
-                            $params['locale'] = $otherLocale;
+                            $languages = [
+                                'en' => __('admin.english'),
+                                'ar' => __('admin.arabic'),
+                            ];
                         @endphp
 
                         <div class="dropdown">
                             <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown">
-                                {{ $currentLocale === 'en' ? __('admin.english') : __('admin.arabic') }}
+                                {{ $languages[$currentLocale] ?? 'Language' }}
                             </button>
                             <ul class="dropdown-menu dropdown-menu-end">
-                                <li>
-                                    <a class="dropdown-item" href="{{ route($routeName, array_merge($params, ['locale' => 'en'])) }}">
-                                        {{ __('admin.english') }}
-                                    </a>
-                                </li>
-                                <li>
-                                    <a class="dropdown-item" href="{{ route($routeName, array_merge($params, ['locale' => 'ar'])) }}">
-                                        {{ __('admin.arabic') }}
-                                    </a>
-                                </li>
+                                @foreach($languages as $localeKey => $label)
+                                    <li>
+                                        @if($localeKey === $currentLocale)
+                                            <span class="dropdown-item active">
+                                                {{ $label }}
+                                            </span>
+                                        @else
+                                            <a class="dropdown-item" href="{{ route('lang.switch', ['locale' => $localeKey]) }}">
+                                                {{ $label }}
+                                            </a>
+                                        @endif
+                                    </li>
+                                @endforeach
                             </ul>
                         </div>
 

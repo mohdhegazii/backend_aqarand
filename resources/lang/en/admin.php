@@ -78,4 +78,8 @@ return [
     'is_active' => 'Is Active',
     'image' => 'Image',
     'select_segment' => 'Select Segment',
+    'amenity_categories' => 'Amenities & Facilities Categories',
+    'amenity_category' => 'Amenity Category',
+    'sort_order' => 'Sort Order',
+    'select_option' => 'Select an option',
 ];
