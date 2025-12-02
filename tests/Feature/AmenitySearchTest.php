@@ -42,4 +42,36 @@ class AmenitySearchTest extends TestCase
         $this->assertFalse($amenities->contains($inactiveAmenity));
         $this->assertEquals(1, $amenities->total());
     }
+
+    public function test_empty_filter_parameter_still_limits_to_active_records()
+    {
+        $admin = User::factory()->create(['is_admin' => true]);
+
+        $activeAmenity = Amenity::create([
+            'name_en' => 'Pool',
+            'name_local' => 'حمام سباحة',
+            'slug' => 'pool',
+            'amenity_type' => 'unit',
+            'is_active' => true,
+        ]);
+
+        $inactiveAmenity = Amenity::create([
+            'name_en' => 'Closed Pool',
+            'name_local' => 'حمام سباحة مغلق',
+            'slug' => 'closed-pool',
+            'amenity_type' => 'unit',
+            'is_active' => false,
+        ]);
+
+        $response = $this->actingAs($admin)
+            ->get(route('admin.amenities.index', ['locale' => 'en', 'filter' => '', 'search' => 'Pool']));
+
+        $response->assertStatus(200);
+
+        $amenities = $response->viewData('amenities');
+
+        $this->assertTrue($amenities->contains($activeAmenity));
+        $this->assertFalse($amenities->contains($inactiveAmenity));
+        $this->assertEquals(1, $amenities->total());
+    }
 }
