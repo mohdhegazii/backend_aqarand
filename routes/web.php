@@ -19,7 +19,8 @@ use Illuminate\Support\Facades\Auth;
 Route::get('/', function () {
     if (Auth::check()) {
         if (Auth::user()->is_admin) {
-            return redirect()->route('admin.dashboard');
+            $locale = session('locale', config('app.locale', 'en'));
+            return redirect()->route('admin.dashboard', ['locale' => $locale]);
         }
         return redirect()->route('dashboard');
     }
@@ -29,7 +30,8 @@ Route::get('/', function () {
 Route::middleware(['auth'])->group(function () {
     Route::get('/dashboard', function () {
         if (Auth::user()->is_admin) {
-             return redirect()->route('admin.dashboard');
+             $locale = session('locale', config('app.locale', 'en'));
+             return redirect()->route('admin.dashboard', ['locale' => $locale]);
         }
         return view('dashboard');
     })->name('dashboard');
@@ -39,47 +41,52 @@ Route::get('lang/{locale}', [LanguageController::class, 'switch'])
     ->name('lang.switch')
     ->whereIn('locale', ['en', 'ar']);
 
-Route::middleware(['auth', 'is_admin'])
-    ->prefix('admin')
-    ->as('admin.')
-    ->group(function () {
-        Route::get('/', [DashboardController::class, 'index'])->name('dashboard');
+Route::get('/admin', function () {
+    return redirect()->route('admin.dashboard', ['locale' => 'en']);
+});
 
-        // Location Helpers
-        Route::get('locations/countries/{id}', [LocationHelperController::class, 'getCountry']);
-        Route::get('locations/regions/{id}', [LocationHelperController::class, 'getRegion']);
-        Route::get('locations/cities/{id}', [LocationHelperController::class, 'getCity']);
+Route::group([
+    'prefix' => '{locale}/admin',
+    'as' => 'admin.',
+    'middleware' => ['web', 'auth', 'is_admin', 'setLocaleFromUrl'],
+], function () {
+    Route::get('/', [DashboardController::class, 'index'])->name('dashboard');
 
-        Route::post('countries/bulk', [CountryController::class, 'bulk'])->name('countries.bulk');
-        Route::resource('countries', CountryController::class);
+    // Location Helpers
+    Route::get('locations/countries/{id}', [LocationHelperController::class, 'getCountry']);
+    Route::get('locations/regions/{id}', [LocationHelperController::class, 'getRegion']);
+    Route::get('locations/cities/{id}', [LocationHelperController::class, 'getCity']);
 
-        Route::post('regions/bulk', [RegionController::class, 'bulk'])->name('regions.bulk');
-        Route::resource('regions', RegionController::class);
+    Route::post('countries/bulk', [CountryController::class, 'bulk'])->name('countries.bulk');
+    Route::resource('countries', CountryController::class);
 
-        Route::post('cities/bulk', [CityController::class, 'bulk'])->name('cities.bulk');
-        Route::resource('cities', CityController::class);
+    Route::post('regions/bulk', [RegionController::class, 'bulk'])->name('regions.bulk');
+    Route::resource('regions', RegionController::class);
 
-        Route::post('districts/bulk', [DistrictController::class, 'bulk'])->name('districts.bulk');
-        Route::resource('districts', DistrictController::class);
+    Route::post('cities/bulk', [CityController::class, 'bulk'])->name('cities.bulk');
+    Route::resource('cities', CityController::class);
 
-        Route::post('property-types/bulk', [PropertyTypeController::class, 'bulk'])->name('property-types.bulk');
-        Route::resource('property-types', PropertyTypeController::class);
+    Route::post('districts/bulk', [DistrictController::class, 'bulk'])->name('districts.bulk');
+    Route::resource('districts', DistrictController::class);
 
-        Route::post('unit-types/bulk', [UnitTypeController::class, 'bulk'])->name('unit-types.bulk');
-        Route::resource('unit-types', UnitTypeController::class);
+    Route::post('property-types/bulk', [PropertyTypeController::class, 'bulk'])->name('property-types.bulk');
+    Route::resource('property-types', PropertyTypeController::class);
 
-        Route::post('amenities/bulk', [AmenityController::class, 'bulk'])->name('amenities.bulk');
-        Route::resource('amenities', AmenityController::class);
+    Route::post('unit-types/bulk', [UnitTypeController::class, 'bulk'])->name('unit-types.bulk');
+    Route::resource('unit-types', UnitTypeController::class);
 
-        Route::post('developers/bulk', [DeveloperController::class, 'bulk'])->name('developers.bulk');
-        Route::resource('developers', DeveloperController::class);
+    Route::post('amenities/bulk', [AmenityController::class, 'bulk'])->name('amenities.bulk');
+    Route::resource('amenities', AmenityController::class);
 
-        Route::post('segments/bulk', [SegmentController::class, 'bulk'])->name('segments.bulk');
-        Route::resource('segments', SegmentController::class);
+    Route::post('developers/bulk', [DeveloperController::class, 'bulk'])->name('developers.bulk');
+    Route::resource('developers', DeveloperController::class);
 
-        Route::post('categories/bulk', [CategoryController::class, 'bulk'])->name('categories.bulk');
-        Route::resource('categories', CategoryController::class);
-    });
+    Route::post('segments/bulk', [SegmentController::class, 'bulk'])->name('segments.bulk');
+    Route::resource('segments', SegmentController::class);
+
+    Route::post('categories/bulk', [CategoryController::class, 'bulk'])->name('categories.bulk');
+    Route::resource('categories', CategoryController::class);
+})->whereIn('locale', ['en', 'ar']);
 
 // Breeze Authentication Routes
 if (file_exists(__DIR__.'/auth.php')) {

@@ -3,9 +3,10 @@
 @section('header', __('admin.create') . ' ' . __('admin.unit_types'))
 
 @section('content')
+    @php($locale = app()->getLocale())
     <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
         <div class="p-6 bg-white border-b border-gray-200">
-            <form action="{{ route('admin.unit-types.store') }}" method="POST" enctype="multipart/form-data">
+            <form action="{{ route('admin.unit-types.store', ['locale' => $locale]) }}" method="POST" enctype="multipart/form-data">
                 @csrf
 
                 <div class="mb-4">
@@ -67,7 +68,7 @@
                 </div>
 
                 <div class="flex items-center justify-end space-x-4 rtl:space-x-reverse">
-                    <a href="{{ route('admin.unit-types.index') }}" class="text-gray-600 hover:text-gray-900">
+                    <a href="{{ route('admin.unit-types.index', ['locale' => $locale]) }}" class="text-gray-600 hover:text-gray-900">
                         @lang('admin.cancel')
                     </a>
                     <button type="submit" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline">

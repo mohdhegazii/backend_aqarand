@@ -69,7 +69,7 @@ class AmenityController extends Controller
 
         Amenity::create($validated);
 
-        return redirect()->route('admin.amenities.index')
+        return redirect()->route('admin.amenities.index', ['locale' => app()->getLocale()])
             ->with('success', __('admin.created_successfully'));
     }
 
@@ -115,7 +115,7 @@ class AmenityController extends Controller
 
         $amenity->update($validated);
 
-        return redirect()->route('admin.amenities.index')
+        return redirect()->route('admin.amenities.index', ['locale' => app()->getLocale()])
             ->with('success', __('admin.updated_successfully'));
     }
 
@@ -123,7 +123,7 @@ class AmenityController extends Controller
     {
         $amenity->update(['is_active' => false]);
 
-        return redirect()->route('admin.amenities.index')
+        return redirect()->route('admin.amenities.index', ['locale' => app()->getLocale()])
             ->with('success', __('admin.deleted_successfully'));
     }
 

@@ -53,7 +53,7 @@ class CountryController extends Controller
 
         Country::create($validated);
 
-        return redirect()->route('admin.countries.index')
+        return redirect()->route('admin.countries.index', ['locale' => app()->getLocale()])
             ->with('success', __('admin.created_successfully'));
     }
 
@@ -82,7 +82,7 @@ class CountryController extends Controller
 
         $country->update($validated);
 
-        return redirect()->route('admin.countries.index')
+        return redirect()->route('admin.countries.index', ['locale' => app()->getLocale()])
             ->with('success', __('admin.updated_successfully'));
     }
 
@@ -91,7 +91,7 @@ class CountryController extends Controller
         // Soft delete implementation
         $country->update(['is_active' => false]);
 
-        return redirect()->route('admin.countries.index')
+        return redirect()->route('admin.countries.index', ['locale' => app()->getLocale()])
             ->with('success', __('admin.deleted_successfully'));
     }
 
