@@ -12,7 +12,8 @@ class Amenity extends Model
     protected $table = 'amenities';
 
     protected $fillable = [
-        'category_id',
+        'category_id', // Keeping for backward compatibility or transition, but new logic should use amenity_category_id
+        'amenity_category_id',
         'name_en',
         'name_local',
         'slug',
@@ -29,9 +30,15 @@ class Amenity extends Model
         'sort_order' => 'integer',
     ];
 
+    // Deprecated relationship
+    public function oldCategory()
+    {
+        return $this->belongsTo(Category::class, 'category_id');
+    }
+
     public function category()
     {
-        return $this->belongsTo(Category::class);
+        return $this->belongsTo(AmenityCategory::class, 'amenity_category_id');
     }
 
     public function projects()

@@ -9,12 +9,12 @@
                 @csrf
 
                 <div class="mb-4">
-                    <label class="block text-gray-700 text-sm font-bold mb-2">@lang('admin.category')</label>
-                    <select name="category_id" class="shadow border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
-                        <option value="">@lang('admin.select_category')</option>
+                    <label class="block text-gray-700 text-sm font-bold mb-2">@lang('admin.amenity_category')</label>
+                    <select name="amenity_category_id" class="shadow border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
+                        <option value="">@lang('admin.select_option')</option>
                         @foreach($categories as $category)
-                            <option value="{{ $category->id }}" {{ old('category_id') == $category->id ? 'selected' : '' }}>
-                                {{ $category->name_en }}
+                            <option value="{{ $category->id }}" {{ old('amenity_category_id') == $category->id ? 'selected' : '' }}>
+                                {{ app()->getLocale() === 'ar' ? $category->name_ar : $category->name_en }}
                             </option>
                         @endforeach
                     </select>
