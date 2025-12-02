@@ -63,4 +63,36 @@ class AmenityCategoryTest extends TestCase
             'name_en' => 'Updated Name',
         ]);
     }
+
+    public function test_search_defaults_to_active_categories()
+    {
+        $admin = User::factory()->create(['is_admin' => true]);
+
+        $active = AmenityCategory::create([
+            'name_en' => 'Active Gym',
+            'name_ar' => 'نشط',
+            'slug' => 'active-gym',
+            'is_active' => true,
+        ]);
+
+        $inactive = AmenityCategory::create([
+            'name_en' => 'Inactive Gym',
+            'name_ar' => 'غير نشط',
+            'slug' => 'inactive-gym',
+            'is_active' => false,
+        ]);
+
+        $response = $this->actingAs($admin)->get(route('admin.amenity-categories.index', [
+            'locale' => 'en',
+            'search' => 'Gym',
+        ]));
+
+        $response->assertStatus(200);
+
+        $categories = $response->viewData('categories');
+
+        $this->assertTrue($categories->contains($active));
+        $this->assertFalse($categories->contains($inactive));
+        $this->assertEquals(1, $categories->total());
+    }
 }
