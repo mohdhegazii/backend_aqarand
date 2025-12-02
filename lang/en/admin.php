@@ -14,6 +14,7 @@ return [
     'developers' => 'Developers',
     'segments' => 'Segments',
     'categories' => 'Categories',
+    'taxonomies' => 'Taxonomies',
     'create_new' => 'Create New',
     'edit' => 'Edit',
     'save' => 'Save',
