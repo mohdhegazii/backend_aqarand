@@ -1,5 +1,6 @@
 <?php
 
+use Illuminate\Routing\Middleware\SubstituteBindings;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\LanguageController;
 use App\Http\Controllers\Admin\DashboardController;
@@ -48,7 +49,7 @@ Route::get('/admin', function () {
 Route::group([
     'prefix' => '{locale}/admin',
     'as' => 'admin.',
-    'middleware' => ['web', 'auth', 'is_admin', 'setLocaleFromUrl'],
+    'middleware' => ['web', 'auth', 'is_admin', 'setLocaleFromUrl', SubstituteBindings::class],
 ], function () {
     Route::get('/', [DashboardController::class, 'index'])->name('dashboard');
 
