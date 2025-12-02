@@ -41,6 +41,7 @@
                 @include('admin.partials.map_picker', [
                     'lat' => old('lat', $district->lat),
                     'lng' => old('lng', $district->lng),
+                    'boundary' => old('boundary_geojson', $district->boundary_geojson),
                     'mapId' => 'district-map'
                 ])
 
