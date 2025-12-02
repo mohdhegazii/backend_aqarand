@@ -102,26 +102,44 @@
                             ];
                         @endphp
 
-                        <div class="dropdown">
-                            <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown">
-                                {{ $languages[$currentLocale] ?? 'Language' }}
+                        <!-- Tailwind Language Switcher -->
+                        <div class="relative">
+                            <button onclick="document.getElementById('language-dropdown').classList.toggle('hidden')" class="flex items-center text-sm font-medium text-gray-500 hover:text-gray-700 hover:border-gray-300 focus:outline-none focus:text-gray-700 focus:border-gray-300 transition duration-150 ease-in-out">
+                                <div>{{ $languages[$currentLocale] ?? 'Language' }}</div>
+                                <div class="ml-1">
+                                    <svg class="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
+                                        <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
+                                    </svg>
+                                </div>
                             </button>
-                            <ul class="dropdown-menu dropdown-menu-end">
-                                @foreach($languages as $localeKey => $label)
-                                    <li>
+
+                            <div id="language-dropdown" class="hidden absolute right-0 mt-2 w-48 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 z-50">
+                                <div class="py-1" role="menu" aria-orientation="vertical" aria-labelledby="options-menu">
+                                    @foreach($languages as $localeKey => $label)
                                         @if($localeKey === $currentLocale)
-                                            <span class="dropdown-item active">
+                                            <span class="block px-4 py-2 text-sm text-gray-700 font-bold bg-gray-100 cursor-default">
                                                 {{ $label }}
                                             </span>
                                         @else
-                                            <a class="dropdown-item" href="{{ route('lang.switch', ['locale' => $localeKey]) }}">
+                                            <a href="{{ route('lang.switch', ['locale' => $localeKey]) }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100" role="menuitem">
                                                 {{ $label }}
                                             </a>
                                         @endif
-                                    </li>
-                                @endforeach
-                            </ul>
+                                    @endforeach
+                                </div>
+                            </div>
                         </div>
+
+                        <!-- Close dropdown when clicking outside -->
+                        <script>
+                            window.addEventListener('click', function(e) {
+                                const dropdown = document.getElementById('language-dropdown');
+                                const button = dropdown.previousElementSibling;
+                                if (!button.contains(e.target) && !dropdown.contains(e.target)) {
+                                    dropdown.classList.add('hidden');
+                                }
+                            });
+                        </script>
 
                         <!-- Logout -->
                         <form method="POST" action="{{ route('logout') }}" class="inline">
