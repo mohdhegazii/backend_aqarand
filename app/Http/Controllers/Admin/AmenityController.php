@@ -15,10 +15,12 @@ class AmenityController extends Controller
     {
         $query = Amenity::query()->with('category');
 
-        if (!$request->has('filter') || $request->filter === 'active') {
-             $query->where('is_active', true);
-        } elseif ($request->filter === 'inactive') {
-             $query->where('is_active', false);
+        $filter = $request->input('filter');
+
+        if ($filter === null || $filter === '' || $filter === 'active') {
+            $query->where('is_active', true);
+        } elseif ($filter === 'inactive') {
+            $query->where('is_active', false);
         }
 
         if ($request->filled('search')) {
