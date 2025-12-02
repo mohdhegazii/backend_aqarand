@@ -70,10 +70,12 @@ Route::group([
     Route::resource('districts', DistrictController::class);
 
     Route::post('property-types/bulk', [PropertyTypeController::class, 'bulk'])->name('property-types.bulk');
-    Route::resource('property-types', PropertyTypeController::class);
+    Route::resource('property-types', PropertyTypeController::class)
+        ->parameters(['property-types' => 'propertyType']);
 
     Route::post('unit-types/bulk', [UnitTypeController::class, 'bulk'])->name('unit-types.bulk');
-    Route::resource('unit-types', UnitTypeController::class);
+    Route::resource('unit-types', UnitTypeController::class)
+        ->parameters(['unit-types' => 'unitType']);
 
     Route::post('amenities/bulk', [AmenityController::class, 'bulk'])->name('amenities.bulk');
     Route::resource('amenities', AmenityController::class);
