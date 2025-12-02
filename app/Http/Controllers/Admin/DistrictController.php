@@ -14,6 +14,12 @@ class DistrictController extends Controller
     {
         $query = District::with(['city.region']);
 
+        if (!$request->has('filter') || $request->filter === 'active') {
+             $query->where('is_active', true);
+        } elseif ($request->filter === 'inactive') {
+             $query->where('is_active', false);
+        }
+
         if ($request->filled('search')) {
             $search = $request->search;
             $query->where('name_en', 'like', "%$search%")
@@ -25,14 +31,14 @@ class DistrictController extends Controller
         }
 
         $districts = $query->paginate(10);
-        $cities = City::with('region')->get(); // For filter
+        $cities = City::where('is_active', true)->with('region')->get();
 
         return view('admin.districts.index', compact('districts', 'cities'));
     }
 
     public function create()
     {
-        $cities = City::with('region')->get();
+        $cities = City::where('is_active', true)->with('region')->get();
         return view('admin.districts.create', compact('cities'));
     }
 
@@ -50,7 +56,6 @@ class DistrictController extends Controller
         $validated['slug'] = Str::slug($validated['name_en']);
         $validated['is_active'] = $request->has('is_active');
 
-        // Check uniqueness
         if (District::where('city_id', $validated['city_id'])->where('slug', $validated['slug'])->exists()) {
              return back()->withInput()->withErrors(['name_en' => 'Slug generated from Name (EN) already exists in this city.']);
         }
@@ -58,12 +63,12 @@ class DistrictController extends Controller
         District::create($validated);
 
         return redirect()->route('admin.districts.index')
-            ->with('success', __('admin.save') . ' ' . __('admin.district')); // Assuming translation exists
+            ->with('success', __('admin.created_successfully'));
     }
 
     public function edit(District $district)
     {
-        $cities = City::with('region')->get();
+        $cities = City::where('is_active', true)->with('region')->get();
         return view('admin.districts.edit', compact('district', 'cities'));
     }
 
@@ -82,7 +87,6 @@ class DistrictController extends Controller
         $validated['is_active'] = $request->has('is_active');
         $validated['slug'] = $slug;
 
-        // Check uniqueness if slug changed OR if city changed
         if ($slug !== $district->slug || $validated['city_id'] != $district->city_id) {
              if (District::where('city_id', $validated['city_id'])->where('slug', $slug)->where('id', '!=', $district->id)->exists()) {
                  return back()->withInput()->withErrors(['name_en' => 'Slug generated from Name (EN) already exists in this city.']);
@@ -92,14 +96,28 @@ class DistrictController extends Controller
         $district->update($validated);
 
         return redirect()->route('admin.districts.index')
-            ->with('success', __('admin.save') . ' ' . __('admin.district'));
+            ->with('success', __('admin.updated_successfully'));
     }
 
     public function destroy(District $district)
     {
-        $district->delete();
+        $district->update(['is_active' => false]);
 
         return redirect()->route('admin.districts.index')
-            ->with('success', __('admin.delete') . ' ' . __('admin.district'));
+            ->with('success', __('admin.deleted_successfully'));
+    }
+
+    public function bulk(Request $request)
+    {
+        $request->validate([
+            'ids' => 'required|array',
+            'ids.*' => 'exists:districts,id',
+            'action' => 'required|in:activate,deactivate',
+        ]);
+
+        $isActive = $request->action === 'activate';
+        District::whereIn('id', $request->ids)->update(['is_active' => $isActive]);
+
+        return redirect()->back()->with('success', __('admin.bulk_action_success'));
     }
 }

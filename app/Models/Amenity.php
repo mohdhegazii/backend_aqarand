@@ -12,11 +12,13 @@ class Amenity extends Model
     protected $table = 'amenities';
 
     protected $fillable = [
+        'category_id',
         'name_en',
         'name_local',
         'slug',
         'icon_class',
         'image_url',
+        'image_path',
         'amenity_type',
         'is_active',
         'sort_order',
@@ -26,6 +28,11 @@ class Amenity extends Model
         'is_active' => 'boolean',
         'sort_order' => 'integer',
     ];
+
+    public function category()
+    {
+        return $this->belongsTo(Category::class);
+    }
 
     public function projects()
     {

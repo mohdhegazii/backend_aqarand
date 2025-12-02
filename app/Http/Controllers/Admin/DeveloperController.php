@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Developer;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
+use Illuminate\Support\Facades\Storage;
 
 class DeveloperController extends Controller
 {
@@ -13,10 +14,21 @@ class DeveloperController extends Controller
     {
         $query = Developer::query();
 
+        // Default to active only
+        if (!$request->has('filter') || $request->filter === 'active') {
+             $query->where('is_active', true);
+        } elseif ($request->filter === 'inactive') {
+             $query->where('is_active', false);
+        }
+
         if ($request->filled('search')) {
             $search = $request->search;
-            $query->where('name', 'like', "%$search%")
+            $query->where(function($q) use ($search) {
+                $q->where('name', 'like', "%$search%")
+                  ->orWhere('name_en', 'like', "%$search%")
+                  ->orWhere('name_ar', 'like', "%$search%")
                   ->orWhere('description', 'like', "%$search%");
+            });
         }
 
         $developers = $query->paginate(10);
@@ -32,25 +44,42 @@ class DeveloperController extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'name' => 'required|string|max:150',
-            'description' => 'nullable|string',
-            'logo_url' => 'nullable|url|max:255',
+            'name' => 'nullable|string|max:150', // Backward compat, can be derived
+            'name_en' => 'required_without:name|string|max:150',
+            'name_ar' => 'required_without:name|string|max:150',
+            'description_en' => 'nullable|string',
+            'description_ar' => 'nullable|string',
+            'logo' => 'nullable|image|max:2048',
             'website_url' => 'nullable|url|max:255',
             'is_active' => 'boolean',
+            'seo_meta.focus_keyphrase' => 'nullable|string|max:255',
+            'seo_meta.meta_title' => 'nullable|string|max:60',
+            'seo_meta.meta_description' => 'nullable|string|max:160',
         ]);
 
-        $validated['slug'] = Str::slug($validated['name']);
+        $name = $validated['name_en'] ?? $validated['name'];
+        $validated['name'] = $name;
+        $validated['slug'] = Str::slug($name);
         $validated['is_active'] = $request->has('is_active');
 
-        // Check for uniqueness of the generated slug
         if (Developer::where('slug', $validated['slug'])->exists()) {
-             return back()->withInput()->withErrors(['name' => 'Slug generated from Name already exists.']);
+             $validated['slug'] .= '-' . uniqid();
         }
 
-        Developer::create($validated);
+        if ($request->hasFile('logo')) {
+            $path = $request->file('logo')->store('developers', 'public');
+            $validated['logo_path'] = $path;
+            $validated['logo_url'] = Storage::url($path);
+        }
+
+        $developer = Developer::create($validated);
+
+        if ($request->has('seo_meta')) {
+            $developer->seoMeta()->create($request->input('seo_meta'));
+        }
 
         return redirect()->route('admin.developers.index')
-            ->with('success', __('admin.save') . ' ' . __('admin.developers'));
+            ->with('success', __('admin.created_successfully'));
     }
 
     public function edit(Developer $developer)
@@ -61,35 +90,73 @@ class DeveloperController extends Controller
     public function update(Request $request, Developer $developer)
     {
         $validated = $request->validate([
-            'name' => 'required|string|max:150',
-            'description' => 'nullable|string',
-            'logo_url' => 'nullable|url|max:255',
+            'name' => 'nullable|string|max:150',
+            'name_en' => 'required_without:name|string|max:150',
+            'name_ar' => 'required_without:name|string|max:150',
+            'description_en' => 'nullable|string',
+            'description_ar' => 'nullable|string',
+            'logo' => 'nullable|image|max:2048',
             'website_url' => 'nullable|url|max:255',
             'is_active' => 'boolean',
+            'seo_meta.focus_keyphrase' => 'nullable|string|max:255',
+            'seo_meta.meta_title' => 'nullable|string|max:60',
+            'seo_meta.meta_description' => 'nullable|string|max:160',
         ]);
 
-        $slug = Str::slug($validated['name']);
+        $name = $validated['name_en'] ?? $validated['name'];
+        $validated['name'] = $name;
+        $slug = Str::slug($name);
         $validated['is_active'] = $request->has('is_active');
 
         if ($slug !== $developer->slug) {
-             // Check for uniqueness of the generated slug
              if (Developer::where('slug', $slug)->where('id', '!=', $developer->id)->exists()) {
-                 return back()->withInput()->withErrors(['name' => 'Slug generated from Name already exists.']);
+                 $slug .= '-' . uniqid();
              }
              $validated['slug'] = $slug;
         }
 
+        if ($request->hasFile('logo')) {
+            if ($developer->logo_path) {
+                Storage::disk('public')->delete($developer->logo_path);
+            }
+            $path = $request->file('logo')->store('developers', 'public');
+            $validated['logo_path'] = $path;
+            $validated['logo_url'] = Storage::url($path);
+        }
+
         $developer->update($validated);
 
+        if ($request->has('seo_meta')) {
+            $developer->seoMeta()->updateOrCreate(
+                [],
+                $request->input('seo_meta')
+            );
+        }
+
         return redirect()->route('admin.developers.index')
-            ->with('success', __('admin.save') . ' ' . __('admin.developers'));
+            ->with('success', __('admin.updated_successfully'));
     }
 
     public function destroy(Developer $developer)
     {
-        $developer->delete();
+        // Soft delete implementation
+        $developer->update(['is_active' => false]);
 
         return redirect()->route('admin.developers.index')
-            ->with('success', __('admin.delete') . ' ' . __('admin.developers'));
+            ->with('success', __('admin.deleted_successfully'));
+    }
+
+    public function bulk(Request $request)
+    {
+        $request->validate([
+            'ids' => 'required|array',
+            'ids.*' => 'exists:developers,id',
+            'action' => 'required|in:activate,deactivate',
+        ]);
+
+        $isActive = $request->action === 'activate';
+        Developer::whereIn('id', $request->ids)->update(['is_active' => $isActive]);
+
+        return redirect()->back()->with('success', __('admin.bulk_action_success'));
     }
 }
