@@ -6,44 +6,61 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
-    /**
-     * Run the migrations.
-     */
     public function up(): void
     {
+        if (!Schema::hasTable('seo_meta')) {
+            Schema::create('seo_meta', function (Blueprint $table) {
+                $table->id();
+                $table->morphs('seoable');
+                $table->string('meta_title_en')->nullable();
+                $table->string('meta_title_ar')->nullable();
+                $table->text('meta_description_en')->nullable();
+                $table->text('meta_description_ar')->nullable();
+                $table->string('focus_keyphrase_en')->nullable();
+                $table->string('focus_keyphrase_ar')->nullable();
+                $table->json('meta_data')->nullable();
+                $table->timestamps();
+            });
+            return;
+        }
+
         Schema::table('seo_meta', function (Blueprint $table) {
-            // English fields
-            $table->string('meta_title_en')->nullable();
-            $table->text('meta_description_en')->nullable();
-            $table->string('focus_keyphrase_en')->nullable();
-
-            // Arabic fields
-            $table->string('meta_title_ar')->nullable();
-            $table->text('meta_description_ar')->nullable();
-            $table->string('focus_keyphrase_ar')->nullable();
+            if (!Schema::hasColumn('seo_meta', 'meta_title_en')) {
+                $table->string('meta_title_en')->nullable();
+            }
+            if (!Schema::hasColumn('seo_meta', 'meta_title_ar')) {
+                $table->string('meta_title_ar')->nullable();
+            }
+            if (!Schema::hasColumn('seo_meta', 'meta_description_en')) {
+                $table->text('meta_description_en')->nullable();
+            }
+            if (!Schema::hasColumn('seo_meta', 'meta_description_ar')) {
+                $table->text('meta_description_ar')->nullable();
+            }
+            if (!Schema::hasColumn('seo_meta', 'focus_keyphrase_en')) {
+                $table->string('focus_keyphrase_en')->nullable();
+            }
+            if (!Schema::hasColumn('seo_meta', 'focus_keyphrase_ar')) {
+                $table->string('focus_keyphrase_ar')->nullable();
+            }
+            if (!Schema::hasColumn('seo_meta', 'meta_data')) {
+                $table->json('meta_data')->nullable();
+            }
         });
-
-        // Migrate existing data (Optional: assuming current data is mixed or default)
-        // Since we are adding new columns, we can just leave the old ones for now or map them.
-        // Let's assume the old ones were English or generic. We won't copy them automatically to avoid confusion,
-        // unless requested. But for safety, we keep the old columns in the DB, just not adding them to the new schema
-        // if they were already there (which they are).
     }
 
-    /**
-     * Reverse the migrations.
-     */
     public function down(): void
     {
-        Schema::table('seo_meta', function (Blueprint $table) {
-            $table->dropColumn([
-                'meta_title_en',
-                'meta_description_en',
-                'focus_keyphrase_en',
-                'meta_title_ar',
-                'meta_description_ar',
-                'focus_keyphrase_ar',
-            ]);
-        });
+        if (Schema::hasTable('seo_meta')) {
+             Schema::table('seo_meta', function (Blueprint $table) {
+                if (Schema::hasColumn('seo_meta', 'meta_title_en')) $table->dropColumn('meta_title_en');
+                if (Schema::hasColumn('seo_meta', 'meta_title_ar')) $table->dropColumn('meta_title_ar');
+                if (Schema::hasColumn('seo_meta', 'meta_description_en')) $table->dropColumn('meta_description_en');
+                if (Schema::hasColumn('seo_meta', 'meta_description_ar')) $table->dropColumn('meta_description_ar');
+                if (Schema::hasColumn('seo_meta', 'focus_keyphrase_en')) $table->dropColumn('focus_keyphrase_en');
+                if (Schema::hasColumn('seo_meta', 'focus_keyphrase_ar')) $table->dropColumn('focus_keyphrase_ar');
+                if (Schema::hasColumn('seo_meta', 'meta_data')) $table->dropColumn('meta_data');
+             });
+        }
     }
 };
