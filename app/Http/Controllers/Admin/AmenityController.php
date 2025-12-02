@@ -23,8 +23,10 @@ class AmenityController extends Controller
 
         if ($request->filled('search')) {
             $search = $request->search;
-            $query->where('name_en', 'like', "%$search%")
-                  ->orWhere('name_local', 'like', "%$search%");
+            $query->where(function ($query) use ($search) {
+                $query->where('name_en', 'like', "%$search%")
+                    ->orWhere('name_local', 'like', "%$search%");
+            });
         }
 
         $amenities = $query->paginate(10);
