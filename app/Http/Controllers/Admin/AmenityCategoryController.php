@@ -13,9 +13,9 @@ class AmenityCategoryController extends Controller
     {
         $query = AmenityCategory::query();
 
-        if ($request->has('filter') && $request->filter === 'active') {
+        if (!$request->has('filter') || $request->filter === 'active') {
              $query->where('is_active', true);
-        } elseif ($request->has('filter') && $request->filter === 'inactive') {
+        } elseif ($request->filter === 'inactive') {
              $query->where('is_active', false);
         }
 
