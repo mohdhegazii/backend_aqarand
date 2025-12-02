@@ -17,7 +17,6 @@ class Category extends Model
         'name_ar',
         'slug',
         'image_path',
-        'image_url',
         'is_active',
     ];
 
@@ -25,19 +24,28 @@ class Category extends Model
         'is_active' => 'boolean',
     ];
 
+    /**
+     * Get the localized name.
+     */
+    public function getName($locale = null)
+    {
+        $locale = $locale ?: app()->getLocale();
+        return $locale === 'ar' ? $this->name_ar : $this->name_en;
+    }
+
+    /**
+     * A category belongs to a segment.
+     */
     public function segment()
     {
         return $this->belongsTo(Segment::class);
     }
 
+    /**
+     * A category has many amenities.
+     */
     public function amenities()
     {
         return $this->hasMany(Amenity::class);
-    }
-
-    public function getName($locale = null)
-    {
-        $locale = $locale ?: app()->getLocale();
-        return $locale === 'ar' ? $this->name_ar : $this->name_en;
     }
 }

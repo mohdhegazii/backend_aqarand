@@ -75,4 +75,7 @@ return [
     'view_district' => 'عرض الحي',
     'back' => 'عودة',
     'country_code_iso' => 'كود الدولة (ISO)',
+    'is_active' => 'مفعل',
+    'image' => 'صورة',
+    'select_segment' => 'اختر التقسيم',
 ];

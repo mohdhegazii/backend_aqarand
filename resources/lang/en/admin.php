@@ -75,4 +75,7 @@ return [
     'view_district' => 'View District',
     'back' => 'Back',
     'country_code_iso' => 'Country Code (ISO)',
+    'is_active' => 'Is Active',
+    'image' => 'Image',
+    'select_segment' => 'Select Segment',
 ];
