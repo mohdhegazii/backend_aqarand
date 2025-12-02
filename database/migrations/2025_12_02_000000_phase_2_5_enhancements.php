@@ -12,26 +12,30 @@ return new class extends Migration
     public function up(): void
     {
         // 1. Segments Table
-        Schema::create('segments', function (Blueprint $table) {
-            $table->id();
-            $table->string('name_en');
-            $table->string('name_ar');
-            $table->string('slug')->unique();
-            $table->boolean('is_active')->default(true);
-            $table->timestamps();
-        });
+        if (!Schema::hasTable('segments')) {
+            Schema::create('segments', function (Blueprint $table) {
+                $table->id();
+                $table->string('name_en');
+                $table->string('name_ar');
+                $table->string('slug')->unique();
+                $table->boolean('is_active')->default(true);
+                $table->timestamps();
+            });
+        }
 
         // 2. Categories Table
-        Schema::create('categories', function (Blueprint $table) {
-            $table->id();
-            $table->foreignId('segment_id')->constrained('segments')->onDelete('cascade');
-            $table->string('name_en');
-            $table->string('name_ar');
-            $table->string('slug')->unique();
-            $table->string('image_path')->nullable();
-            $table->boolean('is_active')->default(true);
-            $table->timestamps();
-        });
+        if (!Schema::hasTable('categories')) {
+            Schema::create('categories', function (Blueprint $table) {
+                $table->id();
+                $table->foreignId('segment_id')->constrained('segments')->onDelete('cascade');
+                $table->string('name_en');
+                $table->string('name_ar');
+                $table->string('slug')->unique();
+                $table->string('image_path')->nullable();
+                $table->boolean('is_active')->default(true);
+                $table->timestamps();
+            });
+        }
 
         // 3. Countries - Add is_active and lat/lng if not present
         Schema::table('countries', function (Blueprint $table) {

@@ -14,6 +14,7 @@ return [
     'developers' => 'المطورون',
     'segments' => 'القطاعات',
     'categories' => 'التصنيفات',
+    'taxonomies' => 'نظام التصنيف',
     'create_new' => 'إضافة جديد',
     'edit' => 'تعديل',
     'save' => 'حفظ',

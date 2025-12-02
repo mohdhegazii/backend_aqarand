@@ -70,7 +70,7 @@
                 <a href="{{ route('admin.developers.index') }}" class="block px-4 py-2 text-gray-700 hover:bg-gray-100 rounded">@lang('admin.developers')</a>
 
                 <div class="mt-4 px-4 text-xs font-semibold text-gray-500 uppercase">
-                    Taxonomies
+                    @lang('admin.taxonomies')
                 </div>
                 <a href="{{ route('admin.segments.index') }}" class="block px-4 py-2 text-gray-700 hover:bg-gray-100 rounded">@lang('admin.segments')</a>
                 <a href="{{ route('admin.categories.index') }}" class="block px-4 py-2 text-gray-700 hover:bg-gray-100 rounded">@lang('admin.categories')</a>
