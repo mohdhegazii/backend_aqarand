@@ -13,9 +13,14 @@ class Developer extends Model
 
     protected $fillable = [
         'name',
+        'name_en',
+        'name_ar',
         'slug',
         'description',
+        'description_en',
+        'description_ar',
         'logo_url',
+        'logo_path',
         'website_url',
         'is_active',
     ];
@@ -27,5 +32,20 @@ class Developer extends Model
     public function projects()
     {
         return $this->hasMany(Project::class);
+    }
+
+    public function seoMeta()
+    {
+        return $this->morphOne(SeoMeta::class, 'seoable');
+    }
+
+    // Helper to get bilingual name
+    public function getName($locale = null)
+    {
+        $locale = $locale ?: app()->getLocale();
+        if ($locale === 'ar') {
+            return $this->name_ar ?? $this->name;
+        }
+        return $this->name_en ?? $this->name;
     }
 }

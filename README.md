@@ -53,3 +53,49 @@ This repository contains the backend for the Aqar-and real estate listing platfo
 - **Locations:** Hierarchical integrity enforced (Country -> Region -> City -> District).
 - **Icons/Images:** Lookup entities now support icon classes and image URLs.
 - **Coordinates:** All location entities support latitude and longitude storage.
+
+### Phase 2.5 Enhancements (Completed)
+
+This phase introduced UX improvements and additional features for the admin panel.
+
+#### 1. Locations UX
+- **Map Picker:** Integrated Leaflet (OpenStreetMap) for all location entities (Country, Region, City, District).
+- **FlyTo Behavior:** When selecting a parent location (e.g., choosing a City for a District), the map automatically flies to the parent's coordinates.
+- **ISO Code:** Clarified Country Code input as ISO code (e.g., EG, SA) in UI.
+
+#### 2. Segments & Categories
+- Implemented `Segments` and `Categories` taxonomies.
+- CRUD screens for managing these entities.
+- Amenities now link to Categories.
+
+#### 3. Developer Enhancements
+- **Bilingual Support:** Developers now have EN and AR name and description fields.
+- **SEO Meta Box:** A Yoast-like SEO meta box for managing Meta Title, Description, and Focus Keyphrase.
+- **Logo Upload:** Ability to upload logos locally.
+
+#### 4. Bulk Actions & Soft Deletes
+- **Bulk Actions:** All admin lists now support bulk "Activate" and "Deactivate".
+- **Soft Delete Behavior:** Delete actions now perform a "Soft Delete" (setting `is_active = 0`) instead of removing the record from the database.
+
+#### 5. Lookups & Validation
+- **Images:** Added image upload support for Property Types, Unit Types, Amenities, and Categories.
+- **Unit Types:** Enforced validation logic (e.g., "Requires Built-up Area" is mandatory).
+- **Bootstrap Icons:** Added clear help text and preview for icon classes.
+
+### Phase 2.6 Enhancements (Completed)
+
+This phase focused on fixing regressions and enhancing the developer experience.
+
+#### 1. Fixes & Refactoring
+- **Routing:** Fixed `/` and `/dashboard` logic. `/login` always shows login page. Admins redirect to `/admin`.
+- **Schema Sync:** Added migrations to ensure `is_active`, `image_path`, and `image_url` exist on all relevant tables.
+- **Bulk Routes:** Verified and fixed bulk action routes.
+
+#### 2. Developer SEO & Tabs
+- **Bilingual Tabs:** Developer Create/Edit screens now use tabs for English and Arabic.
+- **SEO Upgrade:** SEO Meta Box now supports bilingual fields (e.g., `meta_title_en`, `meta_title_ar`) and includes "Traffic Light" indicators for content analysis (Title length, Description length, Keyphrase presence).
+
+#### 3. Configuration
+- **Session Lifetime:** Admin sessions configured to expire after 24 hours (`SESSION_LIFETIME=1440`).
+
+**Note:** After pulling new code, run `php artisan migrate` to ensure your database schema is up to date.

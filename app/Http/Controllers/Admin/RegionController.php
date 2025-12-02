@@ -14,6 +14,12 @@ class RegionController extends Controller
     {
         $query = Region::with('country');
 
+        if (!$request->has('filter') || $request->filter === 'active') {
+             $query->where('is_active', true);
+        } elseif ($request->filter === 'inactive') {
+             $query->where('is_active', false);
+        }
+
         if ($request->filled('search')) {
             $search = $request->search;
             $query->where('name_en', 'like', "%$search%")
@@ -25,14 +31,14 @@ class RegionController extends Controller
         }
 
         $regions = $query->paginate(10);
-        $countries = Country::all(); // For filter
+        $countries = Country::where('is_active', true)->get();
 
         return view('admin.regions.index', compact('regions', 'countries'));
     }
 
     public function create()
     {
-        $countries = Country::all();
+        $countries = Country::where('is_active', true)->get();
         return view('admin.regions.create', compact('countries'));
     }
 
@@ -50,22 +56,19 @@ class RegionController extends Controller
         $validated['slug'] = Str::slug($validated['name_en']);
         $validated['is_active'] = $request->has('is_active');
 
-        // Check uniqueness
         if (Region::where('country_id', $validated['country_id'])->where('slug', $validated['slug'])->exists()) {
-             // Append random string or fail
-             // For now, fail with message
              return back()->withInput()->withErrors(['name_en' => 'Slug generated from Name (EN) already exists in this country.']);
         }
 
         Region::create($validated);
 
         return redirect()->route('admin.regions.index')
-            ->with('success', __('admin.save') . ' ' . __('admin.region'));
+            ->with('success', __('admin.created_successfully'));
     }
 
     public function edit(Region $region)
     {
-        $countries = Country::all();
+        $countries = Country::where('is_active', true)->get();
         return view('admin.regions.edit', compact('region', 'countries'));
     }
 
@@ -84,7 +87,6 @@ class RegionController extends Controller
         $validated['is_active'] = $request->has('is_active');
         $validated['slug'] = $slug;
 
-        // Check uniqueness if slug changed OR if country changed
         if ($slug !== $region->slug || $validated['country_id'] != $region->country_id) {
              if (Region::where('country_id', $validated['country_id'])->where('slug', $slug)->where('id', '!=', $region->id)->exists()) {
                  return back()->withInput()->withErrors(['name_en' => 'Slug generated from Name (EN) already exists in this country.']);
@@ -94,14 +96,28 @@ class RegionController extends Controller
         $region->update($validated);
 
         return redirect()->route('admin.regions.index')
-            ->with('success', __('admin.save') . ' ' . __('admin.region'));
+            ->with('success', __('admin.updated_successfully'));
     }
 
     public function destroy(Region $region)
     {
-        $region->delete();
+        $region->update(['is_active' => false]);
 
         return redirect()->route('admin.regions.index')
-            ->with('success', __('admin.delete') . ' ' . __('admin.region'));
+            ->with('success', __('admin.deleted_successfully'));
+    }
+
+    public function bulk(Request $request)
+    {
+        $request->validate([
+            'ids' => 'required|array',
+            'ids.*' => 'exists:regions,id',
+            'action' => 'required|in:activate,deactivate',
+        ]);
+
+        $isActive = $request->action === 'activate';
+        Region::whereIn('id', $request->ids)->update(['is_active' => $isActive]);
+
+        return redirect()->back()->with('success', __('admin.bulk_action_success'));
     }
 }

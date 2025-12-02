@@ -18,6 +18,7 @@ class PropertyType extends Model
         'category',
         'icon_class',
         'image_url',
+        'image_path',
         'is_active',
         'sort_order',
     ];

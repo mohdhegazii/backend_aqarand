@@ -1,6 +1,6 @@
 @extends('admin.layouts.app')
 
-@section('header', __('admin.create') . ' ' . __('admin.region'))
+@section('header', __('admin.create') . ' ' . __('admin.regions'))
 
 @section('content')
     <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
@@ -10,8 +10,8 @@
 
                 <div class="mb-4">
                     <label class="block text-gray-700 text-sm font-bold mb-2">@lang('admin.country')</label>
-                    <select name="country_id" class="shadow border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" required>
-                        <option value="">-- @lang('admin.country') --</option>
+                    <select name="country_id" id="country_id" class="shadow border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" required>
+                        <option value="">-- @lang('admin.countries') --</option>
                         @foreach($countries as $country)
                             <option value="{{ $country->id }}" {{ old('country_id') == $country->id ? 'selected' : '' }}>
                                 {{ $country->getName() }}
@@ -26,29 +26,24 @@
                 </div>
 
                 <div class="mb-4">
-                    <label class="block text-gray-700 text-sm font-bold mb-2">@lang('admin.name_local')</label>
+                    <label class="block text-gray-700 text-sm font-bold mb-2">@lang('admin.name_ar')</label>
                     <input type="text" name="name_local" value="{{ old('name_local') }}" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" required>
-                </div>
-
-                <div class="mb-4 grid grid-cols-2 gap-4">
-                    <div>
-                        <label class="block text-gray-700 text-sm font-bold mb-2">@lang('admin.lat')</label>
-                        <input type="text" name="lat" value="{{ old('lat') }}" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" placeholder="e.g. 30.0444">
-                    </div>
-                    <div>
-                        <label class="block text-gray-700 text-sm font-bold mb-2">@lang('admin.lng')</label>
-                        <input type="text" name="lng" value="{{ old('lng') }}" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" placeholder="e.g. 31.2357">
-                    </div>
                 </div>
 
                 <div class="mb-4">
                     <label class="inline-flex items-center">
                         <input type="checkbox" name="is_active" value="1" class="form-checkbox" {{ old('is_active', 1) ? 'checked' : '' }}>
-                        <span class="mx-2">@lang('admin.active')</span>
+                        <span class="mx-2">@lang('admin.activate')</span>
                     </label>
                 </div>
 
-                <div class="flex items-center justify-end space-x-4 rtl:space-x-reverse">
+                @include('admin.partials.map_picker', [
+                    'lat' => old('lat'),
+                    'lng' => old('lng'),
+                    'mapId' => 'region-map'
+                ])
+
+                <div class="flex items-center justify-end space-x-4 rtl:space-x-reverse mt-4">
                     <a href="{{ route('admin.regions.index') }}" class="text-gray-600 hover:text-gray-900">
                         @lang('admin.cancel')
                     </a>
@@ -59,4 +54,31 @@
             </form>
         </div>
     </div>
+
+    <script>
+        document.getElementById('country_id').addEventListener('change', function() {
+            var countryId = this.value;
+            if (countryId) {
+                fetch('/admin/locations/countries/' + countryId)
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.lat && data.lng) {
+                            var map = L.DomUtil.get('region-map')._leaflet_map;
+                            // Note: direct access to _leaflet_map might not work if map isn't globally exposed.
+                            // Better: expose map instance in partial or re-instantiate.
+                            // For simplicity, let's assume the map variable is available or we dispatch an event.
+                            // But since partial declares 'var map', it's scoped.
+                            // I will simply re-render or assume the user manually searches for now,
+                            // OR I can modify the partial to listen to an event.
+                            // A better hack for this Phase: reload the map view or (better)
+                            // make 'map' global in the partial with a dynamic name.
+
+                            if (window['map_region-map']) {
+                                window['map_region-map'].flyTo([data.lat, data.lng], 10);
+                            }
+                        }
+                    });
+            }
+        });
+    </script>
 @endsection

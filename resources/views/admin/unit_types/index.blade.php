@@ -5,9 +5,14 @@
 @section('content')
     <div class="mb-4 flex flex-col md:flex-row justify-between space-y-4 md:space-y-0">
         <a href="{{ route('admin.unit-types.create') }}" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded w-fit">
-            @lang('admin.create')
+            @lang('admin.create_new')
         </a>
         <form action="{{ route('admin.unit-types.index') }}" method="GET" class="flex flex-col md:flex-row space-y-2 md:space-y-0 md:space-x-2 rtl:md:space-x-reverse">
+            <select name="filter" class="border rounded px-4 py-2" onchange="this.form.submit()">
+                <option value="active" {{ request('filter') === 'active' || !request('filter') ? 'selected' : '' }}>@lang('admin.activate')</option>
+                <option value="inactive" {{ request('filter') === 'inactive' ? 'selected' : '' }}>@lang('admin.deactivate')</option>
+                <option value="all" {{ request('filter') === 'all' ? 'selected' : '' }}>All</option>
+            </select>
             <select name="property_type_id" class="border rounded px-4 py-2">
                 <option value="">@lang('admin.property_type')</option>
                 @foreach($propertyTypes as $type)
@@ -26,68 +31,94 @@
     </div>
 
     <div class="bg-white shadow-md rounded my-6 overflow-x-auto">
-        <table class="min-w-full table-auto">
-            <thead>
-                <tr class="bg-gray-200 text-gray-600 uppercase text-sm leading-normal">
-                    <th class="py-3 px-6 text-start">ID</th>
-                    <th class="py-3 px-6 text-start">Image</th>
-                    <th class="py-3 px-6 text-start">@lang('admin.name')</th>
-                    <th class="py-3 px-6 text-start">@lang('admin.code')</th>
-                    <th class="py-3 px-6 text-start">@lang('admin.property_type')</th>
-                    <th class="py-3 px-6 text-center">@lang('admin.status')</th>
-                    <th class="py-3 px-6 text-center">@lang('admin.actions')</th>
-                </tr>
-            </thead>
-            <tbody class="text-gray-600 text-sm font-light">
-                @foreach($unitTypes as $type)
-                    <tr class="border-b border-gray-200 hover:bg-gray-100">
-                        <td class="py-3 px-6 text-start">{{ $type->id }}</td>
-                        <td class="py-3 px-6 text-start">
-                            @if($type->image_url)
-                                <img src="{{ $type->image_url }}" class="h-8 w-8 object-cover rounded-full" alt="Icon">
-                            @elseif($type->icon_class)
-                                <i class="{{ $type->icon_class }}"></i>
-                            @else
-                                -
-                            @endif
-                        </td>
-                        <td class="py-3 px-6 text-start">
-                            {{ $type->name }}
-                        </td>
-                        <td class="py-3 px-6 text-start">
-                            {{ $type->code }}
-                        </td>
-                        <td class="py-3 px-6 text-start">
-                            {{ $type->propertyType->name_en }}
-                        </td>
-                        <td class="py-3 px-6 text-center">
-                            @if($type->is_active)
-                                <span class="bg-green-200 text-green-600 py-1 px-3 rounded-full text-xs">@lang('admin.active')</span>
-                            @else
-                                <span class="bg-red-200 text-red-600 py-1 px-3 rounded-full text-xs">@lang('admin.inactive')</span>
-                            @endif
-                        </td>
-                        <td class="py-3 px-6 text-center">
-                            <div class="flex item-center justify-center space-x-2 rtl:space-x-reverse">
-                                <a href="{{ route('admin.unit-types.edit', $type) }}" class="text-purple-600 hover:text-purple-900">
-                                    @lang('admin.edit')
-                                </a>
-                                <form action="{{ route('admin.unit-types.destroy', $type) }}" method="POST" onsubmit="return confirm('@lang('admin.confirm_delete')')" class="inline">
-                                    @csrf
-                                    @method('DELETE')
-                                    <button type="submit" class="text-red-600 hover:text-red-900">
-                                        @lang('admin.delete')
-                                    </button>
-                                </form>
-                            </div>
-                        </td>
+        <form action="{{ route('admin.unit-types.bulk') }}" method="POST" id="bulk-form">
+            @csrf
+            <div class="p-4 border-b flex items-center space-x-2">
+                <select name="action" class="border-gray-300 rounded text-sm">
+                    <option value="activate">@lang('admin.activate')</option>
+                    <option value="deactivate">@lang('admin.deactivate')</option>
+                </select>
+                <button type="submit" class="bg-gray-200 hover:bg-gray-300 text-gray-700 font-bold py-1 px-3 rounded text-sm">@lang('admin.apply')</button>
+            </div>
+
+            <table class="min-w-full table-auto">
+                <thead>
+                    <tr class="bg-gray-200 text-gray-600 uppercase text-sm leading-normal">
+                        <th class="py-3 px-6 text-start">
+                            <input type="checkbox" id="select-all">
+                        </th>
+                        <th class="py-3 px-6 text-start">ID</th>
+                        <th class="py-3 px-6 text-start">@lang('admin.image')</th>
+                        <th class="py-3 px-6 text-start">@lang('admin.name')</th>
+                        <th class="py-3 px-6 text-start">@lang('admin.code')</th>
+                        <th class="py-3 px-6 text-start">@lang('admin.property_type')</th>
+                        <th class="py-3 px-6 text-center">@lang('admin.status')</th>
+                        <th class="py-3 px-6 text-center">@lang('admin.actions')</th>
                     </tr>
-                @endforeach
-            </tbody>
-        </table>
+                </thead>
+                <tbody class="text-gray-600 text-sm font-light">
+                    @foreach($unitTypes as $type)
+                        <tr class="border-b border-gray-200 hover:bg-gray-100 {{ !$type->is_active ? 'bg-gray-50 text-gray-400' : '' }}">
+                            <td class="py-3 px-6 text-start">
+                                <input type="checkbox" name="ids[]" value="{{ $type->id }}" class="row-checkbox">
+                            </td>
+                            <td class="py-3 px-6 text-start">{{ $type->id }}</td>
+                            <td class="py-3 px-6 text-start">
+                                @if($type->image_path)
+                                    <img src="{{ asset('storage/' . $type->image_path) }}" class="h-8 w-8 object-cover rounded-full" alt="Icon">
+                                @elseif($type->icon_class)
+                                    <i class="{{ $type->icon_class }}"></i>
+                                @else
+                                    -
+                                @endif
+                            </td>
+                            <td class="py-3 px-6 text-start">
+                                {{ $type->name }}
+                            </td>
+                            <td class="py-3 px-6 text-start">
+                                {{ $type->code }}
+                            </td>
+                            <td class="py-3 px-6 text-start">
+                                {{ $type->propertyType->name_en }}
+                            </td>
+                            <td class="py-3 px-6 text-center">
+                                @if($type->is_active)
+                                    <span class="bg-green-200 text-green-600 py-1 px-3 rounded-full text-xs">@lang('admin.active')</span>
+                                @else
+                                    <span class="bg-red-200 text-red-600 py-1 px-3 rounded-full text-xs">@lang('admin.inactive')</span>
+                                @endif
+                            </td>
+                            <td class="py-3 px-6 text-center">
+                                <div class="flex item-center justify-center space-x-2 rtl:space-x-reverse">
+                                    <a href="{{ route('admin.unit-types.edit', $type) }}" class="text-purple-600 hover:text-purple-900">
+                                        @lang('admin.edit')
+                                    </a>
+                                    <form action="{{ route('admin.unit-types.destroy', $type) }}" method="POST" onsubmit="return confirm('@lang('admin.confirm_delete')')" class="inline">
+                                        @csrf
+                                        @method('DELETE')
+                                        <button type="submit" class="text-red-600 hover:text-red-900">
+                                            @lang('admin.delete')
+                                        </button>
+                                    </form>
+                                </div>
+                            </td>
+                        </tr>
+                    @endforeach
+                </tbody>
+            </table>
+        </form>
     </div>
 
     <div class="mt-4">
         {{ $unitTypes->links() }}
     </div>
+
+    <script>
+        document.getElementById('select-all').addEventListener('change', function() {
+            var checkboxes = document.querySelectorAll('.row-checkbox');
+            for (var checkbox of checkboxes) {
+                checkbox.checked = this.checked;
+            }
+        });
+    </script>
 @endsection

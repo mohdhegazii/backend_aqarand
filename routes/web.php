@@ -11,10 +11,25 @@ use App\Http\Controllers\Admin\PropertyTypeController;
 use App\Http\Controllers\Admin\UnitTypeController;
 use App\Http\Controllers\Admin\AmenityController;
 use App\Http\Controllers\Admin\DeveloperController;
+use App\Http\Controllers\Admin\SegmentController;
+use App\Http\Controllers\Admin\CategoryController;
+use App\Http\Controllers\Admin\LocationHelperController;
 
 Route::get('/', function () {
-    return view('welcome');
+    if (Illuminate\Support\Facades\Auth::check()) {
+        if (Illuminate\Support\Facades\Auth::user()->is_admin) {
+            return redirect()->route('admin.dashboard');
+        }
+    }
+    return view('welcome-public');
 });
+
+Route::get('/dashboard', function () {
+    if (Illuminate\Support\Facades\Auth::user()->is_admin) {
+        return redirect()->route('admin.dashboard');
+    }
+    return view('dashboard');
+})->middleware(['auth', 'verified'])->name('dashboard');
 
 Route::get('lang/{locale}', [LanguageController::class, 'switch'])
     ->name('lang.switch')
@@ -26,15 +41,40 @@ Route::middleware(['auth', 'is_admin'])
     ->group(function () {
         Route::get('/', [DashboardController::class, 'index'])->name('dashboard');
 
+        // Location Helpers
+        Route::get('locations/countries/{id}', [LocationHelperController::class, 'getCountry']);
+        Route::get('locations/regions/{id}', [LocationHelperController::class, 'getRegion']);
+        Route::get('locations/cities/{id}', [LocationHelperController::class, 'getCity']);
+
+        Route::post('countries/bulk', [CountryController::class, 'bulk'])->name('countries.bulk');
         Route::resource('countries', CountryController::class);
+
+        Route::post('regions/bulk', [RegionController::class, 'bulk'])->name('regions.bulk');
         Route::resource('regions', RegionController::class);
+
+        Route::post('cities/bulk', [CityController::class, 'bulk'])->name('cities.bulk');
         Route::resource('cities', CityController::class);
+
+        Route::post('districts/bulk', [DistrictController::class, 'bulk'])->name('districts.bulk');
         Route::resource('districts', DistrictController::class);
 
+        Route::post('property-types/bulk', [PropertyTypeController::class, 'bulk'])->name('property-types.bulk');
         Route::resource('property-types', PropertyTypeController::class);
+
+        Route::post('unit-types/bulk', [UnitTypeController::class, 'bulk'])->name('unit-types.bulk');
         Route::resource('unit-types', UnitTypeController::class);
+
+        Route::post('amenities/bulk', [AmenityController::class, 'bulk'])->name('amenities.bulk');
         Route::resource('amenities', AmenityController::class);
+
+        Route::post('developers/bulk', [DeveloperController::class, 'bulk'])->name('developers.bulk');
         Route::resource('developers', DeveloperController::class);
+
+        Route::post('segments/bulk', [SegmentController::class, 'bulk'])->name('segments.bulk');
+        Route::resource('segments', SegmentController::class);
+
+        Route::post('categories/bulk', [CategoryController::class, 'bulk'])->name('categories.bulk');
+        Route::resource('categories', CategoryController::class);
     });
 
 // Breeze Authentication Routes
