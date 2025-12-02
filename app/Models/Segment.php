@@ -15,23 +15,28 @@ class Segment extends Model
         'name_en',
         'name_ar',
         'slug',
-        'image_path',
-        'image_url',
         'is_active',
+        'image_path',
     ];
 
     protected $casts = [
         'is_active' => 'boolean',
     ];
 
-    public function categories()
-    {
-        return $this->hasMany(Category::class);
-    }
-
+    /**
+     * Get the localized name.
+     */
     public function getName($locale = null)
     {
         $locale = $locale ?: app()->getLocale();
         return $locale === 'ar' ? $this->name_ar : $this->name_en;
+    }
+
+    /**
+     * A segment has many categories.
+     */
+    public function categories()
+    {
+        return $this->hasMany(Category::class);
     }
 }

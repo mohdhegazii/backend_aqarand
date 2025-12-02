@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Category;
 use App\Models\Segment;
 use Illuminate\Http\Request;
+use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Storage;
 
 class CategoryController extends Controller
@@ -24,22 +25,31 @@ class CategoryController extends Controller
 
     public function store(Request $request)
     {
-        $request->validate([
+        $validated = $request->validate([
             'segment_id' => 'required|exists:segments,id',
             'name_en' => 'required|string|max:255',
             'name_ar' => 'required|string|max:255',
-            'slug' => 'required|string|max:255|unique:categories',
+            'is_active' => 'nullable|boolean',
             'image' => 'nullable|image|max:2048',
         ]);
 
-        $data = $request->except('image');
+        $validated['is_active'] = $request->has('is_active');
+
+        // Generate slug
+        $baseName = $validated['name_en'] ?: $validated['name_ar'];
+        $slug = Str::slug($baseName);
+        $originalSlug = $slug;
+        $counter = 1;
+        while (Category::where('slug', $slug)->exists()) {
+            $slug = $originalSlug . '-' . $counter++;
+        }
+        $validated['slug'] = $slug;
 
         if ($request->hasFile('image')) {
-            $path = $request->file('image')->store('lookups', 'public');
-            $data['image_path'] = $path;
+            $validated['image_path'] = $request->file('image')->store('categories', 'public');
         }
 
-        Category::create($data);
+        Category::create($validated);
 
         return redirect()->route('admin.categories.index')->with('success', __('admin.created_successfully'));
     }
@@ -52,25 +62,36 @@ class CategoryController extends Controller
 
     public function update(Request $request, Category $category)
     {
-        $request->validate([
+        $validated = $request->validate([
             'segment_id' => 'required|exists:segments,id',
             'name_en' => 'required|string|max:255',
             'name_ar' => 'required|string|max:255',
-            'slug' => 'required|string|max:255|unique:categories,slug,' . $category->id,
+            'is_active' => 'nullable|boolean',
             'image' => 'nullable|image|max:2048',
         ]);
 
-        $data = $request->except('image');
+        $validated['is_active'] = $request->has('is_active');
 
-        if ($request->hasFile('image')) {
-            if ($category->image_path) {
-                Storage::disk('public')->delete($category->image_path);
-            }
-            $path = $request->file('image')->store('lookups', 'public');
-            $data['image_path'] = $path;
+        // Re-generate slug if name_en changes
+        if ($category->name_en !== $validated['name_en']) {
+             $baseName = $validated['name_en'] ?: $validated['name_ar'];
+             $slug = Str::slug($baseName);
+             $originalSlug = $slug;
+             $counter = 1;
+             while (Category::where('slug', $slug)->where('id', '!=', $category->id)->exists()) {
+                 $slug = $originalSlug . '-' . $counter++;
+             }
+             $validated['slug'] = $slug;
         }
 
-        $category->update($data);
+        if ($request->hasFile('image')) {
+            if ($category->image_path && Storage::disk('public')->exists($category->image_path)) {
+                Storage::disk('public')->delete($category->image_path);
+            }
+            $validated['image_path'] = $request->file('image')->store('categories', 'public');
+        }
+
+        $category->update($validated);
 
         return redirect()->route('admin.categories.index')->with('success', __('admin.updated_successfully'));
     }
