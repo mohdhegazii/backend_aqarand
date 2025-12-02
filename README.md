@@ -1,8 +1,8 @@
-# Aqar-and Backend
+# Aqarand Backend
 
 ## Phase 1 & 2 Completed
 
-This repository contains the backend for the Aqar-and real estate listing platform.
+This repository contains the backend for the Aqarand real estate listing platform.
 
 ### Phase 1: Database Schema & Models
 - Database schema imported (`database/sql/schema.sql`).
