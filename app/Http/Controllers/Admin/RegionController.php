@@ -23,8 +23,10 @@ class RegionController extends Controller
 
         if ($request->filled('search')) {
             $search = $request->search;
-            $query->where('name_en', 'like', "%$search%")
-                  ->orWhere('name_local', 'like', "%$search%");
+            $query->where(function ($q) use ($search) {
+                $q->where('name_en', 'like', "%$search%")
+                    ->orWhere('name_local', 'like', "%$search%");
+            });
         }
 
         if ($request->filled('country_id')) {
