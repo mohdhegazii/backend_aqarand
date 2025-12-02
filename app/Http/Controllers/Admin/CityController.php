@@ -66,7 +66,7 @@ class CityController extends Controller
 
         if ($request->filled('boundary_geojson')) {
             $city->update([
-                'boundary' => DB::raw("ST_GeomFromGeoJSON('" . $request->boundary_geojson . "')")
+                'boundary' => DB::raw("ST_GeomFromGeoJSON(" . DB::connection()->getPdo()->quote($request->boundary_geojson) . ")")
             ]);
         }
 
@@ -114,7 +114,7 @@ class CityController extends Controller
         if ($request->filled('boundary_geojson')) {
             DB::table('cities')
                 ->where('id', $city->id)
-                ->update(['boundary' => DB::raw("ST_GeomFromGeoJSON('" . $request->boundary_geojson . "')")]);
+                ->update(['boundary' => DB::raw("ST_GeomFromGeoJSON(" . DB::connection()->getPdo()->quote($request->boundary_geojson) . ")")]);
         } elseif ($request->has('boundary_geojson') && empty($request->boundary_geojson)) {
              DB::table('cities')
                 ->where('id', $city->id)
