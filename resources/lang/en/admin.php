@@ -82,4 +82,5 @@ return [
     'amenity_category' => 'Amenity Category',
     'sort_order' => 'Sort Order',
     'select_option' => 'Select an option',
+    'welcome_admin_panel' => 'Welcome to Aqar-and Admin Panel.',
 ];
