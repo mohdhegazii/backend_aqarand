@@ -72,7 +72,11 @@ class PropertyTypeController extends Controller
 
     public function edit(PropertyType $propertyType)
     {
-        return view('admin.property_types.edit', compact('propertyType'));
+        try {
+            return view('admin.property_types.edit', compact('propertyType'))->render();
+        } catch (\Throwable $e) {
+            dd('DEBUG CAUGHT ERROR IN PropertyTypeController::edit', $e->getMessage(), $e->getFile(), $e->getLine(), $e->getTraceAsString());
+        }
     }
 
     public function update(Request $request, PropertyType $propertyType)

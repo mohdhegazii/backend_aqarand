@@ -84,12 +84,16 @@ class AmenityController extends Controller
 
     public function edit(Amenity $amenity)
     {
-        $categories = AmenityCategory::where('is_active', true)
-            ->orderBy('sort_order')
-            ->orderBy('name_en')
-            ->get();
+        try {
+            $categories = AmenityCategory::where('is_active', true)
+                ->orderBy('sort_order')
+                ->orderBy('name_en')
+                ->get();
 
-        return view('admin.amenities.edit', compact('amenity', 'categories'));
+            return view('admin.amenities.edit', compact('amenity', 'categories'))->render();
+        } catch (\Throwable $e) {
+            dd('DEBUG CAUGHT ERROR IN AmenityController::edit', $e->getMessage(), $e->getFile(), $e->getLine(), $e->getTraceAsString());
+        }
     }
 
     public function update(Request $request, Amenity $amenity)
