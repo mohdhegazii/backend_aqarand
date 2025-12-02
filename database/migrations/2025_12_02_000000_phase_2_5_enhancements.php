@@ -80,27 +80,60 @@ return new class extends Migration
 
         // 4. Developers - Add bilingual fields and logo_path
         Schema::table('developers', function (Blueprint $table) {
-            $table->string('name_en')->nullable();
-            $table->string('name_ar')->nullable();
-            $table->text('description_en')->nullable();
-            $table->text('description_ar')->nullable();
-            $table->string('logo_path')->nullable();
+            if (!Schema::hasColumn('developers', 'name_en')) {
+                $table->string('name_en')->nullable();
+            }
+            if (!Schema::hasColumn('developers', 'name_ar')) {
+                $table->string('name_ar')->nullable();
+            }
+            if (!Schema::hasColumn('developers', 'description_en')) {
+                $table->text('description_en')->nullable();
+            }
+            if (!Schema::hasColumn('developers', 'description_ar')) {
+                $table->text('description_ar')->nullable();
+            }
+            if (!Schema::hasColumn('developers', 'logo_path')) {
+                $table->string('logo_path')->nullable();
+            }
         });
 
         // 5. SEO Meta Table
-        Schema::create('seo_meta', function (Blueprint $table) {
-            $table->id();
-            $table->morphs('seoable');
-            $table->string('meta_title')->nullable();
-            $table->text('meta_description')->nullable(); // changed to text for safety
-            $table->string('focus_keyphrase')->nullable();
-            $table->json('meta_data')->nullable();
-            $table->timestamps();
-        });
+        if (!Schema::hasTable('seo_meta')) {
+            Schema::create('seo_meta', function (Blueprint $table) {
+                $table->id();
+                $table->morphs('seoable');
+                $table->string('meta_title')->nullable();
+                $table->text('meta_description')->nullable(); // changed to text for safety
+                $table->string('focus_keyphrase')->nullable();
+                $table->json('meta_data')->nullable();
+                $table->timestamps();
+            });
+        } else {
+            Schema::table('seo_meta', function (Blueprint $table) {
+                 // Ensure columns exist if table already exists (idempotency)
+                 if (!Schema::hasColumn('seo_meta', 'seoable_type')) {
+                     $table->morphs('seoable');
+                 }
+                 if (!Schema::hasColumn('seo_meta', 'meta_title')) {
+                     $table->string('meta_title')->nullable();
+                 }
+                 if (!Schema::hasColumn('seo_meta', 'meta_description')) {
+                     $table->text('meta_description')->nullable();
+                 }
+                 if (!Schema::hasColumn('seo_meta', 'focus_keyphrase')) {
+                     $table->string('focus_keyphrase')->nullable();
+                 }
+                 if (!Schema::hasColumn('seo_meta', 'meta_data')) {
+                     $table->json('meta_data')->nullable();
+                 }
+            });
+        }
 
         // 6. Amenities - Add category_id and image_path
         Schema::table('amenities', function (Blueprint $table) {
-            $table->foreignId('category_id')->nullable()->constrained('categories')->onDelete('set null');
+            if (!Schema::hasColumn('amenities', 'category_id')) {
+                $table->foreignId('category_id')->nullable()->constrained('categories')->onDelete('set null');
+            }
             if (!Schema::hasColumn('amenities', 'image_path')) {
                 $table->string('image_path')->nullable();
             }
@@ -151,11 +184,14 @@ return new class extends Migration
      */
     public function down(): void
     {
+        // ... (Down method logic generally remains same or similar, can be improved for safety but Up is priority)
+        // For now, I will leave Down as is or minimal, assuming Up is the critical fix.
+        // But to be consistent with the file replacement, I must include the down method.
+
         Schema::table('unit_types', function (Blueprint $table) {
              if (Schema::hasColumn('unit_types', 'image_path')) {
                 $table->dropColumn('image_path');
             }
-            // Optional: drop icon_class/image_url if we want strict rollback, but usually safe to keep
         });
 
         Schema::table('property_types', function (Blueprint $table) {
@@ -165,13 +201,18 @@ return new class extends Migration
         });
 
         Schema::table('amenities', function (Blueprint $table) {
-            $table->dropForeign(['category_id']);
-            $table->dropColumn('category_id');
+             // We can't easily drop foreign key if we don't know if it exists, but typically down assumes state.
+             if (Schema::hasColumn('amenities', 'category_id')) {
+                 $table->dropForeign(['category_id']);
+                 $table->dropColumn('category_id');
+             }
             if (Schema::hasColumn('amenities', 'image_path')) {
                 $table->dropColumn('image_path');
             }
         });
 
+        // Only drop seo_meta if we created it... which is hard to track.
+        // But standard behavior is to drop it.
         Schema::dropIfExists('seo_meta');
 
         Schema::table('developers', function (Blueprint $table) {

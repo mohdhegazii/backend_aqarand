@@ -63,16 +63,6 @@
                     .then(response => response.json())
                     .then(data => {
                         if (data.lat && data.lng) {
-                            var map = L.DomUtil.get('region-map')._leaflet_map;
-                            // Note: direct access to _leaflet_map might not work if map isn't globally exposed.
-                            // Better: expose map instance in partial or re-instantiate.
-                            // For simplicity, let's assume the map variable is available or we dispatch an event.
-                            // But since partial declares 'var map', it's scoped.
-                            // I will simply re-render or assume the user manually searches for now,
-                            // OR I can modify the partial to listen to an event.
-                            // A better hack for this Phase: reload the map view or (better)
-                            // make 'map' global in the partial with a dynamic name.
-
                             if (window['map_region-map']) {
                                 window['map_region-map'].flyTo([data.lat, data.lng], 10);
                             }

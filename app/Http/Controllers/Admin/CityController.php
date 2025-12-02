@@ -7,6 +7,7 @@ use App\Models\Region;
 use App\Models\City;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
+use Illuminate\Support\Facades\DB;
 
 class CityController extends Controller
 {
@@ -51,6 +52,7 @@ class CityController extends Controller
             'lat' => 'nullable|numeric|between:-90,90',
             'lng' => 'nullable|numeric|between:-180,180',
             'is_active' => 'boolean',
+            'boundary_geojson' => 'nullable|json',
         ]);
 
         $validated['slug'] = Str::slug($validated['name_en']);
@@ -60,15 +62,28 @@ class CityController extends Controller
              return back()->withInput()->withErrors(['name_en' => 'Slug generated from Name (EN) already exists in this region.']);
         }
 
-        City::create($validated);
+        $city = City::create(collect($validated)->except('boundary_geojson')->toArray());
+
+        if ($request->filled('boundary_geojson')) {
+            $city->update([
+                'boundary' => DB::raw("ST_GeomFromGeoJSON('" . $request->boundary_geojson . "')")
+            ]);
+        }
 
         return redirect()->route('admin.cities.index')
             ->with('success', __('admin.created_successfully'));
     }
 
+    public function show(City $city)
+    {
+        $city = City::select('*', DB::raw('ST_AsGeoJSON(boundary) as boundary_geojson'))->find($city->id);
+        return view('admin.cities.show', compact('city'));
+    }
+
     public function edit(City $city)
     {
         $regions = Region::where('is_active', true)->with('country')->get();
+        $city = City::select('*', DB::raw('ST_AsGeoJSON(boundary) as boundary_geojson'))->find($city->id);
         return view('admin.cities.edit', compact('city', 'regions'));
     }
 
@@ -81,6 +96,7 @@ class CityController extends Controller
             'lat' => 'nullable|numeric|between:-90,90',
             'lng' => 'nullable|numeric|between:-180,180',
             'is_active' => 'boolean',
+            'boundary_geojson' => 'nullable|json',
         ]);
 
         $slug = Str::slug($validated['name_en']);
@@ -93,7 +109,17 @@ class CityController extends Controller
              }
         }
 
-        $city->update($validated);
+        $city->update(collect($validated)->except('boundary_geojson')->toArray());
+
+        if ($request->filled('boundary_geojson')) {
+            DB::table('cities')
+                ->where('id', $city->id)
+                ->update(['boundary' => DB::raw("ST_GeomFromGeoJSON('" . $request->boundary_geojson . "')")]);
+        } elseif ($request->has('boundary_geojson') && empty($request->boundary_geojson)) {
+             DB::table('cities')
+                ->where('id', $city->id)
+                ->update(['boundary' => null]);
+        }
 
         return redirect()->route('admin.cities.index')
             ->with('success', __('admin.updated_successfully'));

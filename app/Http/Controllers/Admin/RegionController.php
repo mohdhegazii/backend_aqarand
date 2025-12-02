@@ -7,6 +7,7 @@ use App\Models\Country;
 use App\Models\Region;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
+use Illuminate\Support\Facades\DB;
 
 class RegionController extends Controller
 {
@@ -51,6 +52,7 @@ class RegionController extends Controller
             'lat' => 'nullable|numeric|between:-90,90',
             'lng' => 'nullable|numeric|between:-180,180',
             'is_active' => 'boolean',
+            'boundary_geojson' => 'nullable|json',
         ]);
 
         $validated['slug'] = Str::slug($validated['name_en']);
@@ -60,15 +62,33 @@ class RegionController extends Controller
              return back()->withInput()->withErrors(['name_en' => 'Slug generated from Name (EN) already exists in this country.']);
         }
 
-        Region::create($validated);
+        $region = Region::create(collect($validated)->except('boundary_geojson')->toArray());
+
+        if ($request->filled('boundary_geojson')) {
+            $region->update([
+                'boundary' => DB::raw("ST_GeomFromGeoJSON('" . $request->boundary_geojson . "')")
+            ]);
+        }
 
         return redirect()->route('admin.regions.index')
             ->with('success', __('admin.created_successfully'));
     }
 
+    public function show(Region $region)
+    {
+        // Fetch boundary as GeoJSON for display
+        $region = Region::select('*', DB::raw('ST_AsGeoJSON(boundary) as boundary_geojson'))->find($region->id);
+
+        return view('admin.regions.show', compact('region'));
+    }
+
     public function edit(Region $region)
     {
         $countries = Country::where('is_active', true)->get();
+
+        // Fetch boundary as GeoJSON
+        $region = Region::select('*', DB::raw('ST_AsGeoJSON(boundary) as boundary_geojson'))->find($region->id);
+
         return view('admin.regions.edit', compact('region', 'countries'));
     }
 
@@ -81,6 +101,7 @@ class RegionController extends Controller
             'lat' => 'nullable|numeric|between:-90,90',
             'lng' => 'nullable|numeric|between:-180,180',
             'is_active' => 'boolean',
+            'boundary_geojson' => 'nullable|json',
         ]);
 
         $slug = Str::slug($validated['name_en']);
@@ -93,7 +114,21 @@ class RegionController extends Controller
              }
         }
 
-        $region->update($validated);
+        $region->update(collect($validated)->except('boundary_geojson')->toArray());
+
+        if ($request->filled('boundary_geojson')) {
+            // We need to use a raw query or update with DB::raw
+            // Since we just updated the model, we can do a second update or hook into it.
+            // Using a separate update is cleaner for safety with raw queries.
+            DB::table('regions')
+                ->where('id', $region->id)
+                ->update(['boundary' => DB::raw("ST_GeomFromGeoJSON('" . $request->boundary_geojson . "')")]);
+        } elseif ($request->has('boundary_geojson') && empty($request->boundary_geojson)) {
+             // Handle clearing of boundary if user deleted it
+             DB::table('regions')
+                ->where('id', $region->id)
+                ->update(['boundary' => null]);
+        }
 
         return redirect()->route('admin.regions.index')
             ->with('success', __('admin.updated_successfully'));

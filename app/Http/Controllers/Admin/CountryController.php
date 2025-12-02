@@ -57,6 +57,11 @@ class CountryController extends Controller
             ->with('success', __('admin.created_successfully'));
     }
 
+    public function show(Country $country)
+    {
+        return view('admin.countries.show', compact('country'));
+    }
+
     public function edit(Country $country)
     {
         return view('admin.countries.edit', compact('country'));
