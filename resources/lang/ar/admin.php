@@ -82,4 +82,5 @@ return [
     'amenity_category' => 'تصنيف وسيلة الراحة',
     'sort_order' => 'ترتيب',
     'select_option' => 'اختر من القائمة',
+    'welcome_admin_panel' => 'مرحباً بك في لوحة تحكم عقار-اند.',
 ];
