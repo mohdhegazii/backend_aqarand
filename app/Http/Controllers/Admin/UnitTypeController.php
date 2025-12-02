@@ -86,8 +86,12 @@ class UnitTypeController extends Controller
 
     public function edit(UnitType $unitType)
     {
-        $propertyTypes = PropertyType::where('is_active', true)->get();
-        return view('admin.unit_types.edit', compact('unitType', 'propertyTypes'));
+        try {
+            $propertyTypes = PropertyType::where('is_active', true)->get();
+            return view('admin.unit_types.edit', compact('unitType', 'propertyTypes'))->render();
+        } catch (\Throwable $e) {
+            dd('DEBUG CAUGHT ERROR IN UnitTypeController::edit', $e->getMessage(), $e->getFile(), $e->getLine(), $e->getTraceAsString());
+        }
     }
 
     public function update(Request $request, UnitType $unitType)
