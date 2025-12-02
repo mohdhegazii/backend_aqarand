@@ -31,7 +31,6 @@
                     <th class="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ID</th>
                     <th class="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">@lang('admin.image')</th>
                     <th class="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">@lang('admin.name')</th>
-                    <th class="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">@lang('admin.segments')</th>
                     <th class="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
                 </tr>
             </thead>
@@ -48,7 +47,6 @@
                         @endif
                     </td>
                     <td class="px-6 py-4 whitespace-nowrap">{{ $category->display_name }}</td>
-                    <td class="px-6 py-4 whitespace-nowrap">{{ $category->segment->display_name ?? '-' }}</td>
                     <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
                         <a href="{{ route('admin.categories.edit', $category) }}" class="text-indigo-600 hover:text-indigo-900">@lang('admin.edit')</a>
                     </td>

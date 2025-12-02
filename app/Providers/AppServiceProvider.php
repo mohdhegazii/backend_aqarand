@@ -13,7 +13,6 @@ use App\Models\PropertyType;
 use App\Models\UnitType;
 use App\Models\Amenity;
 use App\Models\Developer;
-use App\Models\Segment;
 use App\Models\Category;
 
 class AppServiceProvider extends ServiceProvider
@@ -40,7 +39,6 @@ class AppServiceProvider extends ServiceProvider
         Route::model('unitType', UnitType::class);
         Route::model('amenity', Amenity::class);
         Route::model('developer', Developer::class);
-        Route::model('segment', Segment::class);
         Route::model('category', Category::class);
     }
 }

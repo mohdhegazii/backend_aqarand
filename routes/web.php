@@ -12,7 +12,6 @@ use App\Http\Controllers\Admin\PropertyTypeController;
 use App\Http\Controllers\Admin\UnitTypeController;
 use App\Http\Controllers\Admin\AmenityController;
 use App\Http\Controllers\Admin\DeveloperController;
-use App\Http\Controllers\Admin\SegmentController;
 use App\Http\Controllers\Admin\CategoryController;
 use App\Http\Controllers\Admin\LocationHelperController;
 use Illuminate\Support\Facades\Auth;
@@ -85,9 +84,6 @@ Route::group([
 
     Route::post('developers/bulk', [DeveloperController::class, 'bulk'])->name('developers.bulk');
     Route::resource('developers', DeveloperController::class);
-
-    Route::post('segments/bulk', [SegmentController::class, 'bulk'])->name('segments.bulk');
-    Route::resource('segments', SegmentController::class);
 
     Route::post('categories/bulk', [CategoryController::class, 'bulk'])->name('categories.bulk');
     Route::resource('categories', CategoryController::class)

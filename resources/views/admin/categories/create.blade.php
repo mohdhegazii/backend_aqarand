@@ -8,22 +8,6 @@
             <form action="{{ route('admin.categories.store') }}" method="POST" enctype="multipart/form-data">
                 @csrf
 
-                <!-- Segment -->
-                <div class="mb-4">
-                    <label class="block text-gray-700 text-sm font-bold mb-2" for="segment_id">@lang('admin.segments')</label>
-                    <select name="segment_id" id="segment_id" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline @error('segment_id') border-red-500 @enderror" required>
-                        <option value="">@lang('admin.select_segment')</option>
-                        @foreach($segments as $segment)
-                            <option value="{{ $segment->id }}" {{ old('segment_id') == $segment->id ? 'selected' : '' }}>
-                                {{ $segment->getName() }}
-                            </option>
-                        @endforeach
-                    </select>
-                    @error('segment_id')
-                        <p class="text-red-500 text-xs italic mt-1">{{ $message }}</p>
-                    @enderror
-                </div>
-
                 <!-- Name EN -->
                 <div class="mb-4">
                     <label class="block text-gray-700 text-sm font-bold mb-2" for="name_en">@lang('admin.name_en')</label>

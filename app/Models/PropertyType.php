@@ -12,10 +12,11 @@ class PropertyType extends Model
     protected $table = 'property_types';
 
     protected $fillable = [
+        'category_id',
         'name_en',
         'name_local',
         'slug',
-        'category',
+        'group_key',
         'icon_class',
         'image_url',
         'image_path',
@@ -28,18 +29,31 @@ class PropertyType extends Model
         'sort_order' => 'integer',
     ];
 
-    public const CATEGORIES = [
-        'residential',
-        'commercial',
+    public const GROUP_KEYS = [
         'administrative',
         'medical',
-        'mixed',
-        'other'
+        'retail',
+        'industrial',
+        'living',
+        'vacation',
+        'building_lands',
+        'investment_lands',
+        'agriculture',
     ];
+
+    public function category()
+    {
+        return $this->belongsTo(Category::class);
+    }
 
     public function unitTypes()
     {
         return $this->hasMany(UnitType::class);
+    }
+
+    public function scopeForGroupKey($query, string $groupKey)
+    {
+        return $query->where('group_key', $groupKey);
     }
 
     /**
