@@ -43,7 +43,9 @@ Route::get('lang/{locale}', [LanguageController::class, 'switch'])
     ->whereIn('locale', ['en', 'ar']);
 
 Route::get('/admin', function () {
-    return redirect()->route('admin.dashboard', ['locale' => 'en']);
+    $locale = session('locale', config('app.locale', 'en'));
+
+    return redirect()->route('admin.dashboard', ['locale' => $locale]);
 });
 
 Route::group([
