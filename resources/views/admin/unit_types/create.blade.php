@@ -5,7 +5,7 @@
 @section('content')
     <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
         <div class="p-6 bg-white border-b border-gray-200">
-            <form action="{{ route('admin.unit-types.store') }}" method="POST">
+            <form action="{{ route('admin.unit-types.store') }}" method="POST" enctype="multipart/form-data">
                 @csrf
 
                 <div class="mb-4">
@@ -36,17 +36,22 @@
                 </div>
 
                 <div class="mb-4">
-                    <label class="block text-gray-700 text-sm font-bold mb-2">@lang('admin.icon_class')</label>
+                    <label class="block text-gray-700 text-sm font-bold mb-2">@lang('admin.icon_class_bs')</label>
                     <input type="text" name="icon_class" value="{{ old('icon_class') }}" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
                 </div>
 
                 <div class="mb-4">
-                    <label class="block text-gray-700 text-sm font-bold mb-2">@lang('admin.image_url')</label>
-                    <input type="text" name="image_url" value="{{ old('image_url') }}" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
+                    <label class="block text-gray-700 text-sm font-bold mb-2">@lang('admin.image')</label>
+                    <input type="file" name="image" class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100">
                 </div>
 
                 <div class="mb-4 grid grid-cols-1 md:grid-cols-2 gap-4">
-                    @foreach(['requires_land_area', 'requires_built_up_area', 'requires_garden_area', 'requires_roof_area', 'requires_indoor_area', 'requires_outdoor_area'] as $field)
+                    <label class="inline-flex items-center">
+                        <input type="checkbox" name="requires_built_up_area" value="1" class="form-checkbox bg-gray-200" checked disabled>
+                        <span class="mx-2">@lang('admin.requires_built_up_area')</span>
+                    </label>
+
+                    @foreach(['requires_land_area', 'requires_garden_area', 'requires_roof_area', 'requires_indoor_area', 'requires_outdoor_area'] as $field)
                         <label class="inline-flex items-center">
                             <input type="checkbox" name="{{ $field }}" value="1" class="form-checkbox" {{ old($field) ? 'checked' : '' }}>
                             <span class="mx-2">@lang('admin.' . $field)</span>

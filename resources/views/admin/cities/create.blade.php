@@ -1,6 +1,6 @@
 @extends('admin.layouts.app')
 
-@section('header', __('admin.create') . ' ' . __('admin.city'))
+@section('header', __('admin.create') . ' ' . __('admin.cities'))
 
 @section('content')
     <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
@@ -10,7 +10,7 @@
 
                 <div class="mb-4">
                     <label class="block text-gray-700 text-sm font-bold mb-2">@lang('admin.region')</label>
-                    <select name="region_id" class="shadow border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" required>
+                    <select name="region_id" id="region_id" class="shadow border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" required>
                         <option value="">-- @lang('admin.region') --</option>
                         @foreach($regions as $region)
                             <option value="{{ $region->id }}" {{ old('region_id') == $region->id ? 'selected' : '' }}>
@@ -26,29 +26,24 @@
                 </div>
 
                 <div class="mb-4">
-                    <label class="block text-gray-700 text-sm font-bold mb-2">@lang('admin.name_local')</label>
+                    <label class="block text-gray-700 text-sm font-bold mb-2">@lang('admin.name_ar')</label>
                     <input type="text" name="name_local" value="{{ old('name_local') }}" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" required>
-                </div>
-
-                <div class="mb-4 grid grid-cols-2 gap-4">
-                    <div>
-                        <label class="block text-gray-700 text-sm font-bold mb-2">@lang('admin.lat')</label>
-                        <input type="text" name="lat" value="{{ old('lat') }}" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" placeholder="e.g. 30.0444">
-                    </div>
-                    <div>
-                        <label class="block text-gray-700 text-sm font-bold mb-2">@lang('admin.lng')</label>
-                        <input type="text" name="lng" value="{{ old('lng') }}" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" placeholder="e.g. 31.2357">
-                    </div>
                 </div>
 
                 <div class="mb-4">
                     <label class="inline-flex items-center">
                         <input type="checkbox" name="is_active" value="1" class="form-checkbox" {{ old('is_active', 1) ? 'checked' : '' }}>
-                        <span class="mx-2">@lang('admin.active')</span>
+                        <span class="mx-2">@lang('admin.activate')</span>
                     </label>
                 </div>
 
-                <div class="flex items-center justify-end space-x-4 rtl:space-x-reverse">
+                @include('admin.partials.map_picker', [
+                    'lat' => old('lat'),
+                    'lng' => old('lng'),
+                    'mapId' => 'city-map'
+                ])
+
+                <div class="flex items-center justify-end space-x-4 rtl:space-x-reverse mt-4">
                     <a href="{{ route('admin.cities.index') }}" class="text-gray-600 hover:text-gray-900">
                         @lang('admin.cancel')
                     </a>
@@ -59,4 +54,21 @@
             </form>
         </div>
     </div>
+
+    <script>
+        document.getElementById('region_id').addEventListener('change', function() {
+            var regionId = this.value;
+            if (regionId) {
+                fetch('/admin/locations/regions/' + regionId)
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.lat && data.lng) {
+                            if (window['map_city-map']) {
+                                window['map_city-map'].flyTo([data.lat, data.lng], 11);
+                            }
+                        }
+                    });
+            }
+        });
+    </script>
 @endsection

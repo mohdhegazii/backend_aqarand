@@ -1,6 +1,6 @@
 @extends('admin.layouts.app')
 
-@section('header', __('admin.create') . ' ' . __('admin.country'))
+@section('header', __('admin.create') . ' ' . __('admin.countries'))
 
 @section('content')
     <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
@@ -9,8 +9,9 @@
                 @csrf
 
                 <div class="mb-4">
-                    <label class="block text-gray-700 text-sm font-bold mb-2">@lang('admin.code')</label>
+                    <label class="block text-gray-700 text-sm font-bold mb-2">@lang('admin.country_code_iso')</label>
                     <input type="text" name="code" value="{{ old('code') }}" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" required maxlength="3">
+                    <p class="text-xs text-gray-500 mt-1">@lang('admin.country_code_help')</p>
                 </div>
 
                 <div class="mb-4">
@@ -19,22 +20,24 @@
                 </div>
 
                 <div class="mb-4">
-                    <label class="block text-gray-700 text-sm font-bold mb-2">@lang('admin.name_local')</label>
+                    <label class="block text-gray-700 text-sm font-bold mb-2">@lang('admin.name_ar')</label>
                     <input type="text" name="name_local" value="{{ old('name_local') }}" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" required>
                 </div>
 
-                <div class="mb-4 grid grid-cols-2 gap-4">
-                    <div>
-                        <label class="block text-gray-700 text-sm font-bold mb-2">@lang('admin.lat')</label>
-                        <input type="text" name="lat" value="{{ old('lat') }}" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" placeholder="e.g. 30.0444">
-                    </div>
-                    <div>
-                        <label class="block text-gray-700 text-sm font-bold mb-2">@lang('admin.lng')</label>
-                        <input type="text" name="lng" value="{{ old('lng') }}" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" placeholder="e.g. 31.2357">
-                    </div>
+                <div class="mb-4">
+                    <label class="inline-flex items-center">
+                        <input type="checkbox" name="is_active" class="form-checkbox text-blue-500" value="1" checked>
+                        <span class="ml-2">@lang('admin.activate')</span>
+                    </label>
                 </div>
 
-                <div class="flex items-center justify-end space-x-4 rtl:space-x-reverse">
+                @include('admin.partials.map_picker', [
+                    'lat' => old('lat'),
+                    'lng' => old('lng'),
+                    'mapId' => 'country-map'
+                ])
+
+                <div class="flex items-center justify-end space-x-4 rtl:space-x-reverse mt-4">
                     <a href="{{ route('admin.countries.index') }}" class="text-gray-600 hover:text-gray-900">
                         @lang('admin.cancel')
                     </a>

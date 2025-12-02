@@ -5,9 +5,21 @@
 @section('content')
     <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
         <div class="p-6 bg-white border-b border-gray-200">
-            <form action="{{ route('admin.amenities.update', $amenity) }}" method="POST">
+            <form action="{{ route('admin.amenities.update', $amenity) }}" method="POST" enctype="multipart/form-data">
                 @csrf
                 @method('PUT')
+
+                <div class="mb-4">
+                    <label class="block text-gray-700 text-sm font-bold mb-2">@lang('admin.category')</label>
+                    <select name="category_id" class="shadow border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
+                        <option value="">@lang('admin.select_category')</option>
+                        @foreach($categories as $category)
+                            <option value="{{ $category->id }}" {{ old('category_id', $amenity->category_id) == $category->id ? 'selected' : '' }}>
+                                {{ $category->name_en }}
+                            </option>
+                        @endforeach
+                    </select>
+                </div>
 
                 <div class="mb-4">
                     <label class="block text-gray-700 text-sm font-bold mb-2">@lang('admin.name_en')</label>
@@ -29,13 +41,24 @@
                 </div>
 
                 <div class="mb-4">
-                    <label class="block text-gray-700 text-sm font-bold mb-2">@lang('admin.icon_class')</label>
-                    <input type="text" name="icon_class" value="{{ old('icon_class', $amenity->icon_class) }}" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
+                    <label class="block text-gray-700 text-sm font-bold mb-2">@lang('admin.icon_class_bs')</label>
+                    <div class="flex items-center space-x-2">
+                        <input type="text" name="icon_class" value="{{ old('icon_class', $amenity->icon_class) }}" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" placeholder="e.g. bi-wifi">
+                        @if($amenity->icon_class)
+                            <i class="{{ $amenity->icon_class }} text-2xl"></i>
+                        @endif
+                    </div>
+                    <p class="text-xs text-gray-500 mt-1">@lang('admin.icon_class_help')</p>
                 </div>
 
                 <div class="mb-4">
-                    <label class="block text-gray-700 text-sm font-bold mb-2">@lang('admin.image_url')</label>
-                    <input type="text" name="image_url" value="{{ old('image_url', $amenity->image_url) }}" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
+                    <label class="block text-gray-700 text-sm font-bold mb-2">@lang('admin.image')</label>
+                    @if($amenity->image_path)
+                        <div class="mb-2">
+                            <img src="{{ asset('storage/' . $amenity->image_path) }}" alt="Image" class="h-10 w-10 object-cover rounded">
+                        </div>
+                    @endif
+                    <input type="file" name="image" class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100">
                 </div>
 
                 <div class="mb-4">
