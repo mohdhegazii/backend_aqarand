@@ -35,8 +35,22 @@ This repository contains the backend for the Aqar-and real estate listing platfo
 
 ### Development
 
-- **Run Migrations:** `php artisan migrate`
+- **Run Migrations:**
+    After pulling new code, run:
+    ```bash
+    php artisan migrate
+    ```
+    *Note: Do NOT drop or recreate existing tables. This will only add missing columns.*
+
 - **Seed Database:** `php artisan db:seed` (Creates the admin user)
+
+### Configuration
+
+- **Session Lifetime:**
+  Admin sessions expire after 24 hours. Ensure your `.env` has:
+  ```
+  SESSION_LIFETIME=1440
+  ```
 
 ### Entities Implemented (Phase 2)
 - **Countries** (Added optional lat/lng)
@@ -81,3 +95,11 @@ This phase introduced UX improvements and additional features for the admin pane
 - **Images:** Added image upload support for Property Types, Unit Types, Amenities, and Categories.
 - **Unit Types:** Enforced validation logic (e.g., "Requires Built-up Area" is mandatory).
 - **Bootstrap Icons:** Added clear help text and preview for icon classes.
+
+### Phase 2.6 Updates (Current)
+
+- **Routing & Auth:** Improved login redirection and added public placeholder.
+- **Database:** Added missing `is_active` and `image_path` columns via migration.
+- **Sessions:** Increased admin session lifetime to 24 hours.
+- **Developers:** Split Create/Edit form into English/Arabic tabs with per-language SEO settings.
+- **SEO Plugin:** Added traffic-light indicators for SEO rules (Title length, Description length, Keyphrase).

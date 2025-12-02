@@ -31,12 +31,6 @@ class Country extends Model
         return $this->hasMany(Region::class);
     }
 
-    /**
-     * Get the name based on the locale.
-     *
-     * @param string|null $locale
-     * @return string
-     */
     public function getName($locale = null)
     {
         $locale = $locale ?? app()->getLocale();

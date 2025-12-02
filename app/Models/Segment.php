@@ -15,6 +15,8 @@ class Segment extends Model
         'name_en',
         'name_ar',
         'slug',
+        'image_path',
+        'image_url',
         'is_active',
     ];
 

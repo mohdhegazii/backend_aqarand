@@ -14,9 +14,19 @@ class SeoMeta extends Model
     protected $fillable = [
         'seoable_id',
         'seoable_type',
+        // Legacy
         'meta_title',
         'meta_description',
         'focus_keyphrase',
+
+        // New Bilingual
+        'meta_title_en',
+        'meta_description_en',
+        'focus_keyphrase_en',
+        'meta_title_ar',
+        'meta_description_ar',
+        'focus_keyphrase_ar',
+
         'meta_data',
     ];
 
