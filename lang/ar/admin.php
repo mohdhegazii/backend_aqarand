@@ -84,4 +84,10 @@ return [
     'website_url' => 'رابط الموقع',
     'logo_url' => 'رابط الشعار',
     'category' => 'التصنيف',
+
+    // SEO Traffic Light Rules
+    'seo_analysis' => 'تحليل SEO',
+    'seo_rule_title_length' => 'طول عنوان SEO (40-60 حرف)',
+    'seo_rule_desc_length' => 'طول وصف الميتا (120-160 حرف)',
+    'seo_rule_keyphrase' => 'تواجد الكلمة المفتاحية في العنوان والوصف',
 ];

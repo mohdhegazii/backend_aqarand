@@ -14,9 +14,25 @@ use App\Http\Controllers\Admin\DeveloperController;
 use App\Http\Controllers\Admin\SegmentController;
 use App\Http\Controllers\Admin\CategoryController;
 use App\Http\Controllers\Admin\LocationHelperController;
+use Illuminate\Support\Facades\Auth;
 
 Route::get('/', function () {
-    return view('welcome');
+    if (Auth::check()) {
+        if (Auth::user()->is_admin) {
+            return redirect()->route('admin.dashboard');
+        }
+        return redirect()->route('dashboard');
+    }
+    return view('welcome-public');
+});
+
+Route::middleware(['auth'])->group(function () {
+    Route::get('/dashboard', function () {
+        if (Auth::user()->is_admin) {
+             return redirect()->route('admin.dashboard');
+        }
+        return view('dashboard');
+    })->name('dashboard');
 });
 
 Route::get('lang/{locale}', [LanguageController::class, 'switch'])

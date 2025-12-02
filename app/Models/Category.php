@@ -17,6 +17,7 @@ class Category extends Model
         'name_ar',
         'slug',
         'image_path',
+        'image_url',
         'is_active',
     ];
 

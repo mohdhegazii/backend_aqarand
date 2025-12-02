@@ -84,4 +84,10 @@ return [
     'website_url' => 'Website URL',
     'logo_url' => 'Logo URL',
     'category' => 'Category',
+
+    // SEO Traffic Light Rules
+    'seo_analysis' => 'SEO Analysis',
+    'seo_rule_title_length' => 'Meta Title length (40-60 chars)',
+    'seo_rule_desc_length' => 'Meta Description length (120-160 chars)',
+    'seo_rule_keyphrase' => 'Keyphrase in Title and Description',
 ];
