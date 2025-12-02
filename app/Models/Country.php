@@ -45,4 +45,16 @@ class Country extends Model
         }
         return $this->name_en;
     }
+
+    public function getDisplayNameAttribute(): string
+    {
+        $locale = app()->getLocale();
+
+        if ($locale === 'ar' && !empty($this->name_local)) {
+            return $this->name_local;
+        }
+
+        // default to English if locale is en or name_local is empty
+        return $this->name_en ?? $this->name_local ?? '';
+    }
 }

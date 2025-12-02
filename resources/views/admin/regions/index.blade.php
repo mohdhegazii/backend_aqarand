@@ -43,8 +43,7 @@
                         <th class="py-3 px-6 text-start">
                             <input type="checkbox" id="select-all">
                         </th>
-                        <th class="py-3 px-6 text-start">@lang('admin.name_en')</th>
-                        <th class="py-3 px-6 text-start">@lang('admin.name_ar')</th>
+                        <th class="py-3 px-6 text-start">@lang('admin.name')</th>
                         <th class="py-3 px-6 text-start">@lang('admin.country')</th>
                         <th class="py-3 px-6 text-center">@lang('admin.actions')</th>
                     </tr>
@@ -56,13 +55,10 @@
                                 <input type="checkbox" name="ids[]" value="{{ $region->id }}" class="row-checkbox">
                             </td>
                             <td class="py-3 px-6 text-start">
-                                {{ $region->name_en }}
+                                {{ $region->display_name }}
                             </td>
                             <td class="py-3 px-6 text-start">
-                                {{ $region->name_local }}
-                            </td>
-                            <td class="py-3 px-6 text-start">
-                                {{ $region->country->name_en }}
+                                {{ $region->country->display_name }}
                             </td>
                             <td class="py-3 px-6 text-center">
                                 <div class="flex item-center justify-center space-x-2 rtl:space-x-reverse">

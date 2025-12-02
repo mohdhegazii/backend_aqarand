@@ -60,4 +60,15 @@ class Amenity extends Model
         }
         return $this->name_en;
     }
+
+    public function getDisplayNameAttribute(): string
+    {
+        $locale = app()->getLocale();
+
+        if ($locale === 'ar' && !empty($this->name_local)) {
+            return $this->name_local;
+        }
+
+        return $this->name_en ?? $this->name_local ?? '';
+    }
 }

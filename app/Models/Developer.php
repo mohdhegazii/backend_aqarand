@@ -48,4 +48,15 @@ class Developer extends Model
         }
         return $this->name_en ?? $this->name;
     }
+
+    public function getDisplayNameAttribute(): string
+    {
+        $locale = app()->getLocale();
+
+        if ($locale === 'ar' && !empty($this->name_ar)) {
+            return $this->name_ar;
+        }
+
+        return $this->name_en ?? $this->name ?? '';
+    }
 }

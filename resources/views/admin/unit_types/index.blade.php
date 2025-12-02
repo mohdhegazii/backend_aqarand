@@ -80,7 +80,7 @@
                                 {{ $type->code }}
                             </td>
                             <td class="py-3 px-6 text-start">
-                                {{ $type->propertyType->name_en }}
+                                {{ $type->propertyType->display_name }}
                             </td>
                             <td class="py-3 px-6 text-center">
                                 @if($type->is_active)

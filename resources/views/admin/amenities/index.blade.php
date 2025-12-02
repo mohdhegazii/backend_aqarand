@@ -42,8 +42,7 @@
                         <th class="py-3 px-6 text-start">ID</th>
                         <th class="py-3 px-6 text-start">@lang('admin.image')</th>
                         <th class="py-3 px-6 text-start">@lang('admin.category')</th>
-                        <th class="py-3 px-6 text-start">@lang('admin.name_en')</th>
-                        <th class="py-3 px-6 text-start">@lang('admin.name_local')</th>
+                        <th class="py-3 px-6 text-start">@lang('admin.name')</th>
                         <th class="py-3 px-6 text-start">@lang('admin.amenity_type')</th>
                         <th class="py-3 px-6 text-center">@lang('admin.status')</th>
                         <th class="py-3 px-6 text-center">@lang('admin.actions')</th>
@@ -66,13 +65,10 @@
                                 @endif
                             </td>
                             <td class="py-3 px-6 text-start">
-                                {{ $amenity->category->name_en ?? '-' }}
+                                {{ $amenity->category->display_name ?? '-' }}
                             </td>
                             <td class="py-3 px-6 text-start">
-                                {{ $amenity->name_en }}
-                            </td>
-                            <td class="py-3 px-6 text-start">
-                                {{ $amenity->name_local }}
+                                {{ $amenity->display_name }}
                             </td>
                             <td class="py-3 px-6 text-start">
                                 {{ ucfirst($amenity->amenity_type) }}
