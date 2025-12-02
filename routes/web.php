@@ -87,7 +87,8 @@ Route::group([
     Route::post('categories/bulk', [CategoryController::class, 'bulk'])->name('categories.bulk');
     Route::resource('categories', CategoryController::class);
 
-    Route::resource('amenity-categories', \App\Http\Controllers\Admin\AmenityCategoryController::class);
+    Route::resource('amenity-categories', \App\Http\Controllers\Admin\AmenityCategoryController::class)
+        ->parameters(['amenity-categories' => 'amenityCategory']);
 })->whereIn('locale', ['en', 'ar']);
 
 // Breeze Authentication Routes
