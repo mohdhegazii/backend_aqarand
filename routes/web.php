@@ -89,6 +89,13 @@ Route::group([
     Route::resource('categories', CategoryController::class)
         ->parameters(['categories' => 'category']);
 
+    // Backward compatibility: legacy segments route now redirects to categories.
+    Route::get('segments', function () {
+        \Log::debug('Deprecated segments index route accessed; redirecting to categories.');
+
+        return redirect()->route('admin.categories.index', ['locale' => app()->getLocale()]);
+    })->name('segments.index');
+
     Route::resource('amenity-categories', \App\Http\Controllers\Admin\AmenityCategoryController::class)
         ->parameters(['amenity-categories' => 'amenityCategory']);
 })->whereIn('locale', ['en', 'ar']);
