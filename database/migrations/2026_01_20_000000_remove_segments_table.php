@@ -3,6 +3,7 @@
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Database\QueryException;
 
 return new class extends Migration
 {
@@ -12,12 +13,27 @@ return new class extends Migration
     public function up(): void
     {
         // 1. Remove relation from categories
-        Schema::table('categories', function (Blueprint $table) {
-            // Drop foreign key if it exists
-            // We use the standard naming convention: categories_segment_id_foreign
-            $table->dropForeign(['segment_id']);
-            $table->dropColumn('segment_id');
-        });
+        if (Schema::hasTable('categories')) {
+            Schema::table('categories', function (Blueprint $table) {
+                // Safely try to drop foreign key
+                try {
+                    // This assumes the standard Laravel FK naming convention: categories_segment_id_foreign
+                    // If it doesn't exist, it will throw a QueryException which we catch.
+                    $table->dropForeign(['segment_id']);
+                } catch (QueryException $e) {
+                     // 1091 = Can't DROP 'x'; check that column/key exists
+                     // 1025 = Error on rename of '...' (errno: 150 - Foreign key constraint is incorrectly formed) - sometimes happens on drop
+                     // We ignore specifically if it says it doesn't exist.
+                     if ($e->getCode() !== '42000' && !str_contains($e->getMessage(), 'check that it exists')) {
+                        throw $e;
+                     }
+                }
+
+                if (Schema::hasColumn('categories', 'segment_id')) {
+                    $table->dropColumn('segment_id');
+                }
+            });
+        }
 
         // 2. Drop segments table
         Schema::dropIfExists('segments');
@@ -42,10 +58,12 @@ return new class extends Migration
         }
 
         // 2. Add column back to categories
-        Schema::table('categories', function (Blueprint $table) {
-            if (!Schema::hasColumn('categories', 'segment_id')) {
-                $table->foreignId('segment_id')->nullable()->constrained('segments')->onDelete('cascade');
-            }
-        });
+        if (Schema::hasTable('categories')) {
+            Schema::table('categories', function (Blueprint $table) {
+                if (!Schema::hasColumn('categories', 'segment_id')) {
+                    $table->foreignId('segment_id')->nullable()->constrained('segments')->onDelete('cascade');
+                }
+            });
+        }
     }
 };

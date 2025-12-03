@@ -13,7 +13,6 @@ return [
     'unit_types' => 'Unit Types',
     'amenities' => 'Amenities',
     'developers' => 'Developers',
-    'segments' => 'Segments',
     'categories' => 'Categories',
     'taxonomies' => 'Taxonomies',
     'amenity_categories' => 'Amenities & Facilities Categories',
@@ -77,7 +76,6 @@ return [
     'sort_order' => 'Sort Order',
     'select_option' => 'Select an option',
     'select_category' => 'Select Category',
-    'select_segment' => 'Select Segment',
     'yes' => 'Yes',
     'no' => 'No',
 
@@ -113,8 +111,6 @@ return [
     'seo_rule_keyphrase' => 'Keyphrase in Title and Description',
 
     // Content creation helpers
-    'create_segment' => 'Create Segment',
-    'edit_segment' => 'Edit Segment',
     'create_category' => 'Create Category',
     'edit_category' => 'Edit Category',
 

@@ -13,7 +13,6 @@ return [
     'unit_types' => 'أنواع الوحدات',
     'amenities' => 'وسائل الراحة',
     'developers' => 'المطورون',
-    'segments' => 'التقسيمات',
     'categories' => 'التصنيفات',
     'taxonomies' => 'التصنيفات',
     'amenity_categories' => 'تصنيفات وسائل الراحة والخدمات',
@@ -77,7 +76,6 @@ return [
     'sort_order' => 'ترتيب',
     'select_option' => 'اختر من القائمة',
     'select_category' => 'اختر التصنيف',
-    'select_segment' => 'اختر التقسيم',
     'yes' => 'نعم',
     'no' => 'لا',
 
@@ -113,8 +111,6 @@ return [
     'seo_rule_keyphrase' => 'تواجد الكلمة المفتاحية في العنوان والوصف',
 
     // Content creation helpers
-    'create_segment' => 'إضافة قطاع',
-    'edit_segment' => 'تعديل قطاع',
     'create_category' => 'إضافة تصنيف',
     'edit_category' => 'تعديل تصنيف',
 
