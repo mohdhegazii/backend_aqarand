@@ -3,6 +3,7 @@
 return [
     'app_name' => 'Aqar-and Admin',
     'dashboard' => 'Dashboard',
+    'common_info' => 'Common Info',
 
     // Navigation & modules
     'countries' => 'Countries',
@@ -81,6 +82,7 @@ return [
 
     // Location helpers
     'location_on_map' => 'Location on Map',
+    'location_search' => 'Location Search',
     'search_location' => 'Search location...',
     'lat' => 'Latitude',
     'lng' => 'Longitude',
