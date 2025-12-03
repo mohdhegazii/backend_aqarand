@@ -14,6 +14,10 @@ use App\Http\Controllers\Admin\AmenityController;
 use App\Http\Controllers\Admin\DeveloperController;
 use App\Http\Controllers\Admin\CategoryController;
 use App\Http\Controllers\Admin\LocationHelperController;
+use App\Http\Controllers\Admin\ProjectController;
+use App\Http\Controllers\Admin\PropertyModelController;
+use App\Http\Controllers\Admin\UnitController;
+use App\Http\Controllers\Admin\ListingController;
 use Illuminate\Support\Facades\Auth;
 
 Route::get('/', function () {
@@ -87,6 +91,13 @@ Route::group([
 
     Route::resource('amenity-categories', \App\Http\Controllers\Admin\AmenityCategoryController::class)
         ->parameters(['amenity-categories' => 'amenityCategory']);
+
+    // Phase 3 Resources
+    Route::resource('projects', ProjectController::class);
+    Route::resource('property-models', PropertyModelController::class)
+        ->parameters(['property-models' => 'propertyModel']);
+    Route::resource('units', UnitController::class);
+    Route::resource('listings', ListingController::class);
 });
 
 // Breeze Authentication Routes

@@ -16,6 +16,8 @@ class Unit extends Model
         'property_model_id',
         'unit_type_id',
         'unit_number',
+        'title_en',
+        'title_ar',
         'floor_label',
         'delivery_year',
         'unit_status',
@@ -38,6 +40,10 @@ class Unit extends Model
         'payment_type',
         'payment_summary',
         'media',
+        'meta_title_en',
+        'meta_title_ar',
+        'meta_description_en',
+        'meta_description_ar',
     ];
 
     protected $casts = [
@@ -77,9 +83,23 @@ class Unit extends Model
         return $this->hasOne(Listing::class);
     }
 
+    public function getDisplayNameAttribute()
+    {
+        $locale = app()->getLocale();
+        if ($locale === 'ar' && !empty($this->title_ar)) {
+            return $this->title_ar;
+        }
+        return $this->title_en ?? $this->unit_number;
+    }
+
     public function scopeAvailable($query)
     {
         return $query->where('unit_status', 'available');
+    }
+
+    public function scopeByProject($query, $projectId)
+    {
+        return $query->where('project_id', $projectId);
     }
 
     public function scopeByPriceRange($query, $min, $max)
