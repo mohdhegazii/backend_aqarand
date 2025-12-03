@@ -71,6 +71,15 @@ class Project extends Model
         'total_units' => 'integer',
     ];
 
+    // Status Hierarchy: Higher index = Higher status
+    public const STATUS_HIERARCHY = [
+        'new_launch' => 0,
+        'off_plan' => 1,
+        'under_construction' => 2,
+        'ready_to_move' => 3,
+        'livable' => 4,
+    ];
+
     public function developer()
     {
         return $this->belongsTo(Developer::class);
