@@ -28,6 +28,8 @@
             margin-right: auto;
             margin-left: 0;
         }
+        /* TinyMCE Fix for Z-Index if needed */
+        .tox-tinymce { z-index: 0; }
     </style>
     <!-- CDN for Tailwind (optional fallback if build fails) -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -40,11 +42,36 @@
 
     <!-- Leaflet JS -->
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+
+    <!-- TinyMCE (Free CDN) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tinymce/6.8.2/tinymce.min.js" referrerpolicy="origin"></script>
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            tinymce.init({
+                selector: '.wysiwyg',
+                plugins: 'table lists link image code',
+                toolbar: 'undo redo | formatselect | bold italic | alignleft aligncenter alignright | bullist numlist | link image | table | code',
+                height: 300,
+                menubar: false,
+                directionality: document.dir
+            });
+        });
+    </script>
 </head>
 <body class="font-sans antialiased bg-gray-100">
     @php
         $locale = app()->getLocale();
         $isRtl = $locale === 'ar';
+        // Admin Prefix Logic: If locale is 'en', prefix is 'en'. If 'ar', no prefix.
+        // Or simply route() handles it if we pass parameters, but we used route grouping.
+        // We can just rely on standard named routes if we didn't change names.
+        // But we didn't change names, we just wrapped them.
+        // However, standard route() helper without parameters might lose the prefix if not persistent.
+        // Our Middleware SetLocaleFromUrl persists 'locale' in URL defaults?
+        // No, I removed that in SetLocaleFromUrl to avoid 'ar' having prefix.
+        // So we need to manually pass ['locale' => 'en'] if current is en.
+
+        $routeParams = $locale === 'en' ? ['locale' => 'en'] : [];
     @endphp
     <div class="min-h-screen bg-gray-100 flex flex-col md:flex-row">
         <!-- Sidebar -->
@@ -56,35 +83,43 @@
                 </button>
             </div>
             <nav class="mt-4 px-2 space-y-1 overflow-y-auto max-h-[calc(100vh-4rem)]">
-                <a href="{{ route('admin.dashboard') }}" class="block px-4 py-2 text-gray-700 hover:bg-gray-100 rounded">
+                <a href="{{ route('admin.dashboard', $routeParams) }}" class="block px-4 py-2 text-gray-700 hover:bg-gray-100 rounded">
                     @lang('admin.dashboard')
                 </a>
 
                 <div class="mt-4 px-4 text-xs font-semibold text-gray-500 uppercase">
                     @lang('admin.countries') / @lang('admin.regions')
                 </div>
-                <a href="{{ route('admin.countries.index') }}" class="block px-4 py-2 text-gray-700 hover:bg-gray-100 rounded">@lang('admin.countries')</a>
-                <a href="{{ route('admin.regions.index') }}" class="block px-4 py-2 text-gray-700 hover:bg-gray-100 rounded">@lang('admin.regions')</a>
-                <a href="{{ route('admin.cities.index') }}" class="block px-4 py-2 text-gray-700 hover:bg-gray-100 rounded">@lang('admin.cities')</a>
-                <a href="{{ route('admin.districts.index') }}" class="block px-4 py-2 text-gray-700 hover:bg-gray-100 rounded">@lang('admin.districts')</a>
+                <a href="{{ route('admin.countries.index', $routeParams) }}" class="block px-4 py-2 text-gray-700 hover:bg-gray-100 rounded">@lang('admin.countries')</a>
+                <a href="{{ route('admin.regions.index', $routeParams) }}" class="block px-4 py-2 text-gray-700 hover:bg-gray-100 rounded">@lang('admin.regions')</a>
+                <a href="{{ route('admin.cities.index', $routeParams) }}" class="block px-4 py-2 text-gray-700 hover:bg-gray-100 rounded">@lang('admin.cities')</a>
+                <a href="{{ route('admin.districts.index', $routeParams) }}" class="block px-4 py-2 text-gray-700 hover:bg-gray-100 rounded">@lang('admin.districts')</a>
 
                 <div class="mt-4 px-4 text-xs font-semibold text-gray-500 uppercase">
                     @lang('admin.property_types') / @lang('admin.unit_types')
                 </div>
-                <a href="{{ route('admin.property-types.index') }}" class="block px-4 py-2 text-gray-700 hover:bg-gray-100 rounded">@lang('admin.property_types')</a>
-                <a href="{{ route('admin.unit-types.index') }}" class="block px-4 py-2 text-gray-700 hover:bg-gray-100 rounded">@lang('admin.unit_types')</a>
-                <a href="{{ route('admin.amenities.index') }}" class="block px-4 py-2 text-gray-700 hover:bg-gray-100 rounded">@lang('admin.amenities')</a>
-                <a href="{{ route('admin.developers.index') }}" class="block px-4 py-2 text-gray-700 hover:bg-gray-100 rounded">@lang('admin.developers')</a>
+                <a href="{{ route('admin.property-types.index', $routeParams) }}" class="block px-4 py-2 text-gray-700 hover:bg-gray-100 rounded">@lang('admin.property_types')</a>
+                <a href="{{ route('admin.unit-types.index', $routeParams) }}" class="block px-4 py-2 text-gray-700 hover:bg-gray-100 rounded">@lang('admin.unit_types')</a>
+                <a href="{{ route('admin.amenities.index', $routeParams) }}" class="block px-4 py-2 text-gray-700 hover:bg-gray-100 rounded">@lang('admin.amenities')</a>
+                <a href="{{ route('admin.developers.index', $routeParams) }}" class="block px-4 py-2 text-gray-700 hover:bg-gray-100 rounded">@lang('admin.developers')</a>
 
                 <div class="mt-4 px-4 text-xs font-semibold text-gray-500 uppercase">
                     @lang('admin.taxonomies')
                 </div>
-                <a href="{{ route('admin.categories.index') }}" class="block px-4 py-2 text-gray-700 hover:bg-gray-100 rounded">@lang('admin.categories')</a>
+                <a href="{{ route('admin.categories.index', $routeParams) }}" class="block px-4 py-2 text-gray-700 hover:bg-gray-100 rounded">@lang('admin.categories')</a>
 
                 <div class="mt-4 px-4 text-xs font-semibold text-gray-500 uppercase">
                     @lang('admin.amenity_categories')
                 </div>
-                <a href="{{ route('admin.amenity-categories.index') }}" class="block px-4 py-2 text-gray-700 hover:bg-gray-100 rounded">@lang('admin.amenity_categories')</a>
+                <a href="{{ route('admin.amenity-categories.index', $routeParams) }}" class="block px-4 py-2 text-gray-700 hover:bg-gray-100 rounded">@lang('admin.amenity_categories')</a>
+
+                <div class="mt-4 px-4 text-xs font-semibold text-gray-500 uppercase">
+                    @lang('admin.real_estate')
+                </div>
+                <a href="{{ route('admin.projects.index', $routeParams) }}" class="block px-4 py-2 text-gray-700 hover:bg-gray-100 rounded">@lang('admin.projects')</a>
+                <a href="{{ route('admin.property-models.index', $routeParams) }}" class="block px-4 py-2 text-gray-700 hover:bg-gray-100 rounded">@lang('admin.property_models')</a>
+                <a href="{{ route('admin.units.index', $routeParams) }}" class="block px-4 py-2 text-gray-700 hover:bg-gray-100 rounded">@lang('admin.units')</a>
+                <a href="{{ route('admin.listings.index', $routeParams) }}" class="block px-4 py-2 text-gray-700 hover:bg-gray-100 rounded">@lang('admin.listings')</a>
             </nav>
         </aside>
 
@@ -106,16 +141,26 @@
                     <div class="flex items-center space-x-4 rtl:space-x-reverse">
                         <!-- Language Switcher -->
                         @php
-                            $currentLocale = app()->getLocale();
-                            $languages = [
-                                'en' => __('admin.english'),
-                                'ar' => __('admin.arabic'),
-                            ];
+                            // For switcher links:
+                            // If switching to EN: /en/admin/...
+                            // If switching to AR: /admin/...
+                            // Since we use route(), we can pass parameters.
+                            // But SetLocaleFromUrl clears parameters.
+                            // We need to construct the URL manually or use a helper route.
+                            // Current implementation of LanguageController@switch does redirect.
+                            // But we changed logic to be URL based.
+                            // Let's rely on 'lang.switch' which is NOT in the group.
+                            // It will redirect to previous URL.
+                            // We need to update LanguageController to redirect to correct prefix?
+                            // OR we can just link to /admin/dashboard vs /en/admin/dashboard for simplicity here?
+                            // But user wants to stay on same page.
+                            // Let's keep using lang.switch but LanguageController needs to know about prefixes.
+                            // Actually, simple hrefs might be easier if we just toggle the /en/ segment.
                         @endphp
 
                         <div class="relative">
                             <button onclick="document.getElementById('language-dropdown').classList.toggle('hidden')" class="flex items-center text-sm font-medium text-gray-500 hover:text-gray-700 hover:border-gray-300 focus:outline-none focus:text-gray-700 focus:border-gray-300 transition duration-150 ease-in-out">
-                                <div>{{ $languages[$currentLocale] ?? __('admin.language') }}</div>
+                                <div>{{ $locale === 'ar' ? __('admin.arabic') : __('admin.english') }}</div>
                                 <div class="ml-1">
                                     <svg class="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
                                         <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
@@ -125,17 +170,14 @@
 
                             <div id="language-dropdown" class="hidden absolute right-0 mt-2 w-48 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 z-50">
                                 <div class="py-1" role="menu" aria-orientation="vertical" aria-labelledby="options-menu">
-                                    @foreach($languages as $localeKey => $label)
-                                        @if($localeKey === $currentLocale)
-                                            <span class="block px-4 py-2 text-sm text-gray-700 font-bold bg-gray-100 cursor-default">
-                                                {{ $label }}
-                                            </span>
-                                        @else
-                                            <a href="{{ route('lang.switch', ['locale' => $localeKey]) }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100" role="menuitem">
-                                                {{ $label }}
-                                            </a>
-                                        @endif
-                                    @endforeach
+                                    <!-- AR Link: Remove /en/ prefix if exists -->
+                                    <a href="{{ preg_replace('#^/en/#', '/', request()->getRequestUri()) === request()->getRequestUri() ? '/admin' : preg_replace('#^/en#', '', request()->getRequestUri()) }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100" role="menuitem">
+                                        @lang('admin.arabic')
+                                    </a>
+                                    <!-- EN Link: Add /en/ prefix if not exists -->
+                                    <a href="{{ str_starts_with(request()->getRequestUri(), '/en') ? request()->getRequestUri() : '/en' . request()->getRequestUri() }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100" role="menuitem">
+                                        @lang('admin.english')
+                                    </a>
                                 </div>
                             </div>
                         </div>
