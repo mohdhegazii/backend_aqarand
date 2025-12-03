@@ -14,7 +14,7 @@ return new class extends Migration
         $tables = [
             'countries', 'regions', 'cities', 'districts',
             'property_types', 'unit_types', 'amenities',
-            'segments', 'categories'
+            'categories'
         ];
 
         foreach ($tables as $table) {
@@ -27,7 +27,7 @@ return new class extends Migration
             }
         }
 
-        $imageTables = ['property_types', 'unit_types', 'amenities', 'categories', 'segments'];
+        $imageTables = ['property_types', 'unit_types', 'amenities', 'categories'];
 
         foreach ($imageTables as $table) {
             if (Schema::hasTable($table)) {
@@ -51,7 +51,7 @@ return new class extends Migration
         $tables = [
             'countries', 'regions', 'cities', 'districts',
             'property_types', 'unit_types', 'amenities',
-            'segments', 'categories'
+            'categories'
         ];
 
         foreach ($tables as $table) {
@@ -64,7 +64,7 @@ return new class extends Migration
              }
         }
 
-         $imageTables = ['property_types', 'unit_types', 'amenities', 'categories', 'segments'];
+         $imageTables = ['property_types', 'unit_types', 'amenities', 'categories'];
 
         foreach ($imageTables as $table) {
             if (Schema::hasTable($table)) {

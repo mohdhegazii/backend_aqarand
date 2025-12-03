@@ -11,11 +11,13 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('segments', function (Blueprint $table) {
-            if (!Schema::hasColumn('segments', 'image_path')) {
-                $table->string('image_path')->nullable()->after('slug');
-            }
-        });
+        if (Schema::hasTable('segments')) {
+            Schema::table('segments', function (Blueprint $table) {
+                if (!Schema::hasColumn('segments', 'image_path')) {
+                    $table->string('image_path')->nullable()->after('slug');
+                }
+            });
+        }
     }
 
     /**
@@ -23,10 +25,12 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::table('segments', function (Blueprint $table) {
-            if (Schema::hasColumn('segments', 'image_path')) {
-                $table->dropColumn('image_path');
-            }
-        });
+        if (Schema::hasTable('segments')) {
+            Schema::table('segments', function (Blueprint $table) {
+                if (Schema::hasColumn('segments', 'image_path')) {
+                    $table->dropColumn('image_path');
+                }
+            });
+        }
     }
 };

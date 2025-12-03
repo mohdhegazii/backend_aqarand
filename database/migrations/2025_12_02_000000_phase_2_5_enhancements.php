@@ -11,23 +11,10 @@ return new class extends Migration
      */
     public function up(): void
     {
-        // 1. Segments Table
-        if (!Schema::hasTable('segments')) {
-            Schema::create('segments', function (Blueprint $table) {
-                $table->id();
-                $table->string('name_en');
-                $table->string('name_ar');
-                $table->string('slug')->unique();
-                $table->boolean('is_active')->default(true);
-                $table->timestamps();
-            });
-        }
-
-        // 2. Categories Table
+        // 1. Categories Table
         if (!Schema::hasTable('categories')) {
             Schema::create('categories', function (Blueprint $table) {
                 $table->id();
-                $table->foreignId('segment_id')->constrained('segments')->onDelete('cascade');
                 $table->string('name_en');
                 $table->string('name_ar');
                 $table->string('slug')->unique();
@@ -37,7 +24,7 @@ return new class extends Migration
             });
         }
 
-        // 3. Countries - Add is_active and lat/lng if not present
+        // 2. Countries - Add is_active and lat/lng if not present
         Schema::table('countries', function (Blueprint $table) {
             if (!Schema::hasColumn('countries', 'is_active')) {
                 $table->boolean('is_active')->default(true);
@@ -50,7 +37,7 @@ return new class extends Migration
             }
         });
 
-        // 3.1 Locations (Regions, Cities, Districts) - Add lat/lng
+        // 2.1 Locations (Regions, Cities, Districts) - Add lat/lng
         Schema::table('regions', function (Blueprint $table) {
             if (!Schema::hasColumn('regions', 'lat')) {
                 $table->decimal('lat', 10, 7)->nullable();
@@ -78,7 +65,7 @@ return new class extends Migration
             }
         });
 
-        // 4. Developers - Add bilingual fields and logo_path
+        // 3. Developers - Add bilingual fields and logo_path
         Schema::table('developers', function (Blueprint $table) {
             if (!Schema::hasColumn('developers', 'name_en')) {
                 $table->string('name_en')->nullable();
@@ -97,7 +84,7 @@ return new class extends Migration
             }
         });
 
-        // 5. SEO Meta Table
+        // 4. SEO Meta Table
         if (!Schema::hasTable('seo_meta')) {
             Schema::create('seo_meta', function (Blueprint $table) {
                 $table->id();
@@ -129,7 +116,7 @@ return new class extends Migration
             });
         }
 
-        // 6. Amenities - Add category_id and image_path
+        // 5. Amenities - Add category_id and image_path
         Schema::table('amenities', function (Blueprint $table) {
             if (!Schema::hasColumn('amenities', 'category_id')) {
                 $table->foreignId('category_id')->nullable()->constrained('categories')->onDelete('set null');
@@ -139,21 +126,21 @@ return new class extends Migration
             }
         });
 
-        // 7. Property Types - Add image_path
+        // 6. Property Types - Add image_path
         Schema::table('property_types', function (Blueprint $table) {
             if (!Schema::hasColumn('property_types', 'image_path')) {
                 $table->string('image_path')->nullable();
             }
         });
 
-        // 8. Unit Types - Add image_path
+        // 7. Unit Types - Add image_path
         Schema::table('unit_types', function (Blueprint $table) {
             if (!Schema::hasColumn('unit_types', 'image_path')) {
                 $table->string('image_path')->nullable();
             }
         });
 
-        // 9. Lookup Enhancements - icon_class/image_url for property/unit types/amenities if missing
+        // 8. Lookup Enhancements - icon_class/image_url for property/unit types/amenities if missing
         Schema::table('property_types', function (Blueprint $table) {
             if (!Schema::hasColumn('property_types', 'icon_class')) {
                 $table->string('icon_class', 120)->nullable();
@@ -226,6 +213,5 @@ return new class extends Migration
         });
 
         Schema::dropIfExists('categories');
-        Schema::dropIfExists('segments');
     }
 };

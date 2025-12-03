@@ -13,6 +13,8 @@ class UnitType extends Model
 
     protected $fillable = [
         'property_type_id',
+        'name_en',
+        'name_local',
         'name',
         'code',
         'description',

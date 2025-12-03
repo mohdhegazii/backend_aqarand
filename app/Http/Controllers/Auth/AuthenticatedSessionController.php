@@ -30,9 +30,7 @@ class AuthenticatedSessionController extends Controller
 
         // Redirect admins to dashboard
         if (Auth::user()->is_admin) {
-            $locale = session('locale', config('app.locale', 'en'));
-
-            return redirect()->intended(route('admin.dashboard', ['locale' => $locale], absolute: false));
+            return redirect()->intended(route('admin.dashboard', absolute: false));
         }
 
         return redirect()->intended(route('dashboard', absolute: false));

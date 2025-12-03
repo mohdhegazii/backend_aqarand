@@ -107,26 +107,10 @@ return new class extends Migration
             }
         });
 
-        Schema::dropIfExists('segments');
     }
 
     public function down(): void
     {
-        Schema::create('segments', function (Blueprint $table) {
-            $table->id();
-            $table->string('name_en');
-            $table->string('name_ar');
-            $table->string('slug')->unique();
-            $table->boolean('is_active')->default(true);
-            $table->timestamps();
-        });
-
-        Schema::table('categories', function (Blueprint $table) {
-            if (!Schema::hasColumn('categories', 'segment_id')) {
-                $table->foreignId('segment_id')->nullable()->after('id')->constrained('segments')->nullOnDelete();
-            }
-        });
-
         Schema::table('property_types', function (Blueprint $table) {
             if (!Schema::hasColumn('property_types', 'category')) {
                 $table->string('category')->nullable()->after('slug');

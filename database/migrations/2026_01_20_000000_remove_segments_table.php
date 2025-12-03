@@ -44,26 +44,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        // 1. Re-create segments table
-        if (!Schema::hasTable('segments')) {
-            Schema::create('segments', function (Blueprint $table) {
-                $table->id();
-                $table->string('name_en');
-                $table->string('name_ar');
-                $table->string('slug')->unique();
-                $table->string('image_path')->nullable();
-                $table->boolean('is_active')->default(true);
-                $table->timestamps();
-            });
-        }
-
-        // 2. Add column back to categories
-        if (Schema::hasTable('categories')) {
-            Schema::table('categories', function (Blueprint $table) {
-                if (!Schema::hasColumn('categories', 'segment_id')) {
-                    $table->foreignId('segment_id')->nullable()->constrained('segments')->onDelete('cascade');
-                }
-            });
-        }
+        // Intentionally left blank. The segments table is permanently removed.
     }
 };
