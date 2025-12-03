@@ -193,7 +193,7 @@
 </div>
 
 <!-- Scripts -->
-<script src="https://cdn.tiny.cloud/1/no-api-key/tinymce/6/tinymce.min.js" referrerpolicy="origin"></script>
+<script src="https://cdn.tiny.cloud/1/qgkphze48t0eieue0gqhegrc25hz9hyt75xojlt84f36f9md/tinymce/6/tinymce.min.js" referrerpolicy="origin"></script>
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
@@ -321,45 +321,104 @@
 
     // Standard Dropdown Logic
     function fetchRegions(countryId, callback) {
+        const regionSelect = document.getElementById('region_id');
+        const citySelect = document.getElementById('city_id');
+        const districtSelect = document.getElementById('district_id');
+
+        // Clear children
+        regionSelect.innerHTML = '<option value="">@lang("admin.select_option")</option>';
+        citySelect.innerHTML = '<option value="">@lang("admin.select_option")</option>';
+        districtSelect.innerHTML = '<option value="">@lang("admin.select_option")</option>';
+
         if (!countryId) return;
+
+        // FlyTo Logic for Country (Optional: we can fetch country coords if needed)
+        // For now, let's just fetch regions.
+
         fetch(`/admin/locations/countries/${countryId}`)
             .then(response => response.json())
             .then(data => {
-                const regionSelect = document.getElementById('region_id');
-                regionSelect.innerHTML = '<option value="">@lang("admin.select_option")</option>';
+                // Determine which name to show based on current locale
+                const isRtl = document.documentElement.dir === 'rtl';
+
                 data.regions.forEach(region => {
-                    regionSelect.innerHTML += `<option value="${region.id}">${region.name_en}</option>`;
+                    const name = isRtl ? (region.name_local || region.name_ar || region.name_en) : region.name_en;
+                    regionSelect.innerHTML += `<option value="${region.id}" data-lat="${region.lat}" data-lng="${region.lng}">${name}</option>`;
                 });
                 if (callback) callback();
             });
     }
 
     function fetchCities(regionId, callback) {
+        const citySelect = document.getElementById('city_id');
+        const districtSelect = document.getElementById('district_id');
+
+        // Clear children
+        citySelect.innerHTML = '<option value="">@lang("admin.select_option")</option>';
+        districtSelect.innerHTML = '<option value="">@lang("admin.select_option")</option>';
+
         if (!regionId) return;
+
+        // FlyTo Region
+        const regionSelect = document.getElementById('region_id');
+        const selectedOption = regionSelect.options[regionSelect.selectedIndex];
+        if (selectedOption && selectedOption.dataset.lat && selectedOption.dataset.lng) {
+            flyToLocation(selectedOption.dataset.lat, selectedOption.dataset.lng);
+        }
+
         fetch(`/admin/locations/regions/${regionId}`)
             .then(response => response.json())
             .then(data => {
-                const citySelect = document.getElementById('city_id');
-                citySelect.innerHTML = '<option value="">@lang("admin.select_option")</option>';
+                const isRtl = document.documentElement.dir === 'rtl';
                 data.cities.forEach(city => {
-                    citySelect.innerHTML += `<option value="${city.id}">${city.name_en}</option>`;
+                    const name = isRtl ? (city.name_local || city.name_ar || city.name_en) : city.name_en;
+                    citySelect.innerHTML += `<option value="${city.id}" data-lat="${city.lat}" data-lng="${city.lng}">${name}</option>`;
                 });
                  if (callback) callback();
             });
     }
 
     function fetchDistricts(cityId, callback) {
+        const districtSelect = document.getElementById('district_id');
+        districtSelect.innerHTML = '<option value="">@lang("admin.select_option")</option>';
+
         if (!cityId) return;
+
+        // FlyTo City
+        const citySelect = document.getElementById('city_id');
+        const selectedOption = citySelect.options[citySelect.selectedIndex];
+        if (selectedOption && selectedOption.dataset.lat && selectedOption.dataset.lng) {
+            flyToLocation(selectedOption.dataset.lat, selectedOption.dataset.lng);
+        }
+
         fetch(`/admin/locations/cities/${cityId}`)
             .then(response => response.json())
             .then(data => {
-                const districtSelect = document.getElementById('district_id');
-                districtSelect.innerHTML = '<option value="">@lang("admin.select_option")</option>';
+                const isRtl = document.documentElement.dir === 'rtl';
                 data.districts.forEach(district => {
-                    districtSelect.innerHTML += `<option value="${district.id}">${district.name_en}</option>`;
+                    const name = isRtl ? (district.name_local || district.name_ar || district.name_en) : district.name_en;
+                    districtSelect.innerHTML += `<option value="${district.id}" data-lat="${district.lat}" data-lng="${district.lng}">${name}</option>`;
                 });
                  if (callback) callback();
             });
+
+        // Also handle District selection to fly there
+        districtSelect.onchange = function() {
+            const selectedOption = this.options[this.selectedIndex];
+            if (selectedOption && selectedOption.dataset.lat && selectedOption.dataset.lng) {
+                flyToLocation(selectedOption.dataset.lat, selectedOption.dataset.lng);
+            }
+        };
+    }
+
+    function flyToLocation(lat, lng) {
+        if (lat && lng && map) {
+            map.flyTo([lat, lng], 12); // Zoom level 12 for regions/cities
+            // Don't move the marker yet unless they click. Or should we?
+            // The requirement says "fly to the point we select".
+            // Usually in admin, if I select a city, I want the map to center there so I can place the marker accurately.
+            // I won't move the marker automatically to the center of the city because the marker represents the PROJECT location.
+        }
     }
 
     // Close search results on click outside

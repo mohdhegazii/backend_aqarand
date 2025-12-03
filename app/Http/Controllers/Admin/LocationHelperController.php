@@ -17,6 +17,7 @@ class LocationHelperController extends Controller
     public function search(Request $request)
     {
         $query = $request->get('q');
+        $isAr = app()->getLocale() === 'ar';
 
         if (strlen($query) < 2) {
             return response()->json([]);
@@ -32,9 +33,13 @@ class LocationHelperController extends Controller
             ->get();
 
         foreach ($regions as $r) {
+            $name = $isAr
+                ? ($r->name_local ?? $r->name_en) . ' (' . ($r->country->name_local ?? $r->country->name_en) . ')'
+                : $r->name_en . ' (' . $r->country->name_en . ')';
+
             $results[] = [
                 'id' => $r->id,
-                'name' => $r->name_en . ' (' . $r->country->name_en . ')',
+                'name' => $name,
                 'type' => 'region',
                 'data' => [
                     'country_id' => $r->country_id,
@@ -53,9 +58,13 @@ class LocationHelperController extends Controller
             ->get();
 
         foreach ($cities as $c) {
+            $name = $isAr
+                ? ($c->name_local ?? $c->name_en) . ', ' . ($c->region->name_local ?? $c->region->name_en)
+                : $c->name_en . ', ' . $c->region->name_en;
+
             $results[] = [
                 'id' => $c->id,
-                'name' => $c->name_en . ', ' . $c->region->name_en,
+                'name' => $name,
                 'type' => 'city',
                 'data' => [
                     'country_id' => $c->region->country_id,
@@ -74,9 +83,13 @@ class LocationHelperController extends Controller
             ->get();
 
         foreach ($districts as $d) {
+            $name = $isAr
+                ? ($d->name_local ?? $d->name_en) . ', ' . ($d->city->name_local ?? $d->city->name_en)
+                : $d->name_en . ', ' . $d->city->name_en;
+
             $results[] = [
                 'id' => $d->id,
-                'name' => $d->name_en . ', ' . $d->city->name_en,
+                'name' => $name,
                 'type' => 'district',
                 'data' => [
                     'country_id' => $d->city->region->country_id,

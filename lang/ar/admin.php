@@ -3,6 +3,7 @@
 return [
     'app_name' => 'لوحة تحكم عقار-اند',
     'dashboard' => 'لوحة التحكم',
+    'common_info' => 'معلومات عامة',
 
     // Navigation & modules
     'countries' => 'الدول',
@@ -81,6 +82,7 @@ return [
 
     // Location helpers
     'location_on_map' => 'الموقع على الخريطة',
+    'location_search' => 'بحث عن موقع',
     'search_location' => 'ابحث عن موقع...',
     'lat' => 'خط العرض',
     'lng' => 'خط الطول',
