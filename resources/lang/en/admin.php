@@ -93,6 +93,4 @@ return [
     'units' => 'Units',
     'listings' => 'Listings',
     'real_estate' => 'Real Estate',
-    'details' => 'Details',
-    'search_location' => 'Search Location',
 ];

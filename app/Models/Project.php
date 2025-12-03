@@ -155,41 +155,4 @@ class Project extends Model
         $slug = $locale === 'ar' ? ($this->seo_slug_ar ?? $this->seo_slug_en ?? $this->slug) : ($this->seo_slug_en ?? $this->slug);
         return "/{$locale}/projects/{$slug}";
     }
-
-    public function updateStatusFromUnits()
-    {
-        // Get all construction statuses from units
-        $statuses = $this->units()->pluck('construction_status')->unique();
-
-        if ($statuses->isEmpty()) {
-            return;
-        }
-
-        // Find highest
-        $highestStatus = 'new_launch';
-        $highestScore = -1;
-
-        foreach ($statuses as $status) {
-            $score = self::STATUS_HIERARCHY[$status] ?? -1;
-            if ($score > $highestScore) {
-                $highestScore = $score;
-                $highestStatus = $status;
-            }
-        }
-
-        $this->status = $highestStatus;
-        $this->saveQuietly(); // Avoid triggering Project events if any
-    }
-
-    public function updateDeliveryYearFromUnits()
-    {
-        // "Nearest date added in the units" -> Minimum year
-        // delivery_year in units is integer (year)
-        $minYear = $this->units()->whereNotNull('delivery_year')->min('delivery_year');
-
-        if ($minYear) {
-            $this->delivery_year = $minYear;
-            $this->saveQuietly();
-        }
-    }
 }

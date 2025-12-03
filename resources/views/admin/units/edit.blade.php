@@ -49,19 +49,6 @@
                     <input type="text" name="floor_label" value="{{ old('floor_label', $unit->floor_label) }}" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50">
                 </div>
 
-                <div>
-                    <label class="block text-sm font-medium text-gray-700">Orientation</label>
-                    <input type="text" name="orientation" value="{{ old('orientation', $unit->orientation) }}" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50">
-                </div>
-                <div>
-                    <label class="block text-sm font-medium text-gray-700">View Label</label>
-                    <input type="text" name="view_label" value="{{ old('view_label', $unit->view_label) }}" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50">
-                </div>
-                <div>
-                    <label class="block text-sm font-medium text-gray-700">Finishing Type</label>
-                    <input type="text" name="finishing_type" value="{{ old('finishing_type', $unit->finishing_type) }}" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50">
-                </div>
-
                 <!-- Status -->
                 <div>
                     <label class="block text-sm font-medium text-gray-700">Status *</label>
@@ -72,16 +59,6 @@
                         <option value="rented" {{ old('unit_status', $unit->unit_status) == 'rented' ? 'selected' : '' }}>Rented</option>
                     </select>
                 </div>
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700">Construction Status</label>
-                        <select name="construction_status" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50">
-                            <option value="new_launch" {{ old('construction_status', $unit->construction_status) == 'new_launch' ? 'selected' : '' }}>New Launch</option>
-                            <option value="off_plan" {{ old('construction_status', $unit->construction_status) == 'off_plan' ? 'selected' : '' }}>Off Plan</option>
-                            <option value="under_construction" {{ old('construction_status', $unit->construction_status) == 'under_construction' ? 'selected' : '' }}>Under Construction</option>
-                            <option value="ready_to_move" {{ old('construction_status', $unit->construction_status) == 'ready_to_move' ? 'selected' : '' }}>Ready to Move</option>
-                            <option value="livable" {{ old('construction_status', $unit->construction_status) == 'livable' ? 'selected' : '' }}>Livable</option>
-                        </select>
-                    </div>
 
                  <!-- Pricing -->
                  <div>
@@ -92,18 +69,6 @@
                     <label class="block text-sm font-medium text-gray-700">Currency *</label>
                     <input type="text" name="currency_code" value="{{ old('currency_code', $unit->currency_code) }}" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50" required>
                 </div>
-                <div>
-                    <label class="block text-sm font-medium text-gray-700">Payment Type</label>
-                    <select name="payment_type" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50">
-                        <option value="cash" {{ old('payment_type', $unit->payment_type) == 'cash' ? 'selected' : '' }}>Cash</option>
-                        <option value="installments" {{ old('payment_type', $unit->payment_type) == 'installments' ? 'selected' : '' }}>Installments</option>
-                        <option value="both" {{ old('payment_type', $unit->payment_type) == 'both' ? 'selected' : '' }}>Both</option>
-                    </select>
-                </div>
-                <div class="md:col-span-2">
-                    <label class="block text-sm font-medium text-gray-700">Payment Summary</label>
-                    <textarea name="payment_summary" rows="2" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50">{{ old('payment_summary', $unit->payment_summary) }}</textarea>
-                </div>
 
                  <!-- Areas -->
                  <div>
@@ -113,18 +78,6 @@
                 <div>
                     <label class="block text-sm font-medium text-gray-700">Land Area</label>
                     <input type="number" step="0.01" name="land_area" value="{{ old('land_area', $unit->land_area) }}" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50">
-                </div>
-                <div>
-                    <label class="block text-sm font-medium text-gray-700">Garden Area</label>
-                    <input type="number" step="0.01" name="garden_area" value="{{ old('garden_area', $unit->garden_area) }}" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50">
-                </div>
-                <div>
-                    <label class="block text-sm font-medium text-gray-700">Outdoor Area</label>
-                    <input type="number" step="0.01" name="outdoor_area" value="{{ old('outdoor_area', $unit->outdoor_area) }}" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50">
-                </div>
-                <div>
-                    <label class="block text-sm font-medium text-gray-700">Roof Area</label>
-                    <input type="number" step="0.01" name="roof_area" value="{{ old('roof_area', $unit->roof_area) }}" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50">
                 </div>
 
                 <!-- Specs -->

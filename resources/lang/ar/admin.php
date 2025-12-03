@@ -93,6 +93,4 @@ return [
     'units' => 'الوحدات',
     'listings' => 'القوائم',
     'real_estate' => 'العقارات',
-    'details' => 'التفاصيل',
-    'search_location' => 'البحث عن موقع',
 ];
