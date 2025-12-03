@@ -54,8 +54,8 @@ class ProjectController extends Controller
             'country_id' => 'required|exists:countries,id',
             'region_id' => 'required|exists:regions,id',
             'city_id' => 'required|exists:cities,id',
-            'district_id' => 'required|exists:districts,id',
-            'status' => 'required|in:planned,under_construction,delivered',
+            'district_id' => 'nullable|exists:districts,id',
+            'status' => 'required',
             'delivery_year' => 'nullable|integer|min:2000|max:2100',
             'seo_slug_en' => 'nullable|string|unique:projects,seo_slug_en',
             'seo_slug_ar' => 'nullable|string|unique:projects,seo_slug_ar',
@@ -65,16 +65,18 @@ class ProjectController extends Controller
 
         // Auto-generate slugs if missing
         $validated['name'] = $validated['name_en']; // Fallback
-        $validated['slug'] = $validated['seo_slug_en'] ?? Str::slug($validated['name_en']);
 
-        if (empty($validated['seo_slug_en'])) {
-            $validated['seo_slug_en'] = Str::slug($validated['name_en']);
+        // Logic: seo_slug_en defaults to slug(name_en), seo_slug_ar defaults to slug(name_ar)
+        $validated['seo_slug_en'] = !empty($validated['seo_slug_en']) ? $validated['seo_slug_en'] : Str::slug($validated['name_en']);
+
+        // Arabic Slug - user specifically asked: "seo slug Arabic is the Arabic Name"
+        $nameAr = $request->input('name_ar');
+        if (empty($validated['seo_slug_ar']) && !empty($nameAr)) {
+             $validated['seo_slug_ar'] = preg_replace('/\s+/u', '-', trim($nameAr));
         }
-        if (empty($validated['seo_slug_ar']) && !empty($validated['name_ar'])) {
-             // Simple slugify for Arabic or allow empty to fallback to ID/EN in frontend
-             // For now, let's try to keep it simple.
-             $validated['seo_slug_ar'] = Str::slug($validated['name_ar']) ?: null;
-        }
+
+        // Main slug fallback
+        $validated['slug'] = $validated['seo_slug_en'];
 
         $project = Project::create($request->except('amenities', 'seo_slug_en', 'seo_slug_ar') + [
             'name' => $validated['name'],
@@ -110,8 +112,8 @@ class ProjectController extends Controller
             'country_id' => 'required|exists:countries,id',
             'region_id' => 'required|exists:regions,id',
             'city_id' => 'required|exists:cities,id',
-            'district_id' => 'required|exists:districts,id',
-            'status' => 'required|in:planned,under_construction,delivered',
+            'district_id' => 'nullable|exists:districts,id',
+            'status' => 'required',
             'delivery_year' => 'nullable|integer|min:2000|max:2100',
             'seo_slug_en' => 'nullable|string|unique:projects,seo_slug_en,' . $project->id,
             'seo_slug_ar' => 'nullable|string|unique:projects,seo_slug_ar,' . $project->id,
@@ -124,9 +126,13 @@ class ProjectController extends Controller
             $validated['seo_slug_en'] = Str::slug($validated['name_en']);
         }
 
+        if (empty($validated['seo_slug_ar']) && $request->filled('name_ar')) {
+             $validated['seo_slug_ar'] = preg_replace('/\s+/u', '-', trim($request->name_ar));
+        }
+
         $data = $request->except('amenities', 'seo_slug_en', 'seo_slug_ar');
         $data['seo_slug_en'] = $validated['seo_slug_en'];
-        $data['seo_slug_ar'] = $validated['seo_slug_ar'] ?? ($request->has('name_ar') ? Str::slug($request->name_ar) : null);
+        $data['seo_slug_ar'] = $validated['seo_slug_ar'] ?? null;
         $data['is_active'] = $request->has('is_active');
 
         $project->update($data);

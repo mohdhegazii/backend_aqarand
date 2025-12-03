@@ -55,9 +55,10 @@ Route::group([
     Route::get('/', [DashboardController::class, 'index'])->name('dashboard');
 
     // Location Helpers
-    Route::get('locations/countries/{id}', [LocationHelperController::class, 'getCountry']);
-    Route::get('locations/regions/{id}', [LocationHelperController::class, 'getRegion']);
-    Route::get('locations/cities/{id}', [LocationHelperController::class, 'getCity']);
+    Route::get('locations/search', [LocationHelperController::class, 'search'])->name('locations.search');
+    Route::get('locations/countries/{id}', [LocationHelperController::class, 'getRegions']);
+    Route::get('locations/regions/{id}', [LocationHelperController::class, 'getCities']);
+    Route::get('locations/cities/{id}', [LocationHelperController::class, 'getDistricts']);
 
     Route::post('countries/bulk', [CountryController::class, 'bulk'])->name('countries.bulk');
     Route::resource('countries', CountryController::class);

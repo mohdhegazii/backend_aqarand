@@ -49,14 +49,31 @@
                 </div>
 
                 <!-- Status -->
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Sales Status *</label>
+                        <select name="unit_status" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50" required>
+                            <option value="available" {{ old('unit_status') == 'available' ? 'selected' : '' }}>Available</option>
+                            <option value="reserved" {{ old('unit_status') == 'reserved' ? 'selected' : '' }}>Reserved</option>
+                            <option value="sold" {{ old('unit_status') == 'sold' ? 'selected' : '' }}>Sold</option>
+                            <option value="rented" {{ old('unit_status') == 'rented' ? 'selected' : '' }}>Rented</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Construction Status</label>
+                        <select name="construction_status" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50">
+                            <option value="new_launch" {{ old('construction_status') == 'new_launch' ? 'selected' : '' }}>New Launch</option>
+                            <option value="off_plan" {{ old('construction_status') == 'off_plan' ? 'selected' : '' }}>Off Plan</option>
+                            <option value="under_construction" {{ old('construction_status') == 'under_construction' ? 'selected' : '' }}>Under Construction</option>
+                            <option value="ready_to_move" {{ old('construction_status') == 'ready_to_move' ? 'selected' : '' }}>Ready to Move</option>
+                            <option value="livable" {{ old('construction_status') == 'livable' ? 'selected' : '' }}>Livable</option>
+                        </select>
+                    </div>
+                </div>
+
                 <div>
-                    <label class="block text-sm font-medium text-gray-700">Status *</label>
-                    <select name="unit_status" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50" required>
-                        <option value="available" {{ old('unit_status') == 'available' ? 'selected' : '' }}>Available</option>
-                        <option value="reserved" {{ old('unit_status') == 'reserved' ? 'selected' : '' }}>Reserved</option>
-                        <option value="sold" {{ old('unit_status') == 'sold' ? 'selected' : '' }}>Sold</option>
-                        <option value="rented" {{ old('unit_status') == 'rented' ? 'selected' : '' }}>Rented</option>
-                    </select>
+                     <label class="block text-sm font-medium text-gray-700">Delivery Year</label>
+                     <input type="number" name="delivery_year" value="{{ old('delivery_year') }}" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50" min="2000" max="2100">
                 </div>
 
                  <!-- Pricing -->

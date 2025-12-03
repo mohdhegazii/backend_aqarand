@@ -14,6 +14,8 @@ use App\Models\UnitType;
 use App\Models\Amenity;
 use App\Models\Developer;
 use App\Models\Category;
+use App\Models\Unit;
+use App\Observers\UnitObserver;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -30,6 +32,8 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        Unit::observe(UnitObserver::class);
+
         Route::model('amenityCategory', AmenityCategory::class);
         Route::model('country', Country::class);
         Route::model('region', Region::class);
