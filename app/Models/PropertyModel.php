@@ -15,8 +15,12 @@ class PropertyModel extends Model
         'project_id',
         'unit_type_id',
         'name',
+        'name_en',
+        'name_ar',
         'code',
         'description',
+        'description_en',
+        'description_ar',
         'bedrooms',
         'bathrooms',
         'min_bua',
@@ -29,8 +33,14 @@ class PropertyModel extends Model
         'floorplan_3d_url',
         'gallery',
         'seo_slug',
+        'seo_slug_en',
+        'seo_slug_ar',
         'meta_title',
+        'meta_title_en',
+        'meta_title_ar',
         'meta_description',
+        'meta_description_en',
+        'meta_description_ar',
         'is_active',
     ];
 
@@ -60,5 +70,21 @@ class PropertyModel extends Model
     public function units()
     {
         return $this->hasMany(Unit::class);
+    }
+
+    public function getDisplayNameAttribute()
+    {
+        $locale = app()->getLocale();
+        if ($locale === 'ar' && !empty($this->name_ar)) {
+            return $this->name_ar;
+        }
+        return $this->name_en ?? $this->name;
+    }
+
+    public function getFrontendUrl(string $locale = 'en'): string
+    {
+        // Assuming models are nested under projects or independent
+        $slug = $locale === 'ar' ? ($this->seo_slug_ar ?? $this->seo_slug_en) : ($this->seo_slug_en);
+        return "/{$locale}/models/{$slug}";
     }
 }

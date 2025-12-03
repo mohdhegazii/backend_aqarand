@@ -14,25 +14,25 @@ return new class extends Migration
     {
         // 1. Remove relation from categories
         if (Schema::hasTable('categories')) {
-            Schema::table('categories', function (Blueprint $table) {
-                // Safely try to drop foreign key
-                try {
-                    // This assumes the standard Laravel FK naming convention: categories_segment_id_foreign
-                    // If it doesn't exist, it will throw a QueryException which we catch.
+            // Drop foreign key in its own block with try-catch
+            try {
+                Schema::table('categories', function (Blueprint $table) {
                     $table->dropForeign(['segment_id']);
-                } catch (QueryException $e) {
-                     // 1091 = Can't DROP 'x'; check that column/key exists
-                     // 1025 = Error on rename of '...' (errno: 150 - Foreign key constraint is incorrectly formed) - sometimes happens on drop
-                     // We ignore specifically if it says it doesn't exist.
-                     if ($e->getCode() !== '42000' && !str_contains($e->getMessage(), 'check that it exists')) {
-                        throw $e;
-                     }
-                }
+                });
+            } catch (QueryException $e) {
+                 // 1091 = Can't DROP 'x'; check that column/key exists
+                 // We ignore specifically if it says it doesn't exist.
+                 if ($e->getCode() !== '42000' && !str_contains($e->getMessage(), 'check that it exists')) {
+                    throw $e;
+                 }
+            }
 
-                if (Schema::hasColumn('categories', 'segment_id')) {
+            // Drop column if exists
+            if (Schema::hasColumn('categories', 'segment_id')) {
+                Schema::table('categories', function (Blueprint $table) {
                     $table->dropColumn('segment_id');
-                }
-            });
+                });
+            }
         }
 
         // 2. Drop segments table

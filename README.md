@@ -1,106 +1,110 @@
-# Aqarand Backend
+# Aqar-and Backend
 
-## Phase 1 & 2 Completed
+Laravel backend for "Aqar-and" real estate listing platform.
 
-This repository contains the backend for the Aqarand real estate listing platform.
+## Setup
 
-### Phase 1: Database Schema & Models
-- Database schema imported (`database/sql/schema.sql`).
-- Eloquent Models created in `app/Models`.
-- Relationships and fillable fields defined.
+1.  Copy `.env.example` to `.env`.
+2.  Install dependencies: `composer install`.
+3.  Generate key: `php artisan key:generate`.
+4.  Run migrations: `php artisan migrate`.
+5.  Seed data: `php artisan db:seed`.
 
-### Phase 2: Auth, Admin, Localization
-- Authentication via Laravel Breeze (Custom implementation for Admin).
-- Admin Dashboard at `/admin`.
-- Localization (EN/AR) with RTL support.
-- CRUD Operations for:
-  - Locations: Countries, Regions, Cities, Districts.
-  - Lookups: Property Types, Unit Types, Amenities.
-  - Developers.
+## Admin Access
 
-### How to Access
+*   URL: `/admin` (Redirects to `/login` if not authenticated)
+*   Admin User: `admin@aqarand.test` / `password` (check DatabaseSeeder for actual credentials)
 
-1. **Login as Admin:**
-   - Go to `/login`.
-   - Credentials: `admin@aqarand.test` / `password`.
-   - You will be redirected to `/admin` upon successful login.
+## Phase 3 - Advanced Real Estate Modules
 
-2. **Admin Dashboard:**
-   - Access `/admin`.
-   - Use the sidebar to manage content.
-   - Use the Language Switcher in the top bar to toggle between English and Arabic (RTL).
+Phase 3 introduces advanced real estate management capabilities, including Projects, Property Models, Units, and Listings, with full bilingual (English/Arabic) and SEO support.
 
-3. **Switch Language:**
-   - Click "العربية" or "English" in the top navigation bar of the admin panel.
+### New Admin Resources
 
-### Development
+*   **Projects:** Manage real estate projects (compounds, developments).
+    *   Route: `/admin/projects`
+    *   Features: Bilingual names/descriptions/slugs, GEO location (Lat/Lng), Location hierarchy (Country->Region->City->District), Developer assignment, Amenities.
+*   **Property Models:** Define unit models/types within a project (e.g., "Type A Villa").
+    *   Route: `/admin/property-models`
+    *   Features: Linked to Project & Unit Type, Area ranges, Price ranges, Floorplans.
+*   **Units:** Individual physical units (inventory).
+    *   Route: `/admin/units`
+    *   Features: Specific unit number, price, status (available/sold/etc), specs (bedrooms, bathrooms, areas).
+*   **Listings:** Publicly exposed offers for units.
+    *   Route: `/admin/listings`
+    *   Features: Primary/Resale/Rental, SEO titles/descriptions, Publishing status.
 
-- **Run Migrations:**
-    After pulling new code, run:
-    ```bash
-    php artisan migrate
-    ```
-    *Note: Do NOT drop or recreate existing tables. This will only add missing columns.*
+### Bilingual & SEO Fields
 
-- **Seed Database:** `php artisan db:seed` (Creates the admin user)
+All core entities now support:
+*   `name_en` / `name_ar` (or `title_en` / `title_ar`)
+*   `description_en` / `description_ar`
+*   `seo_slug_en` / `seo_slug_ar` (URL friendly slugs per language)
+*   `meta_title_en` / `meta_title_ar`
+*   `meta_description_en` / `meta_description_ar`
 
-### Configuration
+### GEO Readiness
 
-- **Session Lifetime:**
-  Admin sessions expire after 24 hours. Ensure your `.env` has:
-  ```
-  SESSION_LIFETIME=1440
-  ```
+*   Projects and Listings support spatial queries via `scopeInLocation($cityId, $districtId)`.
+*   Latitude and Longitude fields available for Projects.
 
-### Entities Implemented (Phase 2)
-- **Countries** (Added optional lat/lng)
-- **Regions** (Added optional lat/lng)
-- **Cities** (Added optional lat/lng)
-- **Districts** (Added optional lat/lng)
-- **Property Types** (Added icon_class and image_url)
-- **Unit Types** (Added icon_class and image_url)
-- **Amenities** (Added image_url)
-- **Developers**
+## Manual Migration Steps (No PHP Binary)
 
-### Business Logic Alignment (Phase 1+2 Audit)
-- **Lookups:** Slug is no longer required or relied upon for lookup entities (Property Types, Amenities, etc.).
-- **Locations:** Hierarchical integrity enforced (Country -> Region -> City -> District).
-- **Icons/Images:** Lookup entities now support icon classes and image URLs.
-- **Coordinates:** All location entities support latitude and longitude storage.
+If you are running in an environment without PHP binary (to run artisan migrate):
+1.  Import `database/sql/schema.sql`.
+2.  The schema already contains `projects`, `property_models`, `units`, `listings` tables.
+3.  **Run the following SQL** (derived from `database/migrations/2026_06_15_000000_add_bilingual_fields_phase_3.php`) to add the new Phase 3 columns:
 
-### Phase 2.5 Enhancements (Completed)
+```sql
+-- Projects
+ALTER TABLE projects ADD COLUMN name_en VARCHAR(200) NULL AFTER name;
+ALTER TABLE projects ADD COLUMN name_ar VARCHAR(200) NULL AFTER name_en;
+ALTER TABLE projects ADD COLUMN tagline_en VARCHAR(255) NULL AFTER tagline;
+ALTER TABLE projects ADD COLUMN tagline_ar VARCHAR(255) NULL AFTER tagline_en;
+ALTER TABLE projects ADD COLUMN description_en TEXT NULL AFTER description_long;
+ALTER TABLE projects ADD COLUMN description_ar TEXT NULL AFTER description_en;
+ALTER TABLE projects ADD COLUMN address_en VARCHAR(255) NULL AFTER address_text;
+ALTER TABLE projects ADD COLUMN address_ar VARCHAR(255) NULL AFTER address_en;
+ALTER TABLE projects ADD COLUMN seo_slug_en VARCHAR(220) NULL AFTER slug;
+ALTER TABLE projects ADD COLUMN seo_slug_ar VARCHAR(220) NULL AFTER seo_slug_en;
+ALTER TABLE projects ADD COLUMN meta_title_en VARCHAR(255) NULL AFTER meta_title;
+ALTER TABLE projects ADD COLUMN meta_title_ar VARCHAR(255) NULL AFTER meta_title_en;
+ALTER TABLE projects ADD COLUMN meta_description_en VARCHAR(255) NULL AFTER meta_description;
+ALTER TABLE projects ADD COLUMN meta_description_ar VARCHAR(255) NULL AFTER meta_description_en;
+CREATE UNIQUE INDEX projects_seo_slug_en_unique ON projects(seo_slug_en);
+CREATE UNIQUE INDEX projects_seo_slug_ar_unique ON projects(seo_slug_ar);
 
-This phase introduced UX improvements and additional features for the admin panel.
+-- Property Models
+ALTER TABLE property_models ADD COLUMN name_en VARCHAR(200) NULL AFTER name;
+ALTER TABLE property_models ADD COLUMN name_ar VARCHAR(200) NULL AFTER name_en;
+ALTER TABLE property_models ADD COLUMN description_en TEXT NULL AFTER description;
+ALTER TABLE property_models ADD COLUMN description_ar TEXT NULL AFTER description_en;
+ALTER TABLE property_models ADD COLUMN seo_slug_en VARCHAR(220) NULL AFTER seo_slug;
+ALTER TABLE property_models ADD COLUMN seo_slug_ar VARCHAR(220) NULL AFTER seo_slug_en;
+ALTER TABLE property_models ADD COLUMN meta_title_en VARCHAR(255) NULL AFTER meta_title;
+ALTER TABLE property_models ADD COLUMN meta_title_ar VARCHAR(255) NULL AFTER meta_title_en;
+ALTER TABLE property_models ADD COLUMN meta_description_en VARCHAR(255) NULL AFTER meta_description;
+ALTER TABLE property_models ADD COLUMN meta_description_ar VARCHAR(255) NULL AFTER meta_description_en;
+CREATE UNIQUE INDEX property_models_seo_slug_en_unique ON property_models(seo_slug_en);
+CREATE UNIQUE INDEX property_models_seo_slug_ar_unique ON property_models(seo_slug_ar);
 
-#### 1. Locations UX
-- **Map Picker:** Integrated Leaflet (OpenStreetMap) for all location entities (Country, Region, City, District).
-- **FlyTo Behavior:** When selecting a parent location (e.g., choosing a City for a District), the map automatically flies to the parent's coordinates.
-- **ISO Code:** Clarified Country Code input as ISO code (e.g., EG, SA) in UI.
+-- Units
+ALTER TABLE units ADD COLUMN title_en VARCHAR(255) NULL AFTER unit_number;
+ALTER TABLE units ADD COLUMN title_ar VARCHAR(255) NULL AFTER title_en;
+ALTER TABLE units ADD COLUMN meta_title_en VARCHAR(255) NULL AFTER media;
+ALTER TABLE units ADD COLUMN meta_title_ar VARCHAR(255) NULL AFTER meta_title_en;
+ALTER TABLE units ADD COLUMN meta_description_en VARCHAR(255) NULL AFTER meta_title_ar;
+ALTER TABLE units ADD COLUMN meta_description_ar VARCHAR(255) NULL AFTER meta_description_en;
 
-#### 2. Segments & Categories
-- Implemented `Segments` and `Categories` taxonomies.
-- CRUD screens for managing these entities.
-- Amenities now link to Categories.
-
-#### 3. Developer Enhancements
-- **Bilingual Support:** Developers now have EN and AR name and description fields.
-- **SEO Meta Box:** A Yoast-like SEO meta box for managing Meta Title, Description, and Focus Keyphrase.
-- **Logo Upload:** Ability to upload logos locally.
-
-#### 4. Bulk Actions & Soft Deletes
-- **Bulk Actions:** All admin lists now support bulk "Activate" and "Deactivate".
-- **Soft Delete Behavior:** Delete actions now perform a "Soft Delete" (setting `is_active = 0`) instead of removing the record from the database.
-
-#### 5. Lookups & Validation
-- **Images:** Added image upload support for Property Types, Unit Types, Amenities, and Categories.
-- **Unit Types:** Enforced validation logic (e.g., "Requires Built-up Area" is mandatory).
-- **Bootstrap Icons:** Added clear help text and preview for icon classes.
-
-### Phase 2.6 Updates (Current)
-
-- **Routing & Auth:** Improved login redirection and added public placeholder.
-- **Database:** Added missing `is_active` and `image_path` columns via migration.
-- **Sessions:** Increased admin session lifetime to 24 hours.
-- **Developers:** Split Create/Edit form into English/Arabic tabs with per-language SEO settings.
-- **SEO Plugin:** Added traffic-light indicators for SEO rules (Title length, Description length, Keyphrase).
-- **Migrations:** Fixed seo_meta migration (create or extend table safely) and added lat/lng columns to countries for location map support. Remember to run php artisan migrate after pulling.
+-- Listings
+ALTER TABLE listings ADD COLUMN title_en VARCHAR(255) NULL AFTER title;
+ALTER TABLE listings ADD COLUMN title_ar VARCHAR(255) NULL AFTER title_en;
+ALTER TABLE listings ADD COLUMN slug_en VARCHAR(255) NULL AFTER slug;
+ALTER TABLE listings ADD COLUMN slug_ar VARCHAR(255) NULL AFTER slug_en;
+ALTER TABLE listings ADD COLUMN seo_title_en VARCHAR(255) NULL AFTER seo_title;
+ALTER TABLE listings ADD COLUMN seo_title_ar VARCHAR(255) NULL AFTER seo_title_en;
+ALTER TABLE listings ADD COLUMN seo_description_en VARCHAR(255) NULL AFTER seo_description;
+ALTER TABLE listings ADD COLUMN seo_description_ar VARCHAR(255) NULL AFTER seo_description_en;
+CREATE UNIQUE INDEX listings_slug_en_unique ON listings(slug_en);
+CREATE UNIQUE INDEX listings_slug_ar_unique ON listings(slug_ar);
+```

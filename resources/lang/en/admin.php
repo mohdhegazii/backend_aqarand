@@ -14,6 +14,7 @@ return [
     'unit_type' => 'Unit Type',
     'amenity' => 'Amenity',
     'developers' => 'Developers',
+    'developer' => 'Developer',
     'logo_url' => 'Logo URL',
     'website_url' => 'Website URL',
     'logout' => 'Logout',
@@ -37,6 +38,7 @@ return [
     'region' => 'Region',
     'city' => 'City',
     'district' => 'District',
+    'location' => 'Location',
     'slug' => 'Slug',
     'category' => 'Category',
     'amenity_type' => 'Amenity Type',
@@ -84,4 +86,11 @@ return [
     'sort_order' => 'Sort Order',
     'select_option' => 'Select an option',
     'welcome_admin_panel' => 'Welcome to Aqar-and Admin Panel.',
+
+    // Phase 3
+    'projects' => 'Projects',
+    'property_models' => 'Property Models',
+    'units' => 'Units',
+    'listings' => 'Listings',
+    'real_estate' => 'Real Estate',
 ];
