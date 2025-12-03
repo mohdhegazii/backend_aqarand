@@ -47,6 +47,8 @@ class UnitController extends Controller
             'title_en' => 'nullable|string|max:255',
             'title_ar' => 'nullable|string|max:255',
             'unit_status' => 'required|in:available,reserved,sold,rented',
+            'construction_status' => 'nullable|in:new_launch,off_plan,under_construction,ready_to_move,livable',
+            'delivery_year' => 'nullable|integer|min:2000|max:2100',
             'bedrooms' => 'nullable|integer',
             'bathrooms' => 'nullable|integer',
         ]);
@@ -59,6 +61,7 @@ class UnitController extends Controller
 
         Unit::create($request->except('price_per_sqm') + [
             'price_per_sqm' => $pricePerSqm,
+            'construction_status' => $request->construction_status ?? 'new_launch',
             'is_corner' => $request->has('is_corner'),
             'is_furnished' => $request->has('is_furnished'),
         ]);
@@ -91,6 +94,8 @@ class UnitController extends Controller
             'currency_code' => 'required|string|size:3',
             'built_up_area' => 'nullable|numeric',
             'unit_status' => 'required|in:available,reserved,sold,rented',
+            'construction_status' => 'nullable|in:new_launch,off_plan,under_construction,ready_to_move,livable',
+            'delivery_year' => 'nullable|integer|min:2000|max:2100',
         ]);
 
         $pricePerSqm = $unit->price_per_sqm;
