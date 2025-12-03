@@ -73,24 +73,6 @@
                     <input type="number" step="0.01" name="max_price" value="{{ old('max_price', $propertyModel->max_price) }}" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50">
                 </div>
 
-                <div>
-                    <label class="block text-sm font-medium text-gray-700">Min Land Area</label>
-                    <input type="number" step="0.01" name="min_land_area" value="{{ old('min_land_area', $propertyModel->min_land_area) }}" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50">
-                </div>
-                <div>
-                    <label class="block text-sm font-medium text-gray-700">Max Land Area</label>
-                    <input type="number" step="0.01" name="max_land_area" value="{{ old('max_land_area', $propertyModel->max_land_area) }}" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50">
-                </div>
-
-                <div class="md:col-span-2">
-                    <label class="block text-sm font-medium text-gray-700">Floorplan 2D URL</label>
-                    <input type="text" name="floorplan_2d_url" value="{{ old('floorplan_2d_url', $propertyModel->floorplan_2d_url) }}" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50">
-                </div>
-                 <div class="md:col-span-2">
-                    <label class="block text-sm font-medium text-gray-700">Floorplan 3D URL</label>
-                    <input type="text" name="floorplan_3d_url" value="{{ old('floorplan_3d_url', $propertyModel->floorplan_3d_url) }}" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50">
-                </div>
-
                 <!-- Descriptions -->
                 <div class="md:col-span-2">
                     <label class="block text-sm font-medium text-gray-700">Description (EN)</label>
