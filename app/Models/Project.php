@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Str;
 
 class Project extends Model
 {
@@ -18,9 +19,17 @@ class Project extends Model
         'city_id',
         'district_id',
         'name',
+        'name_en',
+        'name_ar',
         'slug',
+        'seo_slug_en',
+        'seo_slug_ar',
         'tagline',
+        'tagline_en',
+        'tagline_ar',
         'description_long',
+        'description_en',
+        'description_ar',
         'status',
         'delivery_year',
         'total_area',
@@ -33,11 +42,17 @@ class Project extends Model
         'lat',
         'lng',
         'address_text',
+        'address_en',
+        'address_ar',
         'brochure_url',
         'hero_image_url',
         'gallery',
         'meta_title',
+        'meta_title_en',
+        'meta_title_ar',
         'meta_description',
+        'meta_description_en',
+        'meta_description_ar',
         'is_active',
     ];
 
@@ -91,8 +106,44 @@ class Project extends Model
         return $this->hasMany(Unit::class);
     }
 
+    public function listings()
+    {
+        return $this->hasManyThrough(Listing::class, Unit::class);
+    }
+
     public function amenities()
     {
         return $this->belongsToMany(Amenity::class, 'project_amenity', 'project_id', 'amenity_id');
+    }
+
+    public function getDisplayNameAttribute()
+    {
+        $locale = app()->getLocale();
+        if ($locale === 'ar' && !empty($this->name_ar)) {
+            return $this->name_ar;
+        }
+        return $this->name_en ?? $this->name;
+    }
+
+    public function scopeActive($query)
+    {
+        return $query->where('is_active', true);
+    }
+
+    public function scopeInLocation($query, $cityId = null, $districtId = null)
+    {
+        if ($districtId) {
+            return $query->where('district_id', $districtId);
+        }
+        if ($cityId) {
+            return $query->where('city_id', $cityId);
+        }
+        return $query;
+    }
+
+    public function getFrontendUrl(string $locale = 'en'): string
+    {
+        $slug = $locale === 'ar' ? ($this->seo_slug_ar ?? $this->seo_slug_en ?? $this->slug) : ($this->seo_slug_en ?? $this->slug);
+        return "/{$locale}/projects/{$slug}";
     }
 }
