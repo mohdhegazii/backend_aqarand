@@ -20,7 +20,6 @@ use App\Http\Controllers\Admin\UnitController;
 use App\Http\Controllers\Admin\ListingController;
 use Illuminate\Support\Facades\Auth;
 
-// Public Welcome
 Route::get('/', function () {
     if (Auth::check()) {
         if (Auth::user()->is_admin) {
@@ -40,19 +39,18 @@ Route::middleware(['auth'])->group(function () {
     })->name('dashboard');
 });
 
-// Admin Locale Switching
 Route::get('lang/{locale}', [LanguageController::class, 'switch'])
     ->name('lang.switch')
     ->whereIn('locale', ['en', 'ar']);
 
+Route::get('/admin', function () {
+    return redirect()->route('admin.dashboard');
+});
 
-// ADMIN GROUP with Optional Locale Prefix
-// Matches /admin (AR default) and /en/admin (EN)
 Route::group([
-    'prefix' => '{locale?}/admin',
-    'where' => ['locale' => 'en'], // Only allow 'en' as prefix, empty implies 'ar'
+    'prefix' => 'admin',
     'as' => 'admin.',
-    'middleware' => ['web', 'setLocaleFromUrl', 'auth', 'is_admin', SubstituteBindings::class],
+    'middleware' => ['web', 'auth', 'is_admin', SubstituteBindings::class],
 ], function () {
     Route::get('/', [DashboardController::class, 'index'])->name('dashboard');
 
@@ -60,8 +58,6 @@ Route::group([
     Route::get('locations/countries/{id}', [LocationHelperController::class, 'getCountry']);
     Route::get('locations/regions/{id}', [LocationHelperController::class, 'getRegion']);
     Route::get('locations/cities/{id}', [LocationHelperController::class, 'getCity']);
-    // New: Global Search
-    Route::get('locations/global-search', [LocationHelperController::class, 'searchLocations']);
 
     Route::post('countries/bulk', [CountryController::class, 'bulk'])->name('countries.bulk');
     Route::resource('countries', CountryController::class);
@@ -103,16 +99,6 @@ Route::group([
     Route::resource('units', UnitController::class);
     Route::resource('listings', ListingController::class);
 });
-
-// Admin Root Redirection
-Route::get('/admin', function () {
-    return redirect()->route('admin.dashboard');
-});
-// Handle /en/admin redirect
-Route::get('/en/admin', function () {
-    return redirect()->route('admin.dashboard', ['locale' => 'en']);
-});
-
 
 // Breeze Authentication Routes
 if (file_exists(__DIR__.'/auth.php')) {

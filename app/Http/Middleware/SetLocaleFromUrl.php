@@ -17,26 +17,17 @@ class SetLocaleFromUrl
      */
     public function handle(Request $request, Closure $next): Response
     {
-        // Check the first segment of the URL
-        $segment = $request->segment(1);
+        $locale = $request->route('locale');
 
-        if ($segment === 'en') {
-            $locale = 'en';
-        } else {
-            $locale = 'ar';
+        if (! in_array($locale, ['en', 'ar'])) {
+            $locale = config('app.locale', 'en');
         }
 
         App::setLocale($locale);
-        // We do NOT set URL::defaults here blindly because 'ar' routes don't have the prefix.
-        // We only persist 'locale' if we are in a route group that expects it?
-        // Actually, for 'ar', we don't want the prefix.
-
+        URL::defaults(['locale' => $locale]);
         session(['locale' => $locale]);
 
-        // If the route has a 'locale' parameter (captured by {locale?}), forget it so controllers don't get it.
-        if ($request->route('locale')) {
-            $request->route()->forgetParameter('locale');
-        }
+        $request->route()->forgetParameter('locale');
 
         return $next($request);
     }

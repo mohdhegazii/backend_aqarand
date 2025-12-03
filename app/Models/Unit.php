@@ -21,7 +21,6 @@ class Unit extends Model
         'floor_label',
         'delivery_year',
         'unit_status',
-        'construction_status',
         'bedrooms',
         'bathrooms',
         'finishing_type',
