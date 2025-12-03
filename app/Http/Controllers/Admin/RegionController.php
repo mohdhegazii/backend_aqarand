@@ -72,7 +72,7 @@ class RegionController extends Controller
             ]);
         }
 
-        return redirect()->route('admin.regions.index', ['locale' => app()->getLocale()])
+        return redirect()->route('admin.regions.index')
             ->with('success', __('admin.created_successfully'));
     }
 
@@ -132,7 +132,7 @@ class RegionController extends Controller
                 ->update(['boundary' => null]);
         }
 
-        return redirect()->route('admin.regions.index', ['locale' => app()->getLocale()])
+        return redirect()->route('admin.regions.index')
             ->with('success', __('admin.updated_successfully'));
     }
 
@@ -140,7 +140,7 @@ class RegionController extends Controller
     {
         $region->update(['is_active' => false]);
 
-        return redirect()->route('admin.regions.index', ['locale' => app()->getLocale()])
+        return redirect()->route('admin.regions.index')
             ->with('success', __('admin.deleted_successfully'));
     }
 

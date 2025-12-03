@@ -94,6 +94,8 @@ CREATE TABLE property_types (
 CREATE TABLE unit_types (
     id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     property_type_id BIGINT UNSIGNED NOT NULL,
+    name_en VARCHAR(150) NULL,
+    name_local VARCHAR(150) NULL,
     name VARCHAR(150) NOT NULL,
     code VARCHAR(50) NULL,
     description TEXT NULL,

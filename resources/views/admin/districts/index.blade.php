@@ -11,7 +11,7 @@
              <select name="filter" class="border rounded px-4 py-2" onchange="this.form.submit()">
                 <option value="active" {{ request('filter') === 'active' || !request('filter') ? 'selected' : '' }}>@lang('admin.activate')</option>
                 <option value="inactive" {{ request('filter') === 'inactive' ? 'selected' : '' }}>@lang('admin.deactivate')</option>
-                <option value="all" {{ request('filter') === 'all' ? 'selected' : '' }}>All</option>
+                <option value="all" {{ request('filter') === 'all' ? 'selected' : '' }}>@lang('admin.all')</option>
             </select>
             <select name="city_id" class="border rounded px-4 py-2">
                 <option value="">@lang('admin.city')</option>

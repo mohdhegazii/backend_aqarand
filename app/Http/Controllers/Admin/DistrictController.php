@@ -70,7 +70,7 @@ class DistrictController extends Controller
             ]);
         }
 
-        return redirect()->route('admin.districts.index', ['locale' => app()->getLocale()])
+        return redirect()->route('admin.districts.index')
             ->with('success', __('admin.created_successfully'));
     }
 
@@ -121,7 +121,7 @@ class DistrictController extends Controller
                 ->update(['boundary' => null]);
         }
 
-        return redirect()->route('admin.districts.index', ['locale' => app()->getLocale()])
+        return redirect()->route('admin.districts.index')
             ->with('success', __('admin.updated_successfully'));
     }
 
@@ -129,7 +129,7 @@ class DistrictController extends Controller
     {
         $district->update(['is_active' => false]);
 
-        return redirect()->route('admin.districts.index', ['locale' => app()->getLocale()])
+        return redirect()->route('admin.districts.index')
             ->with('success', __('admin.deleted_successfully'));
     }
 

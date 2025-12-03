@@ -24,6 +24,8 @@ class UnitTypeController extends Controller
             $search = $request->search;
             $query->where(function ($q) use ($search) {
                 $q->where('name', 'like', "%{$search}%")
+                  ->orWhere('name_en', 'like', "%{$search}%")
+                  ->orWhere('name_local', 'like', "%{$search}%")
                   ->orWhere('code', 'like', "%{$search}%");
             });
         }
@@ -48,7 +50,8 @@ class UnitTypeController extends Controller
     {
         $validated = $request->validate([
             'property_type_id' => 'required|exists:property_types,id',
-            'name' => 'required|string|max:150',
+            'name_en' => 'required|string|max:150',
+            'name_local' => 'required|string|max:150',
             'code' => 'nullable|string|max:50',
             'description' => 'nullable|string',
             'icon_class' => 'nullable|string|max:120',
@@ -71,6 +74,7 @@ class UnitTypeController extends Controller
 
         // Force requires_built_up_area to be 1
         $validated['requires_built_up_area'] = true;
+        $validated['name'] = $validated['name_en'];
 
         if ($request->hasFile('image')) {
             $path = $request->file('image')->store('lookups', 'public');
@@ -80,7 +84,7 @@ class UnitTypeController extends Controller
 
         UnitType::create($validated);
 
-        return redirect()->route('admin.unit-types.index', ['locale' => app()->getLocale()])
+        return redirect()->route('admin.unit-types.index')
             ->with('success', __('admin.created_successfully'));
     }
 
@@ -98,7 +102,8 @@ class UnitTypeController extends Controller
     {
         $validated = $request->validate([
             'property_type_id' => 'required|exists:property_types,id',
-            'name' => 'required|string|max:150',
+            'name_en' => 'required|string|max:150',
+            'name_local' => 'required|string|max:150',
             'code' => 'nullable|string|max:50',
             'description' => 'nullable|string',
             'icon_class' => 'nullable|string|max:120',
@@ -120,6 +125,7 @@ class UnitTypeController extends Controller
         }
 
         $validated['requires_built_up_area'] = true;
+        $validated['name'] = $validated['name_en'];
 
         if ($request->hasFile('image')) {
             if ($unitType->image_path) {
@@ -132,7 +138,7 @@ class UnitTypeController extends Controller
 
         $unitType->update($validated);
 
-        return redirect()->route('admin.unit-types.index', ['locale' => app()->getLocale()])
+        return redirect()->route('admin.unit-types.index')
             ->with('success', __('admin.updated_successfully'));
     }
 
@@ -140,7 +146,7 @@ class UnitTypeController extends Controller
     {
         $unitType->update(['is_active' => false]);
 
-        return redirect()->route('admin.unit-types.index', ['locale' => app()->getLocale()])
+        return redirect()->route('admin.unit-types.index')
             ->with('success', __('admin.deleted_successfully'));
     }
 

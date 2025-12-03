@@ -19,8 +19,7 @@ use Illuminate\Support\Facades\Auth;
 Route::get('/', function () {
     if (Auth::check()) {
         if (Auth::user()->is_admin) {
-            $locale = session('locale', config('app.locale', 'en'));
-            return redirect()->route('admin.dashboard', ['locale' => $locale]);
+            return redirect()->route('admin.dashboard');
         }
         return redirect()->route('dashboard');
     }
@@ -30,8 +29,7 @@ Route::get('/', function () {
 Route::middleware(['auth'])->group(function () {
     Route::get('/dashboard', function () {
         if (Auth::user()->is_admin) {
-             $locale = session('locale', config('app.locale', 'en'));
-             return redirect()->route('admin.dashboard', ['locale' => $locale]);
+             return redirect()->route('admin.dashboard');
         }
         return view('dashboard');
     })->name('dashboard');
@@ -42,15 +40,13 @@ Route::get('lang/{locale}', [LanguageController::class, 'switch'])
     ->whereIn('locale', ['en', 'ar']);
 
 Route::get('/admin', function () {
-    $locale = session('locale', config('app.locale', 'en'));
-
-    return redirect()->route('admin.dashboard', ['locale' => $locale]);
+    return redirect()->route('admin.dashboard');
 });
 
 Route::group([
-    'prefix' => '{locale}/admin',
+    'prefix' => 'admin',
     'as' => 'admin.',
-    'middleware' => ['web', 'auth', 'is_admin', 'setLocaleFromUrl', SubstituteBindings::class],
+    'middleware' => ['web', 'auth', 'is_admin', SubstituteBindings::class],
 ], function () {
     Route::get('/', [DashboardController::class, 'index'])->name('dashboard');
 
@@ -91,7 +87,7 @@ Route::group([
 
     Route::resource('amenity-categories', \App\Http\Controllers\Admin\AmenityCategoryController::class)
         ->parameters(['amenity-categories' => 'amenityCategory']);
-})->whereIn('locale', ['en', 'ar']);
+});
 
 // Breeze Authentication Routes
 if (file_exists(__DIR__.'/auth.php')) {

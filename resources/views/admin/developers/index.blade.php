@@ -3,16 +3,15 @@
 @section('header', __('admin.developers'))
 
 @section('content')
-    @php($locale = app()->getLocale())
     <div class="mb-4 flex flex-col md:flex-row justify-between md:items-center gap-4">
-        <a href="{{ route('admin.developers.create', ['locale' => $locale]) }}" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded w-fit">
+        <a href="{{ route('admin.developers.create') }}" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded w-fit">
             @lang('admin.create_new')
         </a>
-        <form action="{{ route('admin.developers.index', ['locale' => $locale]) }}" method="GET" class="flex flex-col md:flex-row gap-2">
+        <form action="{{ route('admin.developers.index') }}" method="GET" class="flex flex-col md:flex-row gap-2">
             <select name="filter" class="border rounded px-4 py-2" onchange="this.form.submit()">
                 <option value="active" {{ request('filter') === 'active' || !request('filter') ? 'selected' : '' }}>@lang('admin.activate')</option>
                 <option value="inactive" {{ request('filter') === 'inactive' ? 'selected' : '' }}>@lang('admin.deactivate')</option>
-                <option value="all" {{ request('filter') === 'all' ? 'selected' : '' }}>All</option>
+                <option value="all" {{ request('filter') === 'all' ? 'selected' : '' }}>@lang('admin.all')</option>
             </select>
             <div class="flex">
                 <input type="text" name="search" value="{{ request('search') }}" placeholder="@lang('admin.search')..." class="border rounded-s px-4 py-2">
@@ -24,7 +23,7 @@
     </div>
 
     <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
-        <form action="{{ route('admin.developers.bulk', ['locale' => $locale]) }}" method="POST" id="bulk-form">
+        <form action="{{ route('admin.developers.bulk') }}" method="POST" id="bulk-form">
             @csrf
             <div class="p-4 border-b flex items-center space-x-2">
                 <select name="action" class="border-gray-300 rounded text-sm">
@@ -76,8 +75,8 @@
                                     </span>
                                 </td>
                                 <td class="px-5 py-5 border-b border-gray-200 text-sm">
-                                    <a href="{{ route('admin.developers.edit', ['locale' => $locale, 'developer' => $developer->id]) }}" class="text-blue-600 hover:text-blue-900 mr-2">@lang('admin.edit')</a>
-                                    <form action="{{ route('admin.developers.destroy', ['locale' => $locale, 'developer' => $developer->id]) }}" method="POST" class="inline-block" onsubmit="return confirm('@lang('admin.confirm_delete')')">
+                                    <a href="{{ route('admin.developers.edit', ['developer' => $developer->id]) }}" class="text-blue-600 hover:text-blue-900 mr-2">@lang('admin.edit')</a>
+                                    <form action="{{ route('admin.developers.destroy', ['developer' => $developer->id]) }}" method="POST" class="inline-block" onsubmit="return confirm('@lang('admin.confirm_delete')')">
                                         @csrf
                                         @method('DELETE')
                                         <button type="submit" class="text-red-600 hover:text-red-900">@lang('admin.delete')</button>
