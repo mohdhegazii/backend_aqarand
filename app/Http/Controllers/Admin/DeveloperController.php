@@ -69,7 +69,11 @@ class DeveloperController extends Controller
         if ($request->hasFile('logo')) {
             $path = $request->file('logo')->store('developers', 'public');
             $validated['logo_path'] = $path;
-            $validated['logo_url'] = Storage::url($path);
+        }
+
+        if (isset($validated['website_url'])) {
+            $validated['website'] = $validated['website_url'];
+            unset($validated['website_url']);
         }
 
         $developer = Developer::create($validated);
@@ -121,7 +125,11 @@ class DeveloperController extends Controller
             }
             $path = $request->file('logo')->store('developers', 'public');
             $validated['logo_path'] = $path;
-            $validated['logo_url'] = Storage::url($path);
+        }
+
+        if (isset($validated['website_url'])) {
+            $validated['website'] = $validated['website_url'];
+            unset($validated['website_url']);
         }
 
         $developer->update($validated);
