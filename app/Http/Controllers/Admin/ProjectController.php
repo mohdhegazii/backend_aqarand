@@ -9,6 +9,7 @@ use App\Models\Country;
 use App\Models\Amenity;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
+use App\Services\Media\MediaProcessor;
 
 class ProjectController extends Controller
 {
@@ -61,6 +62,8 @@ class ProjectController extends Controller
             'seo_slug_ar' => 'nullable|string|unique:projects,seo_slug_ar',
             'amenities' => 'array',
             'amenities.*' => 'exists:amenities,id',
+            'main_keyword_en' => 'nullable|string',
+            'main_keyword_ar' => 'nullable|string',
         ]);
 
         // Auto-generate slugs if missing
@@ -119,6 +122,8 @@ class ProjectController extends Controller
             'seo_slug_ar' => 'nullable|string|unique:projects,seo_slug_ar,' . $project->id,
             'amenities' => 'array',
             'amenities.*' => 'exists:amenities,id',
+            'main_keyword_en' => 'nullable|string',
+            'main_keyword_ar' => 'nullable|string',
         ]);
 
         // Auto-generate slugs if missing
@@ -135,6 +140,14 @@ class ProjectController extends Controller
         $data['seo_slug_ar'] = $validated['seo_slug_ar'] ?? null;
         $data['is_active'] = $request->has('is_active');
 
+        // Handle secondary keywords as JSON array if passed as CSV or array
+        if ($request->has('secondary_keywords_en_str')) {
+             $data['secondary_keywords_en'] = array_map('trim', explode(',', $request->secondary_keywords_en_str));
+        }
+        if ($request->has('secondary_keywords_ar_str')) {
+             $data['secondary_keywords_ar'] = array_map('trim', explode(',', $request->secondary_keywords_ar_str));
+        }
+
         $project->update($data);
 
         if ($request->has('amenities')) {
@@ -150,5 +163,19 @@ class ProjectController extends Controller
         $project->delete();
         return redirect()->route('admin.projects.index')
             ->with('success', __('admin.deleted_successfully'));
+    }
+
+    public function uploadMedia(Request $request, Project $project, MediaProcessor $mediaProcessor)
+    {
+        $request->validate([
+            'file' => 'required|image|max:10240', // 10MB
+        ]);
+
+        try {
+            $mediaProcessor->storeProjectImage($project, $request->file('file'));
+            return response()->json(['success' => true, 'message' => __('admin.created_successfully')]);
+        } catch (\Exception $e) {
+            return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
+        }
     }
 }
