@@ -99,6 +99,14 @@ Route::group([
         ->parameters(['property-models' => 'propertyModel']);
     Route::resource('units', UnitController::class);
     Route::resource('listings', ListingController::class);
+
+    // Media Manager
+    Route::resource('media', \App\Http\Controllers\Admin\MediaController::class)
+        ->only(['index', 'show', 'update', 'destroy'])
+        ->parameters(['media' => 'mediaFile']);
+
+    // Project Media Upload (Test Route)
+    Route::post('projects/{project}/media', [\App\Http\Controllers\Admin\ProjectController::class, 'uploadMedia'])->name('projects.media.store');
 });
 
 // Breeze Authentication Routes

@@ -54,6 +54,11 @@ class Project extends Model
         'meta_description_en',
         'meta_description_ar',
         'is_active',
+        // SEO Keywords
+        'main_keyword_en',
+        'main_keyword_ar',
+        'secondary_keywords_en',
+        'secondary_keywords_ar',
     ];
 
     protected $casts = [
@@ -69,6 +74,8 @@ class Project extends Model
         'lng' => 'decimal:7',
         'delivery_year' => 'integer',
         'total_units' => 'integer',
+        'secondary_keywords_en' => 'array',
+        'secondary_keywords_ar' => 'array',
     ];
 
     public function developer()
@@ -114,6 +121,11 @@ class Project extends Model
     public function amenities()
     {
         return $this->belongsToMany(Amenity::class, 'project_amenity', 'project_id', 'amenity_id');
+    }
+
+    public function mediaFiles()
+    {
+        return $this->hasMany(MediaFile::class, 'context_id')->where('context_type', 'project');
     }
 
     public function getDisplayNameAttribute()

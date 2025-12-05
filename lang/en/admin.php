@@ -125,4 +125,23 @@ return [
     'view_region' => 'View Region',
     'view_city' => 'View City',
     'view_district' => 'View District',
+
+    // Media Manager
+    'file_manager' => 'File Manager',
+    'media_manager' => 'Media Manager',
+    'media_details' => 'Media Details',
+    'file_info' => 'File Info',
+    'context' => 'Context',
+    'variant_role' => 'Variant',
+    'all' => 'All',
+    'filter' => 'Filter',
+    'search' => 'Search',
+    'preview' => 'Preview',
+    'details' => 'Details',
+    'seo_alt' => 'SEO Alt Text',
+    'view' => 'View',
+    'save_changes' => 'Save Changes',
+    'back_to_list' => 'Back to List',
+    'no_records_found' => 'No media files found.',
+    'are_you_sure' => 'Are you sure?',
 ];

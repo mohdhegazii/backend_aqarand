@@ -11,15 +11,17 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('amenity_categories', function (Blueprint $table) {
-            $table->id();
-            $table->string('name_en', 150);
-            $table->string('name_ar', 150);
-            $table->string('slug', 180)->unique();
-            $table->boolean('is_active')->default(true);
-            $table->integer('sort_order')->default(0);
-            $table->timestamps();
-        });
+        if (!Schema::hasTable('amenity_categories')) {
+            Schema::create('amenity_categories', function (Blueprint $table) {
+                $table->id();
+                $table->string('name_en', 150);
+                $table->string('name_ar', 150);
+                $table->string('slug', 180)->unique();
+                $table->boolean('is_active')->default(true);
+                $table->integer('sort_order')->default(0);
+                $table->timestamps();
+            });
+        }
     }
 
     /**

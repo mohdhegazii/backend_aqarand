@@ -93,6 +93,11 @@
                 <a href="{{ route('admin.property-models.index') }}" class="block px-4 py-2 text-gray-700 hover:bg-gray-100 rounded">@lang('admin.property_models')</a>
                 <a href="{{ route('admin.units.index') }}" class="block px-4 py-2 text-gray-700 hover:bg-gray-100 rounded">@lang('admin.units')</a>
                 <a href="{{ route('admin.listings.index') }}" class="block px-4 py-2 text-gray-700 hover:bg-gray-100 rounded">@lang('admin.listings')</a>
+
+                <div class="mt-4 px-4 text-xs font-semibold text-gray-500 uppercase">
+                    @lang('admin.media_manager')
+                </div>
+                <a href="{{ route('admin.media.index') }}" class="block px-4 py-2 text-gray-700 hover:bg-gray-100 rounded">@lang('admin.file_manager')</a>
             </nav>
         </aside>
 
