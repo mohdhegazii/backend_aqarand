@@ -1,29 +1,28 @@
-# Database Setup Instructions
+# Media Management System Setup
 
-It seems the `segments` and `categories` tables are missing in your database, which causes the Internal Server Error.
+To enable the new Media Management system, please follow these steps:
 
-To fix this, please run the following command in your terminal:
+1.  **Install Image Processing Library**:
+    This system requires `intervention/image` for image manipulation. Run:
+    ```bash
+    composer require intervention/image
+    ```
+    *Note: Depending on your PHP version and Intervention Image version, you might need to publish configuration. For v3, it usually works out of the box.*
 
-```bash
-php artisan migrate
-```
+2.  **Run Migrations**:
+    New tables (`media_files`, `blog_posts`) and columns have been added. Run:
+    ```bash
+    php artisan migrate
+    ```
 
-This will execute the migration `database/migrations/2025_12_02_000000_phase_2_5_enhancements.php` which creates the missing tables.
+3.  **Link Storage**:
+    Ensure the public disk is linked to the `public` directory:
+    ```bash
+    php artisan storage:link
+    ```
 
-## New Migration (Image Path for Segments)
-
-A new migration has been added to add `image_path` to the `segments` table. Please run the migration to apply this change:
-
-```bash
-php artisan migrate
-```
-
-This will execute `database/migrations/2025_12_05_000001_add_image_path_to_segments.php`.
-
-## Caching Issues
-
-If you see incorrect translations (e.g. `admin.segments`), clear the cache:
-
-```bash
-php artisan optimize:clear
-```
+4.  **Clear Caches**:
+    To ensure new routes and config are loaded:
+    ```bash
+    php artisan optimize:clear
+    ```

@@ -111,6 +111,26 @@
                         <label for="is_active" class="ml-2 block text-sm text-gray-900">@lang('admin.is_active')</label>
                     </div>
                 </div>
+
+                <!-- SEO Keywords -->
+                <div class="bg-gray-50 p-4 rounded mb-6">
+                    <h4 class="font-medium text-gray-700 mb-2">SEO Keywords</h4>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                             <label for="main_keyword_en" class="block text-sm font-medium text-gray-700">Main Keyword (EN)</label>
+                             <input type="text" name="main_keyword_en" id="main_keyword_en" value="{{ old('main_keyword_en', $project->main_keyword_en) }}" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm">
+                             <label for="secondary_keywords_en_str" class="block text-sm font-medium text-gray-700 mt-2">Secondary Keywords (EN) (Comma separated)</label>
+                             <input type="text" name="secondary_keywords_en_str" id="secondary_keywords_en_str" value="{{ old('secondary_keywords_en_str', implode(', ', $project->secondary_keywords_en ?? [])) }}" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm">
+                        </div>
+                        <div>
+                             <label for="main_keyword_ar" class="block text-sm font-medium text-gray-700">Main Keyword (AR)</label>
+                             <input type="text" name="main_keyword_ar" id="main_keyword_ar" value="{{ old('main_keyword_ar', $project->main_keyword_ar) }}" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm">
+                             <label for="secondary_keywords_ar_str" class="block text-sm font-medium text-gray-700 mt-2">Secondary Keywords (AR) (Comma separated)</label>
+                             <input type="text" name="secondary_keywords_ar_str" id="secondary_keywords_ar_str" value="{{ old('secondary_keywords_ar_str', implode(', ', $project->secondary_keywords_ar ?? [])) }}" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm">
+                        </div>
+                    </div>
+                </div>
+
             </div>
 
             <!-- =========================
@@ -194,6 +214,46 @@
                 </button>
             </div>
         </form>
+
+        <!-- Media Upload Section -->
+        <div class="mt-12 border-t pt-8">
+            <h3 class="text-lg font-medium text-gray-900 mb-4">@lang('admin.media_manager')</h3>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <div>
+                     <label class="block text-sm font-medium text-gray-700 mb-2">Upload New Image</label>
+                     <div class="flex items-center space-x-4">
+                         <input type="file" id="mediaUpload" class="block w-full text-sm text-gray-500
+                            file:mr-4 file:py-2 file:px-4
+                            file:rounded-full file:border-0
+                            file:text-sm file:font-semibold
+                            file:bg-indigo-50 file:text-indigo-700
+                            hover:file:bg-indigo-100">
+                         <button type="button" onclick="uploadImage()" class="bg-indigo-600 text-white px-4 py-2 rounded shadow hover:bg-indigo-700 transition">
+                             Upload
+                         </button>
+                     </div>
+                     <p id="uploadStatus" class="mt-2 text-sm text-gray-500"></p>
+                </div>
+
+                <div>
+                    <!-- Mini Gallery of Uploaded Images -->
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Recent Media</label>
+                    <div class="grid grid-cols-3 gap-2 max-h-40 overflow-y-auto">
+                        @foreach($project->mediaFiles as $media)
+                            @if($media->variant_role == 'original' || $media->variant_role == 'webp')
+                                <a href="{{ route('admin.media.show', $media->originalFile ? $media->originalFile : $media) }}" target="_blank">
+                                    <img src="{{ $media->url }}" class="h-20 w-full object-cover rounded border">
+                                </a>
+                            @endif
+                        @endforeach
+                    </div>
+                    <div class="mt-2 text-right">
+                        <a href="{{ route('admin.media.index', ['project_id' => $project->id]) }}" class="text-indigo-600 text-sm hover:underline">View All in File Manager</a>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 </div>
 
@@ -203,6 +263,52 @@
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
 <script>
+    // Media Upload
+    function uploadImage() {
+        const fileInput = document.getElementById('mediaUpload');
+        const file = fileInput.files[0];
+        const status = document.getElementById('uploadStatus');
+
+        if (!file) {
+            status.textContent = 'Please select a file.';
+            status.className = 'mt-2 text-sm text-red-600';
+            return;
+        }
+
+        status.textContent = 'Uploading...';
+        status.className = 'mt-2 text-sm text-blue-600';
+
+        const formData = new FormData();
+        formData.append('file', file);
+        formData.append('_token', '{{ csrf_token() }}');
+
+        fetch('{{ route("admin.projects.media.store", $project) }}', {
+            method: 'POST',
+            body: formData,
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest'
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                status.textContent = 'Upload successful!';
+                status.className = 'mt-2 text-sm text-green-600';
+                fileInput.value = '';
+                // Optional: Reload partial or just notify
+                setTimeout(() => window.location.reload(), 1000);
+            } else {
+                status.textContent = 'Error: ' + data.message;
+                status.className = 'mt-2 text-sm text-red-600';
+            }
+        })
+        .catch(error => {
+            status.textContent = 'Upload failed.';
+            status.className = 'mt-2 text-sm text-red-600';
+            console.error('Error:', error);
+        });
+    }
+
     // TinyMCE
     tinymce.init({
         selector: '.wysiwyg',
