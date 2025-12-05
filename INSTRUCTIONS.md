@@ -10,7 +10,7 @@ To enable the new Media Management system, please follow these steps:
     *Note: Depending on your PHP version and Intervention Image version, you might need to publish configuration. For v3, it usually works out of the box.*
 
 2.  **Run Migrations**:
-    New tables (`media_files`, `blog_posts`) and columns have been added. Also includes a fix for `AmenityCategory` sort order. Run:
+    New tables (`media_files`, `blog_posts`, `property_models`) and columns have been added. Also includes a fix for `AmenityCategory` sort order. Run:
     ```bash
     php artisan migrate
     ```
