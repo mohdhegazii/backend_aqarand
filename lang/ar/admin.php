@@ -125,4 +125,23 @@ return [
     'view_region' => 'عرض المنطقة',
     'view_city' => 'عرض المدينة',
     'view_district' => 'عرض الحي',
+
+    // Media Manager
+    'file_manager' => 'مدير الملفات',
+    'media_manager' => 'إدارة الوسائط',
+    'media_details' => 'تفاصيل الوسائط',
+    'file_info' => 'معلومات الملف',
+    'context' => 'السياق',
+    'variant_role' => 'النوع',
+    'all' => 'الكل',
+    'filter' => 'تصفية',
+    'search' => 'بحث',
+    'preview' => 'معاينة',
+    'details' => 'التفاصيل',
+    'seo_alt' => 'نص بديل (SEO)',
+    'view' => 'عرض',
+    'save_changes' => 'حفظ التغييرات',
+    'back_to_list' => 'العودة للقائمة',
+    'no_records_found' => 'لا توجد ملفات وسائط.',
+    'are_you_sure' => 'هل أنت متأكد؟',
 ];
