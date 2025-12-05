@@ -5,7 +5,7 @@
 @section('content')
 <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
     <div class="p-6 bg-white border-b border-gray-200">
-        <form method="POST" action="{{ route('admin.projects.store') }}" id="projectForm">
+        <form method="POST" action="{{ route('admin.projects.store') }}" id="projectForm" enctype="multipart/form-data">
             @csrf
 
             <!-- =========================
@@ -106,6 +106,75 @@
                         <label for="is_active" class="ml-2 block text-sm text-gray-900">@lang('admin.is_active')</label>
                     </div>
                 </div>
+
+                 <!-- =========================
+                     Media & Brochure Section
+                     ========================= -->
+                <div class="mb-8 border-b pb-6">
+                    <h3 class="text-lg font-medium text-gray-900 mb-4">Media & Brochure</h3>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <!-- Hero Image -->
+                        <div class="mb-3">
+                            <label for="hero_image" class="block text-sm font-medium text-gray-700">Hero Image *</label>
+                            <input type="file" name="hero_image" id="hero_image" class="mt-1 block w-full text-sm text-gray-500
+                                file:mr-4 file:py-2 file:px-4
+                                file:rounded-full file:border-0
+                                file:text-sm file:font-semibold
+                                file:bg-indigo-50 file:text-indigo-700
+                                hover:file:bg-indigo-100" required>
+                            <small class="text-muted text-xs">JPEG/PNG/WebP, max 2MB. Will be resized to 1920px.</small>
+                            @error('hero_image') <div class="text-red-500 text-xs mt-1">{{ $message }}</div> @enderror
+                        </div>
+
+                        <!-- Brochure -->
+                        <div class="mb-3">
+                            <label for="brochure" class="block text-sm font-medium text-gray-700">Project Brochure (PDF)</label>
+                             <input type="file" name="brochure" id="brochure" class="mt-1 block w-full text-sm text-gray-500
+                                file:mr-4 file:py-2 file:px-4
+                                file:rounded-full file:border-0
+                                file:text-sm file:font-semibold
+                                file:bg-indigo-50 file:text-indigo-700
+                                hover:file:bg-indigo-100">
+                            <small class="text-muted text-xs">PDF only, max 5MB</small>
+                            @error('brochure') <div class="text-red-500 text-xs mt-1">{{ $message }}</div> @enderror
+                        </div>
+                    </div>
+
+                    <!-- Gallery -->
+                    <div class="mt-4">
+                        <label for="gallery" class="block text-sm font-medium text-gray-700">Gallery Images</label>
+                        <input type="file" name="gallery[]" id="gallery" multiple class="mt-1 block w-full text-sm text-gray-500
+                            file:mr-4 file:py-2 file:px-4
+                            file:rounded-full file:border-0
+                            file:text-sm file:font-semibold
+                            file:bg-indigo-50 file:text-indigo-700
+                            hover:file:bg-indigo-100">
+                        <small class="text-muted text-xs">Multiple images allowed, JPEG/PNG/WebP, max 4MB per file. Will be resized to 1600px.</small>
+                        @error('gallery') <div class="text-red-500 text-xs mt-1">{{ $message }}</div> @enderror
+                        @error('gallery.*') <div class="text-red-500 text-xs mt-1">{{ $message }}</div> @enderror
+                    </div>
+                </div>
+
+                <!-- SEO Keywords -->
+                <div class="bg-gray-50 p-4 rounded mb-6">
+                    <h4 class="font-medium text-gray-700 mb-2">SEO Keywords</h4>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                             <label for="main_keyword_en" class="block text-sm font-medium text-gray-700">Main Keyword (EN)</label>
+                             <input type="text" name="main_keyword_en" id="main_keyword_en" value="{{ old('main_keyword_en') }}" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm">
+                             <label for="secondary_keywords_en_str" class="block text-sm font-medium text-gray-700 mt-2">Secondary Keywords (EN) (Comma separated)</label>
+                             <input type="text" name="secondary_keywords_en_str" id="secondary_keywords_en_str" value="{{ old('secondary_keywords_en_str') }}" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm">
+                        </div>
+                        <div>
+                             <label for="main_keyword_ar" class="block text-sm font-medium text-gray-700">Main Keyword (AR)</label>
+                             <input type="text" name="main_keyword_ar" id="main_keyword_ar" value="{{ old('main_keyword_ar') }}" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm">
+                             <label for="secondary_keywords_ar_str" class="block text-sm font-medium text-gray-700 mt-2">Secondary Keywords (AR) (Comma separated)</label>
+                             <input type="text" name="secondary_keywords_ar_str" id="secondary_keywords_ar_str" value="{{ old('secondary_keywords_ar_str') }}" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm">
+                        </div>
+                    </div>
+                </div>
+
             </div>
 
             <!-- =========================
