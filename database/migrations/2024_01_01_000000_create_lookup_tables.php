@@ -104,9 +104,23 @@ return new class extends Migration
             });
         }
 
+        // --- ده الجدول اللي كان ناقص وضفته ليك هنا ---
+        if (!Schema::hasTable('amenity_categories')) {
+            Schema::create('amenity_categories', function (Blueprint $table) {
+                $table->id();
+                $table->string('name_en');
+                $table->string('name_local')->nullable();
+                $table->string('slug')->unique();
+                $table->boolean('is_active')->default(true);
+                $table->timestamps();
+            });
+        }
+        // -----------------------------------------
+
         if (!Schema::hasTable('amenities')) {
             Schema::create('amenities', function (Blueprint $table) {
                 $table->id();
+                // دلوقتي الجدول موجود وهيقدر يربط عليه عادي
                 $table->foreignId('amenity_category_id')->nullable()->constrained('amenity_categories')->nullOnDelete();
                 $table->unsignedBigInteger('category_id')->nullable();
                 $table->string('name_en');
@@ -126,6 +140,7 @@ return new class extends Migration
     public function down(): void
     {
         Schema::dropIfExists('amenities');
+        Schema::dropIfExists('amenity_categories'); // ضفت أمر الحذف هنا كمان
         Schema::dropIfExists('unit_types');
         Schema::dropIfExists('property_types');
         Schema::dropIfExists('districts');
