@@ -12,8 +12,10 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('amenities', function (Blueprint $table) {
-            $table->unsignedBigInteger('amenity_category_id')->nullable()->after('category_id');
-            $table->foreign('amenity_category_id')->references('id')->on('amenity_categories')->onDelete('set null');
+            if (!Schema::hasColumn('amenities', 'amenity_category_id')) {
+                $table->unsignedBigInteger('amenity_category_id')->nullable()->after('category_id');
+                $table->foreign('amenity_category_id')->references('id')->on('amenity_categories')->onDelete('set null');
+            }
         });
     }
 
@@ -23,8 +25,14 @@ return new class extends Migration
     public function down(): void
     {
         Schema::table('amenities', function (Blueprint $table) {
-            $table->dropForeign(['amenity_category_id']);
-            $table->dropColumn('amenity_category_id');
+            if (Schema::hasColumn('amenities', 'amenity_category_id')) {
+                try {
+                    $table->dropForeign(['amenity_category_id']);
+                } catch (\Illuminate\Database\QueryException $e) {
+                    // Foreign key might not exist
+                }
+                $table->dropColumn('amenity_category_id');
+            }
         });
     }
 };
