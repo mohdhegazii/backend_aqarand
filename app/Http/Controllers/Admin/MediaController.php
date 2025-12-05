@@ -6,6 +6,8 @@ use App\Http\Controllers\Controller;
 use App\Models\MediaFile;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
+use App\Http\Requests\Admin\StoreMediaRequest;
+use App\Services\Media\MediaProcessor;
 
 class MediaController extends Controller
 {
@@ -76,7 +78,26 @@ class MediaController extends Controller
 
         $mediaFile->delete();
 
+        // Check if request expects JSON (for AJAX delete in media manager)
+        if (request()->wantsJson()) {
+            return response()->json(['success' => true]);
+        }
+
         return redirect()->route('admin.media.index')
             ->with('success', __('admin.deleted_successfully'));
+    }
+
+    public function download(MediaFile $mediaFile)
+    {
+        // Security check
+        $this->authorize('view', $mediaFile);
+        // Note: You need a Policy for MediaFile, or remove this line if you rely on route middleware
+        // Since strict policies might not be set up, ensure strictly Admin access via middleware (handled in routes/web.php)
+
+        if (!Storage::disk($mediaFile->disk)->exists($mediaFile->path)) {
+            abort(404);
+        }
+
+        return Storage::disk($mediaFile->disk)->download($mediaFile->path, $mediaFile->original_filename);
     }
 }

@@ -25,6 +25,9 @@ class MediaFile extends Model
         'height',
         'context_type',
         'context_id',
+        'collection_name', // Added
+        'sort_order',      // Added
+        'is_private',      // Added
         'country_id',
         'region_id',
         'city_id',
@@ -45,9 +48,11 @@ class MediaFile extends Model
         'seo_keywords_en' => 'array',
         'seo_keywords_ar' => 'array',
         'is_primary' => 'boolean',
+        'is_private' => 'boolean', // Added
         'size_bytes' => 'integer',
         'width' => 'integer',
         'height' => 'integer',
+        'sort_order' => 'integer', // Added
         'created_at' => 'datetime',
         'updated_at' => 'datetime',
     ];
@@ -57,6 +62,11 @@ class MediaFile extends Model
      */
     public function getUrlAttribute()
     {
+        if ($this->is_private) {
+            // Private files cannot be accessed directly via storage URL
+            // They should be routed through a controller
+            return route('admin.media.download', $this->id);
+        }
         return Storage::disk($this->disk)->url($this->path);
     }
 
