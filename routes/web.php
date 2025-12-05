@@ -107,6 +107,9 @@ Route::group([
 
     // Project Media Upload (Test Route)
     Route::post('projects/{project}/media', [\App\Http\Controllers\Admin\ProjectController::class, 'uploadMedia'])->name('projects.media.store');
+
+    // Secure File Download
+    Route::get('media/download/{mediaFile}', [\App\Http\Controllers\Admin\MediaController::class, 'download'])->name('media.download');
 });
 
 // Breeze Authentication Routes
