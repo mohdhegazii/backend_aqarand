@@ -91,10 +91,10 @@
                             </td>
                             <td class="py-3 px-6 text-center">
                                 <div class="flex item-center justify-center space-x-2 rtl:space-x-reverse">
-                                    <a href="{{ route('admin.unit-types.edit', ['unit_type' => $type]) }}" class="text-purple-600 hover:text-purple-900">
+                                    <a href="{{ route('admin.unit-types.edit', ['unitType' => $type]) }}" class="text-purple-600 hover:text-purple-900">
                                         @lang('admin.edit')
                                     </a>
-                                    <form action="{{ route('admin.unit-types.destroy', ['unit_type' => $type]) }}" method="POST" onsubmit="return confirm('@lang('admin.confirm_delete')')" class="inline">
+                                    <form action="{{ route('admin.unit-types.destroy', ['unitType' => $type]) }}" method="POST" onsubmit="return confirm('@lang('admin.confirm_delete')')" class="inline">
                                         @csrf
                                         @method('DELETE')
                                         <button type="submit" class="text-red-600 hover:text-red-900">
