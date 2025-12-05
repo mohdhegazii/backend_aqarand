@@ -63,12 +63,12 @@ class AmenityCategoryController extends Controller
             ->with('success', __('admin.created_successfully'));
     }
 
-    public function edit($locale, AmenityCategory $amenityCategory)
+    public function edit(AmenityCategory $amenityCategory)
     {
         return view('admin.amenity_categories.edit', compact('amenityCategory'));
     }
 
-    public function update(Request $request, $locale, AmenityCategory $amenityCategory)
+    public function update(Request $request, AmenityCategory $amenityCategory)
     {
         $validated = $request->validate([
             'name_en' => ['required', 'string', 'max:150'],
@@ -97,7 +97,7 @@ class AmenityCategoryController extends Controller
             ->with('success', __('admin.updated_successfully'));
     }
 
-    public function destroy($locale, AmenityCategory $amenityCategory)
+    public function destroy(AmenityCategory $amenityCategory)
     {
         // Check if has amenities
         if ($amenityCategory->amenities()->count() > 0) {
