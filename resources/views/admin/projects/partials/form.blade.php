@@ -302,6 +302,96 @@
                 </div>
             </div>
 
+            <!-- FAQ Section -->
+            @php
+                $faqItems = old('faqs');
+                if ($faqItems === null && isset($project)) {
+                    $faqItems = $project->faqs->toArray();
+                }
+                $faqItems = $faqItems ?? [];
+            @endphp
+
+            <div class="mt-8">
+                <div class="flex items-center justify-between border-b pb-2 mb-4">
+                    <h4 class="text-lg font-bold text-gray-800">FAQ</h4>
+                    <button type="button" id="add-faq-item" class="bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold px-4 py-2 rounded shadow">
+                        + {{ __('admin.add') ?? 'Add FAQ item' }}
+                    </button>
+                </div>
+
+                <div id="faq-items" class="space-y-4">
+                    @foreach($faqItems as $index => $faq)
+                        <div class="faq-item border rounded-lg p-4 bg-gray-50 space-y-3">
+                            <input type="hidden" name="faqs[{{ $index }}][id]" value="{{ $faq['id'] ?? '' }}">
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div>
+                                    <label class="block text-sm font-semibold text-gray-700 mb-1">Question (Arabic)</label>
+                                    <input type="text" name="faqs[{{ $index }}][question_ar]" value="{{ $faq['question_ar'] ?? '' }}" class="w-full rounded border-gray-300 p-2" placeholder="اكتب السؤال">
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-semibold text-gray-700 mb-1">Question (English)</label>
+                                    <input type="text" name="faqs[{{ $index }}][question_en]" value="{{ $faq['question_en'] ?? '' }}" class="w-full rounded border-gray-300 p-2" placeholder="Enter question">
+                                </div>
+                            </div>
+
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div>
+                                    <label class="block text-sm font-semibold text-gray-700 mb-1">Answer (Arabic)</label>
+                                    <textarea name="faqs[{{ $index }}][answer_ar]" rows="3" class="w-full rounded border-gray-300 p-2">{{ $faq['answer_ar'] ?? '' }}</textarea>
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-semibold text-gray-700 mb-1">Answer (English)</label>
+                                    <textarea name="faqs[{{ $index }}][answer_en]" rows="3" class="w-full rounded border-gray-300 p-2">{{ $faq['answer_en'] ?? '' }}</textarea>
+                                </div>
+                            </div>
+
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <label class="block text-sm font-semibold text-gray-700 mb-1">Sort Order</label>
+                                    <input type="number" name="faqs[{{ $index }}][sort_order]" value="{{ $faq['sort_order'] ?? $index }}" class="w-32 rounded border-gray-300 p-2">
+                                </div>
+                                <button type="button" class="remove-faq text-red-600 hover:text-red-800 text-sm font-semibold">{{ __('admin.delete') ?? 'Remove' }}</button>
+                            </div>
+                        </div>
+                    @endforeach
+                </div>
+
+                <template id="faq-item-template">
+                    <div class="faq-item border rounded-lg p-4 bg-gray-50 space-y-3">
+                        <input type="hidden" data-name="faqs[__INDEX__][id]" value="">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-sm font-semibold text-gray-700 mb-1">Question (Arabic)</label>
+                                <input type="text" data-name="faqs[__INDEX__][question_ar]" class="w-full rounded border-gray-300 p-2" placeholder="اكتب السؤال">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-semibold text-gray-700 mb-1">Question (English)</label>
+                                <input type="text" data-name="faqs[__INDEX__][question_en]" class="w-full rounded border-gray-300 p-2" placeholder="Enter question">
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-sm font-semibold text-gray-700 mb-1">Answer (Arabic)</label>
+                                <textarea data-name="faqs[__INDEX__][answer_ar]" rows="3" class="w-full rounded border-gray-300 p-2"></textarea>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-semibold text-gray-700 mb-1">Answer (English)</label>
+                                <textarea data-name="faqs[__INDEX__][answer_en]" rows="3" class="w-full rounded border-gray-300 p-2"></textarea>
+                            </div>
+                        </div>
+
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <label class="block text-sm font-semibold text-gray-700 mb-1">Sort Order</label>
+                                <input type="number" data-name="faqs[__INDEX__][sort_order]" data-sort-default="__INDEX__" class="w-32 rounded border-gray-300 p-2">
+                            </div>
+                            <button type="button" class="remove-faq text-red-600 hover:text-red-800 text-sm font-semibold">{{ __('admin.delete') ?? 'Remove' }}</button>
+                        </div>
+                    </div>
+                </template>
+            </div>
+
             <div class="mt-6">
                 <h4 class="font-bold text-gray-700 mb-2">{{ __('admin.seo_settings') }}</h4>
                 <div class="grid grid-cols-1 gap-4">
@@ -448,6 +538,7 @@
 <script>
     document.addEventListener('DOMContentLoaded', () => {
         initProjectDescriptionEditors();
+        initFaqForm();
     });
 
     function initProjectDescriptionEditors() {
@@ -463,6 +554,40 @@
             menubar: false,
             branding: false,
             directionality: document.documentElement.dir === 'rtl' ? 'rtl' : 'ltr',
+        });
+    }
+
+    function initFaqForm() {
+        const faqContainer = document.getElementById('faq-items');
+        const template = document.getElementById('faq-item-template');
+        const addButton = document.getElementById('add-faq-item');
+
+        if (!faqContainer || !template || !addButton) {
+            return;
+        }
+
+        let nextIndex = faqContainer.querySelectorAll('.faq-item').length;
+
+        addButton.addEventListener('click', () => {
+            const clone = document.importNode(template.content, true);
+            clone.querySelectorAll('[data-name]').forEach((element) => {
+                element.name = element.dataset.name.replace('__INDEX__', nextIndex);
+            });
+            clone.querySelectorAll('[data-sort-default]').forEach((element) => {
+                element.value = element.dataset.sortDefault.replace('__INDEX__', nextIndex);
+            });
+
+            faqContainer.appendChild(clone);
+            nextIndex++;
+        });
+
+        faqContainer.addEventListener('click', (event) => {
+            if (event.target.closest('.remove-faq')) {
+                const item = event.target.closest('.faq-item');
+                if (item) {
+                    item.remove();
+                }
+            }
         });
     }
 

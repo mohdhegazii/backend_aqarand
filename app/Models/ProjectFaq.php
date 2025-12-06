@@ -9,8 +9,6 @@ class ProjectFaq extends Model
 {
     use HasFactory;
 
-    protected $table = 'project_faqs';
-
     protected $fillable = [
         'project_id',
         'question_ar',

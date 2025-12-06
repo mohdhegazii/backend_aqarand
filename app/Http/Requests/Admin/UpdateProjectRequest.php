@@ -72,6 +72,8 @@ class UpdateProjectRequest extends FormRequest
             'faqs.*.answer_ar' => 'nullable|string',
             'faqs.*.question_en' => 'nullable|string',
             'faqs.*.answer_en' => 'nullable|string',
+            'faqs.*.sort_order' => 'nullable|integer',
+            'faqs.*.id' => 'nullable|integer|exists:project_faqs,id',
 
             // Media Validation (Add basic rules)
             'hero_image_url' => 'nullable|image|max:10240', // 10MB
