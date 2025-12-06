@@ -15,10 +15,29 @@ use Illuminate\Support\Str;
 
 class ProjectController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        $projects = Project::with('developer')->latest()->paginate(20);
-        return view('admin.projects.index', compact('projects'));
+        $projectsQuery = Project::with(['developer', 'city', 'district'])->latest();
+
+        if ($request->filled('search')) {
+            $search = $request->input('search');
+            $projectsQuery->where(function ($query) use ($search) {
+                $likeSearch = '%'.$search.'%';
+
+                $query->where('name_ar', 'like', $likeSearch)
+                      ->orWhere('name_en', 'like', $likeSearch)
+                      ->orWhere('name', 'like', $likeSearch);
+            });
+        }
+
+        if ($request->filled('developer_id')) {
+            $projectsQuery->where('developer_id', $request->input('developer_id'));
+        }
+
+        $projects = $projectsQuery->paginate(20)->withQueryString();
+        $developers = Developer::where('is_active', true)->orderBy('name')->get();
+
+        return view('admin.projects.index', compact('projects', 'developers'));
     }
 
     public function create()
