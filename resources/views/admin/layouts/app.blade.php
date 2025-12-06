@@ -47,16 +47,6 @@
     @stack('styles')
 </head>
 <body class="font-sans antialiased bg-gray-100">
-    @if (config('app.debug'))
-        <div style="background:#111;color:#0f0;padding:8px;font-size:11px;direction:ltr;z-index:9999;position:relative;">
-            <strong>Locale DEBUG</strong><br>
-            app()->getLocale(): {{ app()->getLocale() }}<br>
-            config('app.locale'): {{ config('app.locale') }}<br>
-            URL: {{ url()->current() }}<br>
-            Segment[1]: {{ request()->segment(1) ?? 'null' }}<br>
-            Session locale: {{ session('locale') ?? 'null' }}
-        </div>
-    @endif
     @php
         $locale = app()->getLocale();
         $isRtl = $locale === 'ar';

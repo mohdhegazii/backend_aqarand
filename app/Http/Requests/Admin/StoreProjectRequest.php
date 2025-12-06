@@ -52,6 +52,7 @@ class StoreProjectRequest extends FormRequest
             'max_price' => 'nullable|numeric|min:0',
             'min_bua' => 'nullable|numeric|min:0',
             'max_bua' => 'nullable|numeric|min:0',
+            'total_units' => 'nullable|integer|min:0',
             'delivery_year' => 'nullable|integer|min:2000|max:2100',
 
             // Developer
