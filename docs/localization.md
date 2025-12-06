@@ -2,16 +2,7 @@
 
 This project supports multi-language functionality with **Arabic (ar)** as the default locale and **English (en)** (plus potentially others) as secondary locales.
 
-## 1. Important Configuration
-
-**Crucial:** You must ensure your `.env` file sets the default locale to Arabic.
-```env
-APP_LOCALE=ar
-APP_FALLBACK_LOCALE=ar
-```
-If `APP_LOCALE` is set to `en`, the application will treat English as the default language, breaking the URL structure (e.g., `/` will render in English, and `/en` will redirect to `/`).
-
-## 2. URL Structure
+## 1. URL Structure
 
 - **Arabic (Default):** No prefix.
   - Home: `http://domain.com/`
@@ -21,7 +12,7 @@ If `APP_LOCALE` is set to `en`, the application will treat English as the defaul
   - Home: `http://domain.com/en/`
   - Projects: `http://domain.com/en/projects`
 
-## 3. Locale Detection & Middleware
+## 2. Locale Detection & Middleware
 
 The system uses a custom middleware `App\Http\Middleware\SetLocaleFromUrl` to determine the locale:
 
@@ -34,7 +25,7 @@ The system uses a custom middleware `App\Http\Middleware\SetLocaleFromUrl` to de
     - If a user tries to access `/ar/projects`, they are redirected to `/projects` (canonical URL).
     - If a user accesses `/en` (without trailing slash), they are redirected to `/en/` for consistency.
 
-## 4. Routes Configuration (`routes/web.php`)
+## 3. Routes Configuration (`routes/web.php`)
 
 Routes are organized into two main groups:
 
@@ -49,7 +40,7 @@ Routes are organized into two main groups:
     - Contains all routes for other languages.
     - The `{locale}` parameter is constrained to match supported locales *excluding* the default one (regex: `^(?!ar$)[a-zA-Z_]{2,5}$`).
 
-## 5. Adding a New Language
+## 4. Adding a New Language
 
 To add a new language (e.g., French `fr`):
 
@@ -57,11 +48,11 @@ To add a new language (e.g., French `fr`):
 2.  **Add Translations:** Create a new directory `resources/lang/fr/` and add necessary files (e.g., `messages.php`).
 3.  **Update Switcher:** The language switcher automatically detects supported locales if configured dynamically, or you can add the link manually in `resources/views/partials/lang-switcher.blade.php`.
 
-## 6. Language Switcher
+## 5. Language Switcher
 
 A blade partial is available at `resources/views/partials/lang-switcher.blade.php`. It generates links to the current page in the alternate language, preserving the remaining path segments.
 
-## 7. Testing
+## 6. Testing
 
 - Access `/` -> Should show Arabic content.
 - Access `/en/` -> Should show English content.
