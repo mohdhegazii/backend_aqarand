@@ -109,7 +109,7 @@
         <div id="sidebar-backdrop" class="fixed inset-0 bg-black/40 hidden md:hidden z-20" onclick="toggleSidebar()"></div>
 
         <!-- Main Content -->
-        <div class="flex-1 flex flex-col overflow-hidden min-h-screen {{ $isRtl ? 'md:mr-64' : 'md:ml-64' }}">
+        <div class="flex-1 flex flex-col overflow-hidden min-h-screen">
             <!-- Navbar -->
             <header class="bg-white shadow sticky top-0 z-10">
                 <div class="max-w-7xl mx-auto py-4 px-4 sm:px-6 lg:px-8 flex justify-between items-center">
