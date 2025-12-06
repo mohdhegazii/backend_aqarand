@@ -147,8 +147,8 @@ return [
 
     // Project Form
     'step_basic_info' => '١- المعلومات الأساسية',
-    'step_details' => '٢- تفاصيل العقار والسعر',
-    'step_description' => '٣- وصف العقار',
+    'step_details' => '٢- تفاصيل المشروع والتسعير',
+    'step_description' => '٣- وصف المشروع',
     'step_media' => '٤- الفيديوهات والصور',
     'step_publish' => '٥- النشر',
 
@@ -168,15 +168,23 @@ return [
     'project_map' => 'خريطة المشروع وحدود الأرض',
     'map_instruction' => 'استخدم أدوات الرسم لتحديد حدود المشروع على الخريطة.',
 
-    'property_details_price' => 'تفاصيل العقار والسعر',
-    'min_price' => 'أقل سعر',
-    'max_price' => 'أعلى سعر',
-    'min_area' => 'أقل مساحة (م٢)',
-    'max_area' => 'أكبر مساحة (م٢)',
+    'project_details_pricing' => 'تفاصيل المشروع والتسعير',
+    'project_details_pricing_helper' => 'إحصائيات ملخصة على مستوى المشروع وليست للوحدات الفردية.',
+    'project_min_price' => 'أقل سعر للمشروع',
+    'project_max_price' => 'أعلى سعر للمشروع',
+    'project_min_bua' => 'أقل مسطح مبني للمشروع (م٢)',
+    'project_max_bua' => 'أعلى مسطح مبني للمشروع (م٢)',
+    'delivery_year' => 'سنة التسليم',
+    'project_status' => 'حالة المشروع',
     'total_units' => 'عدد الوحدات',
     'amenities' => 'المرافق والخدمات',
 
-    'description_detailed' => 'وصف تفصيلي',
+    'project_description_section' => 'وصف المشروع',
+    'project_description_helper' => 'اكتب وصفاً شاملاً للمشروع باللغتين.',
+    'project_title_ar' => 'عنوان المشروع (عربي)',
+    'project_title_en' => 'عنوان المشروع (إنجليزي)',
+    'project_description_ar' => 'وصف المشروع (عربي)',
+    'project_description_en' => 'وصف المشروع (إنجليزي)',
     'seo_settings' => 'تحسين محركات البحث (SEO)',
     'meta_title' => 'عنوان الصفحة (Meta Title)',
 

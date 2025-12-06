@@ -147,7 +147,7 @@ return [
 
     // Project Form
     'step_basic_info' => '1- Basic Info',
-    'step_details' => '2- Property Details & Price',
+    'step_details' => '2- Project Details & Pricing',
     'step_description' => '3- Description',
     'step_media' => '4- Videos & Photos',
     'step_publish' => '5- Publish',
@@ -168,15 +168,23 @@ return [
     'project_map' => 'Project Map & Land Boundaries',
     'map_instruction' => 'Use drawing tools to define the project boundaries on the map.',
 
-    'property_details_price' => 'Property Details & Price',
-    'min_price' => 'Min Price',
-    'max_price' => 'Max Price',
-    'min_area' => 'Min Area (m²)',
-    'max_area' => 'Max Area (m²)',
+    'project_details_pricing' => 'Project Details & Pricing',
+    'project_details_pricing_helper' => 'Project-level summary stats, not individual unit values.',
+    'project_min_price' => 'Project Min Price',
+    'project_max_price' => 'Project Max Price',
+    'project_min_bua' => 'Project Min BUA (sqm)',
+    'project_max_bua' => 'Project Max BUA (sqm)',
+    'delivery_year' => 'Delivery Year',
+    'project_status' => 'Project Status',
     'total_units' => 'Total Units',
     'amenities' => 'Amenities',
 
-    'description_detailed' => 'Detailed Description',
+    'project_description_section' => 'Project Description',
+    'project_description_helper' => 'Describe the overall project in both languages.',
+    'project_title_ar' => 'Project Title (Arabic)',
+    'project_title_en' => 'Project Title (English)',
+    'project_description_ar' => 'Project Description (Arabic)',
+    'project_description_en' => 'Project Description (English)',
     'seo_settings' => 'SEO Settings',
     'meta_title' => 'Meta Title',
     // meta_description already exists but maybe check context

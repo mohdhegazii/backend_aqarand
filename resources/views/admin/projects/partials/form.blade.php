@@ -197,26 +197,29 @@
 
         <!-- STEP 2: Details -->
         <div x-show="step === 2" class="space-y-6">
-            <h3 class="text-lg font-bold text-gray-800 border-b pb-2">{{ __('admin.property_details_price') }}</h3>
+            <div class="flex items-center justify-between border-b pb-2">
+                <h3 class="text-lg font-bold text-gray-800">{{ __('admin.project_details_pricing') }}</h3>
+                <p class="text-sm text-gray-500">{{ __('admin.project_details_pricing_helper') }}</p>
+            </div>
 
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <!-- Prices -->
                 <div>
-                    <label class="block text-gray-700 font-bold mb-2">{{ __('admin.min_price') }}</label>
+                    <label class="block text-gray-700 font-bold mb-2">{{ __('admin.project_min_price') }}</label>
                     <input type="number" name="min_price" value="{{ old('min_price', $project->min_price ?? '') }}" class="w-full rounded border-gray-300 p-2">
                 </div>
                 <div>
-                    <label class="block text-gray-700 font-bold mb-2">{{ __('admin.max_price') }}</label>
+                    <label class="block text-gray-700 font-bold mb-2">{{ __('admin.project_max_price') }}</label>
                     <input type="number" name="max_price" value="{{ old('max_price', $project->max_price ?? '') }}" class="w-full rounded border-gray-300 p-2">
                 </div>
 
                 <!-- Areas -->
                 <div>
-                    <label class="block text-gray-700 font-bold mb-2">{{ __('admin.min_area') }}</label>
+                    <label class="block text-gray-700 font-bold mb-2">{{ __('admin.project_min_bua') }}</label>
                     <input type="number" name="min_bua" value="{{ old('min_bua', $project->min_bua ?? '') }}" class="w-full rounded border-gray-300 p-2">
                 </div>
                 <div>
-                    <label class="block text-gray-700 font-bold mb-2">{{ __('admin.max_area') }}</label>
+                    <label class="block text-gray-700 font-bold mb-2">{{ __('admin.project_max_bua') }}</label>
                     <input type="number" name="max_bua" value="{{ old('max_bua', $project->max_bua ?? '') }}" class="w-full rounded border-gray-300 p-2">
                 </div>
 
@@ -224,6 +227,21 @@
                 <div>
                     <label class="block text-gray-700 font-bold mb-2">{{ __('admin.total_units') }}</label>
                     <input type="number" name="total_units" value="{{ old('total_units', $project->total_units ?? '') }}" class="w-full rounded border-gray-300 p-2">
+                </div>
+
+                <!-- Delivery Year -->
+                <div>
+                    <label class="block text-gray-700 font-bold mb-2">{{ __('admin.delivery_year') }}</label>
+                    <input type="number" name="delivery_year" value="{{ old('delivery_year', $project->delivery_year ?? '') }}" class="w-full rounded border-gray-300 p-2">
+                </div>
+                <!-- Project Status -->
+                <div>
+                    <label class="block text-gray-700 font-bold mb-2">{{ __('admin.project_status') }}</label>
+                    <select name="status" class="w-full rounded border-gray-300 p-2">
+                        @foreach(['draft' => __('admin.draft'), 'published' => __('admin.published')] as $value => $label)
+                            <option value="{{ $value }}" {{ old('status', $project->status ?? 'draft') === $value ? 'selected' : '' }}>{{ $label }}</option>
+                        @endforeach
+                    </select>
                 </div>
             </div>
 
@@ -247,12 +265,41 @@
         </div>
 
         <!-- STEP 3: Description -->
-        <div x-show="step === 3" class="space-y-6">
-            <h3 class="text-lg font-bold text-gray-800 border-b pb-2">{{ __('admin.step_description') }}</h3>
+        <div x-show="step === 3" class="space-y-6" x-data="{ activeLang: 'ar' }">
+            <div class="flex items-center justify-between border-b pb-2">
+                <h3 class="text-lg font-bold text-gray-800">{{ __('admin.project_description_section') }}</h3>
+                <p class="text-sm text-gray-500">{{ __('admin.project_description_helper') }}</p>
+            </div>
 
-            <div>
-                <label class="block text-gray-700 font-bold mb-2">{{ __('admin.description_detailed') }}</label>
-                <textarea name="description_long" rows="10" class="w-full rounded border-gray-300 p-2">{{ old('description_long', $project->description_long ?? '') }}</textarea>
+            <div class="flex space-x-2">
+                <button type="button" @click="activeLang = 'ar'" :class="activeLang === 'ar' ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-700'" class="px-4 py-2 rounded-md border">
+                    {{ __('admin.arabic') }}
+                </button>
+                <button type="button" @click="activeLang = 'en'" :class="activeLang === 'en' ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-700'" class="px-4 py-2 rounded-md border">
+                    {{ __('admin.english') }}
+                </button>
+            </div>
+
+            <div x-show="activeLang === 'ar'" class="space-y-4">
+                <div>
+                    <label class="block text-gray-700 font-bold mb-2">{{ __('admin.project_title_ar') }}</label>
+                    <input type="text" name="title_ar" value="{{ old('title_ar', $project->title_ar ?? '') }}" class="w-full rounded border-gray-300 p-2">
+                </div>
+                <div>
+                    <label class="block text-gray-700 font-bold mb-2">{{ __('admin.project_description_ar') }}</label>
+                    <textarea id="project_description_ar" name="description_ar" rows="10" class="w-full rounded border-gray-300 p-2 tinymce-project-description">{{ old('description_ar', $project->description_ar ?? $project->description_long ?? '') }}</textarea>
+                </div>
+            </div>
+
+            <div x-show="activeLang === 'en'" class="space-y-4">
+                <div>
+                    <label class="block text-gray-700 font-bold mb-2">{{ __('admin.project_title_en') }}</label>
+                    <input type="text" name="title_en" value="{{ old('title_en', $project->title_en ?? '') }}" class="w-full rounded border-gray-300 p-2">
+                </div>
+                <div>
+                    <label class="block text-gray-700 font-bold mb-2">{{ __('admin.project_description_en') }}</label>
+                    <textarea id="project_description_en" name="description_en" rows="10" class="w-full rounded border-gray-300 p-2 tinymce-project-description">{{ old('description_en', $project->description_en ?? $project->description_long ?? '') }}</textarea>
+                </div>
             </div>
 
             <div class="mt-6">
@@ -354,15 +401,7 @@
             <h3 class="text-lg font-bold text-gray-800 border-b pb-2">{{ __('admin.publish') }}</h3>
 
             <div class="bg-gray-50 p-6 rounded border border-gray-200 text-center">
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-left mb-4">
-                    <div>
-                        <label class="block text-gray-700 font-bold mb-2">{{ __('admin.status') }}</label>
-                        <select name="status" class="w-full rounded border-gray-300 p-2">
-                            @foreach(['draft' => __('admin.draft'), 'published' => __('admin.published')] as $value => $label)
-                                <option value="{{ $value }}" {{ old('status', $project->status ?? 'draft') === $value ? 'selected' : '' }}>{{ $label }}</option>
-                            @endforeach
-                        </select>
-                    </div>
+                <div class="grid grid-cols-1 gap-4 text-left mb-4">
                     <div class="space-y-2">
                         <label class="inline-flex items-center">
                             <input type="checkbox" name="include_in_sitemap" value="1" {{ old('include_in_sitemap', $project->include_in_sitemap ?? true) ? 'checked' : '' }} class="form-checkbox h-5 w-5 text-blue-600">
@@ -405,7 +444,28 @@
 </div>
 
 @push('scripts')
+<script src="https://cdn.tiny.cloud/1/no-api-key/tinymce/6/tinymce.min.js" referrerpolicy="origin"></script>
 <script>
+    document.addEventListener('DOMContentLoaded', () => {
+        initProjectDescriptionEditors();
+    });
+
+    function initProjectDescriptionEditors() {
+        if (typeof tinymce === 'undefined') {
+            return;
+        }
+
+        tinymce.init({
+            selector: 'textarea.tinymce-project-description',
+            plugins: 'link lists code',
+            toolbar: 'undo redo | bold italic underline | alignleft aligncenter alignright | bullist numlist | link | code',
+            height: 300,
+            menubar: false,
+            branding: false,
+            directionality: document.documentElement.dir === 'rtl' ? 'rtl' : 'ltr',
+        });
+    }
+
     function areaConverter(initialValue, initialUnit) {
         return {
             areaValue: initialValue ?? '',
