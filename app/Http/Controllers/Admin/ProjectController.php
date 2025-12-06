@@ -71,8 +71,14 @@ class ProjectController extends Controller
             'seo_slug_ar' => 'nullable|string|unique:projects,seo_slug_ar',
             'amenities' => 'array',
             'amenities.*' => 'exists:amenities,id',
-            'main_keyword_en' => 'nullable|string',
-            'main_keyword_ar' => 'nullable|string',
+            'main_keyword_en' => 'nullable|string|max:255',
+            'main_keyword_ar' => 'nullable|string|max:255',
+            'meta_title_en' => 'nullable|string|max:255',
+            'meta_title_ar' => 'nullable|string|max:255',
+            'meta_description_en' => 'nullable|string|max:255',
+            'meta_description_ar' => 'nullable|string|max:255',
+            'tagline_en' => 'nullable|string|max:255',
+            'tagline_ar' => 'nullable|string|max:255',
 
             // Media Validation
             // Hero image is selected from gallery, so not required as separate upload
@@ -95,6 +101,14 @@ class ProjectController extends Controller
 
         // Main slug fallback
         $validated['slug'] = $validated['seo_slug_en'];
+
+        // Ensure slug uniqueness
+        $originalSlug = $validated['slug'];
+        $count = 1;
+        while (Project::where('slug', $validated['slug'])->exists()) {
+            $validated['slug'] = $originalSlug . '-' . $count;
+            $count++;
+        }
 
         $project = Project::create($request->except('amenities', 'seo_slug_en', 'seo_slug_ar', 'hero_image', 'gallery', 'brochure') + [
             'name' => $validated['name'],
@@ -159,8 +173,14 @@ class ProjectController extends Controller
             'seo_slug_ar' => 'nullable|string|unique:projects,seo_slug_ar,' . $project->id,
             'amenities' => 'array',
             'amenities.*' => 'exists:amenities,id',
-            'main_keyword_en' => 'nullable|string',
-            'main_keyword_ar' => 'nullable|string',
+            'main_keyword_en' => 'nullable|string|max:255',
+            'main_keyword_ar' => 'nullable|string|max:255',
+            'meta_title_en' => 'nullable|string|max:255',
+            'meta_title_ar' => 'nullable|string|max:255',
+            'meta_description_en' => 'nullable|string|max:255',
+            'meta_description_ar' => 'nullable|string|max:255',
+            'tagline_en' => 'nullable|string|max:255',
+            'tagline_ar' => 'nullable|string|max:255',
 
             // Media Validation (Optional on update)
             'gallery' => 'nullable|array',
