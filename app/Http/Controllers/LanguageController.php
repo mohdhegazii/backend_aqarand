@@ -25,23 +25,22 @@ class LanguageController extends Controller
         $segments = $previousPath === '' ? [] : explode('/', $previousPath);
         $firstSegment = $segments[0] ?? null;
 
-        if ($firstSegment && in_array($firstSegment, $supportedLocales, true)) {
+        // If the first segment is a supported locale (e.g. 'en'), remove it to get the base path
+        if ($firstSegment && in_array($firstSegment, $supportedLocales, true) && $firstSegment !== $defaultLocale) {
             array_shift($segments);
+        }
+
+        // Also handle the case where default locale might be present in URL (though we try to avoid it)
+        if ($firstSegment === $defaultLocale) {
+             array_shift($segments);
         }
 
         $relativePath = implode('/', $segments);
 
-        $targetPath = $locale === $defaultLocale
+        // Construct target path
+        $targetPath = $targetLocale === $defaultLocale
             ? ($relativePath === '' ? '/' : '/'.$relativePath)
-            : '/'.$locale.'/'.($relativePath === '' ? '' : $relativePath);
-
-        if (Auth::check() && Auth::user()->is_admin) {
-            if ($relativePath === '') {
-                return redirect()->to(route($this->adminRoutePrefix().'dashboard'));
-            }
-
-            return redirect()->to($targetPath);
-        }
+            : '/'.$targetLocale.'/'.($relativePath === '' ? '' : $relativePath);
 
         return redirect()->to($targetPath);
     }

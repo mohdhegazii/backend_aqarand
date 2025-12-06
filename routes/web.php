@@ -119,9 +119,9 @@ Route::group([
 ], function () use ($registerPublicRoutes, $registerAdminRoutes) {
     $registerPublicRoutes();
 
-    Route::get('lang/{locale}', [LanguageController::class, 'switch'])
+    Route::get('lang/{targetLocale}', [LanguageController::class, 'switch'])
         ->name('lang.switch')
-        ->where('locale', '[a-zA-Z_]{2,5}');
+        ->where('targetLocale', '[a-zA-Z_]{2,5}');
 
     $registerAdminRoutes('admin.');
 
@@ -138,10 +138,6 @@ Route::group([
     'middleware' => ['web', 'set.locale'],
 ], function () use ($registerPublicRoutes, $registerAdminRoutes) {
     $registerPublicRoutes('localized.');
-
-    Route::get('lang/{locale}', [LanguageController::class, 'switch'])
-        ->name('lang.switch')
-        ->where('locale', '[a-zA-Z_]{2,5}');
 
     $registerAdminRoutes('localized.admin.');
 
