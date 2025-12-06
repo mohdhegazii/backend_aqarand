@@ -1,24 +1,25 @@
 # Instructions for User
 
-To resolve the remaining issues with Project Creation and ensure images are accessible, please perform the following steps:
+To resolve the issues with Project Creation (Internal Server Error) and update the Hero Image behavior, please perform the following step:
 
 1.  **Run Migrations:**
-    A new fix migration has been created to add the missing `developer_id` column to the `projects` table.
-    Run the following command in your terminal:
+    The system has detected that the `projects` table is missing required location columns (`country_id`, `region_id`, etc.), causing the "Column not found" error.
+
+    A fix migration file has been created at:
+    `database/migrations/2027_01_06_000000_add_location_columns_to_projects_fix.php`
+
+    Please run the following command in your terminal to apply the fix:
     ```bash
     php artisan migrate
     ```
 
-2.  **Verify Storage Link:**
-    The symbolic link for public storage (`public/storage`) has been created. Ensure your web server configuration allows following symlinks.
-    If images still return 404, you may need to run:
-    ```bash
-    php artisan storage:link
-    ```
-    (Note: I have already attempted to create the link manually, but running the artisan command ensures it's correct for your specific environment).
+    *If you are in a production environment, ensure you have a backup before running migrations.*
 
 ## Changes Applied:
 
-1.  **Project Creation Error Fix (Part 2):** Created a migration `2027_01_06_000001_add_developer_id_to_projects_fix.php` to add the missing `developer_id` column.
-2.  **Storage Access:** Manually created the symbolic link from `public/storage` to `storage/app/public` to ensure uploaded images are accessible.
-3.  **Hero Image & Tabs:** (Previous Step) Updated the Hero Image selection logic and fixed the Admin Language Tabs.
+1.  **Project Creation Error Fix:** Created a migration to add missing location columns to the `projects` table.
+2.  **Hero Image Selection:**
+    *   **Removed** the mandatory "Hero Image" file upload on Project Creation.
+    *   **Logic Change:** The first image uploaded to the Gallery during creation will automatically be set as the Hero Image.
+    *   **Edit Screen:** Added a UI to select a Hero Image from the existing Gallery images via radio buttons.
+3.  **Language Tabs Fix:** Added Alpine.js to the admin layout (`app.blade.php`) to ensure the English/Arabic tabs switch correctly.
