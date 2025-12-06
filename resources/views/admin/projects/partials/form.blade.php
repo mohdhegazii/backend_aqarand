@@ -253,9 +253,7 @@
                 </div>
 
                 @php
-                    $selectedAmenities = old('amenities', $isEdit ? $project->amenities->pluck('id')->toArray() : []);
-                    $selectedAmenities = is_array($selectedAmenities) ? array_map('intval', $selectedAmenities) : [];
-
+                    $selectedAmenities = $isEdit ? $project->amenities->pluck('id')->toArray() : [];
                     $amenityGroups = ($amenities instanceof \Illuminate\Support\Collection && $amenities->first() instanceof \Illuminate\Support\Collection)
                         ? $amenities
                         : collect(['amenities' => $amenities]);
