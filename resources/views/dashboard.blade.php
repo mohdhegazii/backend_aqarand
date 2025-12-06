@@ -1,1 +1,4 @@
-<h1>User Dashboard</h1><p>You are logged in!</p>
+<h1>{{ __('messages.dashboard') }}</h1>
+<p>{{ __('messages.welcome') }}</p>
+
+@include('partials.lang-switcher')

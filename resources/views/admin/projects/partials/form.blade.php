@@ -73,7 +73,7 @@
         </ul>
     </div>
 
-    <form action="{{ $isEdit ? route('admin.projects.update', $project->id) : route('admin.projects.store') }}"
+    <form action="{{ $isEdit ? route($adminRoutePrefix.'projects.update', $project->id) : route($adminRoutePrefix.'projects.store') }}"
           method="POST"
           enctype="multipart/form-data"
           id="project-form">
@@ -675,7 +675,7 @@
             regions: [],
             cities: [],
             districts: [],
-            locationSearchUrl: '{{ route('admin.locations.search') }}',
+            locationSearchUrl: '{{ route($adminRoutePrefix.'locations.search') }}',
 
             async init() {
                 if (this.selectedCountry) {

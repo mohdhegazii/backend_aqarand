@@ -57,7 +57,7 @@ class MediaController extends Controller
 
         $mediaFile->update($validated);
 
-        return redirect()->route('admin.media.show', $mediaFile)
+        return redirect()->route($this->adminRoutePrefix().'media.show', $mediaFile)
             ->with('success', __('admin.updated_successfully'));
     }
 
@@ -83,7 +83,7 @@ class MediaController extends Controller
             return response()->json(['success' => true]);
         }
 
-        return redirect()->route('admin.media.index')
+        return redirect()->route($this->adminRoutePrefix().'media.index')
             ->with('success', __('admin.deleted_successfully'));
     }
 

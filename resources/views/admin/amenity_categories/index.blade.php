@@ -7,7 +7,7 @@
         <div class="p-6 bg-white border-b border-gray-200">
             <div class="flex justify-between mb-4">
                 <div class="flex-1">
-                     <form method="GET" action="{{ route('admin.amenity-categories.index') }}" class="flex">
+                     <form method="GET" action="{{ route($adminRoutePrefix.'amenity-categories.index') }}" class="flex">
                         <input type="text" name="search" value="{{ request('search') }}" placeholder="@lang('admin.search')" class="rounded-l border-gray-300 focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50">
                         <button type="submit" class="bg-gray-200 hover:bg-gray-300 text-gray-700 font-bold py-2 px-4 rounded-r">
                             @lang('admin.search')
@@ -15,7 +15,7 @@
                     </form>
                 </div>
                 <div>
-                    <a href="{{ route('admin.amenity-categories.create') }}" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
+                    <a href="{{ route($adminRoutePrefix.'amenity-categories.create') }}" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
                         @lang('admin.create_new')
                     </a>
                 </div>
@@ -60,8 +60,8 @@
                                 </span>
                             </td>
                             <td class="px-5 py-5 border-b border-gray-200 bg-white text-sm">
-                                <a href="{{ route('admin.amenity-categories.edit', $category->id) }}" class="text-blue-600 hover:text-blue-900 mr-4">@lang('admin.edit')</a>
-                                <form action="{{ route('admin.amenity-categories.destroy', $category->id) }}" method="POST" class="inline-block" onsubmit="return confirm('@lang('admin.confirm_delete')')">
+                                <a href="{{ route($adminRoutePrefix.'amenity-categories.edit', $category->id) }}" class="text-blue-600 hover:text-blue-900 mr-4">@lang('admin.edit')</a>
+                                <form action="{{ route($adminRoutePrefix.'amenity-categories.destroy', $category->id) }}" method="POST" class="inline-block" onsubmit="return confirm('@lang('admin.confirm_delete')')">
                                     @csrf
                                     @method('DELETE')
                                     <button type="submit" class="text-red-600 hover:text-red-900">@lang('admin.delete')</button>
