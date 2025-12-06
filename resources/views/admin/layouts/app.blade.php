@@ -7,10 +7,33 @@
 
     <title>@lang('admin.app_name')</title>
 
+    <!-- Scripts -->
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 
+    <style>
+        /* Minimal RTL support */
+        [dir="rtl"] .space-x-4 > :not([hidden]) ~ :not([hidden]) {
+            --tw-space-x-reverse: 1;
+            margin-right: calc(1rem * var(--tw-space-x-reverse));
+            margin-left: calc(1rem * calc(1 - var(--tw-space-x-reverse)));
+        }
+        [dir="rtl"] {
+            text-align: right;
+        }
+        [dir="rtl"] .border-r {
+            border-left-width: 1px;
+            border-right-width: 0;
+        }
+        [dir="rtl"] .ml-auto {
+            margin-right: auto;
+            margin-left: 0;
+        }
+    </style>
+    <!-- CDN for Tailwind (optional fallback if build fails) -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
     <!-- Leaflet CSS -->
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
 
     <!-- Bootstrap Icons -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
@@ -23,7 +46,7 @@
 
     @stack('styles')
 </head>
-<body class="aqarand-body">
+<body class="font-sans antialiased bg-gray-100">
     @if (config('app.debug'))
         <div style="background:#111;color:#0f0;padding:8px;font-size:11px;direction:ltr;z-index:9999;position:relative;">
             <strong>Locale DEBUG</strong><br>
@@ -38,151 +61,112 @@
         $locale = app()->getLocale();
         $isRtl = $locale === 'ar';
         $adminRoutePrefix = $adminRoutePrefix ?? 'admin.';
-        $isActive = fn($route) => request()->routeIs($route);
-        $navSections = [
-            [
-                'links' => [
-                    ['route' => $adminRoutePrefix . 'dashboard', 'label' => __('admin.dashboard'), 'icon' => 'bi-grid-1x2'],
-                ],
-            ],
-            [
-                'label' => __('admin.countries') . ' / ' . __('admin.regions'),
-                'links' => [
-                    ['route' => $adminRoutePrefix . 'countries.index', 'label' => __('admin.countries')],
-                    ['route' => $adminRoutePrefix . 'regions.index', 'label' => __('admin.regions')],
-                    ['route' => $adminRoutePrefix . 'cities.index', 'label' => __('admin.cities')],
-                    ['route' => $adminRoutePrefix . 'districts.index', 'label' => __('admin.districts')],
-                ],
-            ],
-            [
-                'label' => __('admin.property_types') . ' / ' . __('admin.unit_types'),
-                'links' => [
-                    ['route' => $adminRoutePrefix . 'property-types.index', 'label' => __('admin.property_types')],
-                    ['route' => $adminRoutePrefix . 'unit-types.index', 'label' => __('admin.unit_types')],
-                    ['route' => $adminRoutePrefix . 'amenities.index', 'label' => __('admin.amenities')],
-                    ['route' => $adminRoutePrefix . 'developers.index', 'label' => __('admin.developers')],
-                ],
-            ],
-            [
-                'label' => __('admin.taxonomies'),
-                'links' => [
-                    ['route' => $adminRoutePrefix . 'categories.index', 'label' => __('admin.categories')],
-                ],
-            ],
-            [
-                'label' => __('admin.amenity_categories'),
-                'links' => [
-                    ['route' => $adminRoutePrefix . 'amenity-categories.index', 'label' => __('admin.amenity_categories')],
-                ],
-            ],
-            [
-                'label' => __('admin.real_estate'),
-                'links' => [
-                    ['route' => $adminRoutePrefix . 'projects.index', 'label' => __('admin.projects')],
-                    ['route' => $adminRoutePrefix . 'units.index', 'label' => __('admin.units')],
-                    ['route' => $adminRoutePrefix . 'listings.index', 'label' => __('admin.listings')],
-                ],
-            ],
-            [
-                'label' => __('admin.media_manager'),
-                'links' => [
-                    ['route' => $adminRoutePrefix . 'media.index', 'label' => __('admin.file_manager')],
-                ],
-            ],
-        ];
     @endphp
-
-    <div class="app-shell">
+    <div class="min-h-screen bg-gray-100 flex flex-col md:flex-row">
         <!-- Sidebar -->
-        <aside id="admin-sidebar" class="aqarand-sidebar" data-hidden-class="{{ $isRtl ? 'rtl-hidden' : 'ltr-hidden' }}">
-            <div class="brand">
-                <div class="logo-mark">AQ</div>
-                <div class="brand-text">
-                    <div class="card-title">@lang('admin.app_name')</div>
-                    <div class="card-subtitle">Dashboard</div>
-                </div>
-                <button type="button" id="sidebar-close-button" class="ui-btn ui-btn-ghost" aria-label="@lang('admin.close_sidebar')" onclick="toggleSidebar(false)">
+        <aside id="admin-sidebar" data-hidden-class="{{ $isRtl ? 'translate-x-full' : '-translate-x-full' }}" class="fixed inset-y-0 {{ $isRtl ? 'right-0 translate-x-full' : 'left-0 -translate-x-full' }} w-64 bg-white border-{{ $isRtl ? 'l' : 'r' }} border-gray-200 transform md:translate-x-0 transition-transform duration-200 z-30 md:static md:block">
+            <div class="p-4 border-b border-gray-200 flex items-center justify-between">
+                <span class="text-xl font-bold">@lang('admin.app_name')</span>
+                <button type="button" id="sidebar-close-button" class="md:hidden text-gray-500 hover:text-gray-700" aria-label="@lang('admin.close_sidebar')" onclick="toggleSidebar()">
                     <i class="bi bi-x-lg"></i>
                 </button>
             </div>
-            <nav class="sidebar-nav">
-                @foreach($navSections as $section)
-                    <div class="sidebar-group">
-                        @if(!empty($section['label']))
-                            <div class="group-label">{{ $section['label'] }}</div>
-                        @endif
-                        @foreach($section['links'] as $link)
-                            @php $active = $isActive($link['route']); @endphp
-                            <a href="{{ route($link['route']) }}" class="sidebar-link {{ $active ? 'active' : '' }}">
-                                @if(isset($link['icon']))
-                                    <i class="bi {{ $link['icon'] }}"></i>
-                                @else
-                                    <span class="icon-dot"></span>
-                                @endif
-                                <span>{{ $link['label'] }}</span>
-                            </a>
-                        @endforeach
-                    </div>
-                @endforeach
+            <nav class="mt-4 px-2 space-y-1 overflow-y-auto max-h-[calc(100vh-4rem)]">
+                <a href="{{ route($adminRoutePrefix.'dashboard') }}" class="block px-4 py-2 text-gray-700 hover:bg-gray-100 rounded">
+                    @lang('admin.dashboard')
+                </a>
+
+                <div class="mt-4 px-4 text-xs font-semibold text-gray-500 uppercase">
+                    @lang('admin.countries') / @lang('admin.regions')
+                </div>
+                <a href="{{ route($adminRoutePrefix.'countries.index') }}" class="block px-4 py-2 text-gray-700 hover:bg-gray-100 rounded">@lang('admin.countries')</a>
+                <a href="{{ route($adminRoutePrefix.'regions.index') }}" class="block px-4 py-2 text-gray-700 hover:bg-gray-100 rounded">@lang('admin.regions')</a>
+                <a href="{{ route($adminRoutePrefix.'cities.index') }}" class="block px-4 py-2 text-gray-700 hover:bg-gray-100 rounded">@lang('admin.cities')</a>
+                <a href="{{ route($adminRoutePrefix.'districts.index') }}" class="block px-4 py-2 text-gray-700 hover:bg-gray-100 rounded">@lang('admin.districts')</a>
+
+                <div class="mt-4 px-4 text-xs font-semibold text-gray-500 uppercase">
+                    @lang('admin.property_types') / @lang('admin.unit_types')
+                </div>
+                <a href="{{ route($adminRoutePrefix.'property-types.index') }}" class="block px-4 py-2 text-gray-700 hover:bg-gray-100 rounded">@lang('admin.property_types')</a>
+                <a href="{{ route($adminRoutePrefix.'unit-types.index') }}" class="block px-4 py-2 text-gray-700 hover:bg-gray-100 rounded">@lang('admin.unit_types')</a>
+                <a href="{{ route($adminRoutePrefix.'amenities.index') }}" class="block px-4 py-2 text-gray-700 hover:bg-gray-100 rounded">@lang('admin.amenities')</a>
+                <a href="{{ route($adminRoutePrefix.'developers.index') }}" class="block px-4 py-2 text-gray-700 hover:bg-gray-100 rounded">@lang('admin.developers')</a>
+
+                <div class="mt-4 px-4 text-xs font-semibold text-gray-500 uppercase">
+                    @lang('admin.taxonomies')
+                </div>
+                <a href="{{ route($adminRoutePrefix.'categories.index') }}" class="block px-4 py-2 text-gray-700 hover:bg-gray-100 rounded">@lang('admin.categories')</a>
+
+                <div class="mt-4 px-4 text-xs font-semibold text-gray-500 uppercase">
+                    @lang('admin.amenity_categories')
+                </div>
+                <a href="{{ route($adminRoutePrefix.'amenity-categories.index') }}" class="block px-4 py-2 text-gray-700 hover:bg-gray-100 rounded">@lang('admin.amenity_categories')</a>
+
+                <div class="mt-4 px-4 text-xs font-semibold text-gray-500 uppercase">
+                    @lang('admin.real_estate')
+                </div>
+                <a href="{{ route($adminRoutePrefix.'projects.index') }}" class="block px-4 py-2 text-gray-700 hover:bg-gray-100 rounded">@lang('admin.projects')</a>
+                <!-- Property Models now accessed via Projects -->
+                <a href="{{ route($adminRoutePrefix.'units.index') }}" class="block px-4 py-2 text-gray-700 hover:bg-gray-100 rounded">@lang('admin.units')</a>
+                <a href="{{ route($adminRoutePrefix.'listings.index') }}" class="block px-4 py-2 text-gray-700 hover:bg-gray-100 rounded">@lang('admin.listings')</a>
+
+                <div class="mt-4 px-4 text-xs font-semibold text-gray-500 uppercase">
+                    @lang('admin.media_manager')
+                </div>
+                <a href="{{ route($adminRoutePrefix.'media.index') }}" class="block px-4 py-2 text-gray-700 hover:bg-gray-100 rounded">@lang('admin.file_manager')</a>
             </nav>
         </aside>
 
-        <div id="sidebar-backdrop" class="sidebar-backdrop" onclick="toggleSidebar(false)"></div>
+        <div id="sidebar-backdrop" class="fixed inset-0 bg-black/40 hidden md:hidden z-20" onclick="toggleSidebar()"></div>
 
         <!-- Main Content -->
-        <div class="app-surface">
+        <div class="flex-1 flex flex-col overflow-hidden min-h-screen">
             <!-- Navbar -->
-            <header class="layout-header">
-                <div class="header-inner">
-                    <div class="flex items-center gap-3">
-                        <button type="button" id="sidebar-toggle" class="ui-btn ui-btn-ghost" aria-label="@lang('admin.toggle_sidebar')" onclick="toggleSidebar()">
-                            <i class="bi bi-list"></i>
+            <header class="bg-white shadow sticky top-0 z-10">
+                <div class="max-w-7xl mx-auto py-4 px-4 sm:px-6 lg:px-8 flex justify-between items-center">
+                    <div class="flex items-center space-x-3 rtl:space-x-reverse">
+                        <button type="button" id="sidebar-toggle" class="md:hidden text-gray-600 hover:text-gray-900" aria-label="@lang('admin.toggle_sidebar')" onclick="toggleSidebar()">
+                            <i class="bi bi-list text-2xl"></i>
                         </button>
-                        <div>
-                            <div class="title">@yield('header', __('admin.dashboard'))</div>
-                            <div class="subtitle">@lang('admin.app_name')</div>
-                        </div>
+                        <h2 class="font-semibold text-xl text-gray-800 leading-tight">
+                            @yield('header', __('admin.dashboard'))
+                        </h2>
                     </div>
-                    <div class="flex items-center gap-3">
-                        <div class="badge is-primary">
+                    <div class="flex items-center space-x-4 rtl:space-x-reverse">
+                        <div class="px-2">
                              @if(app()->getLocale() === 'ar')
-                                <a href="{{ url('en/' . (request()->path() === '/' ? '' : request()->path())) }}" class="hover:underline">English</a>
+                                <a href="{{ url('en/' . (request()->path() === '/' ? '' : request()->path())) }}" class="text-sm font-medium text-gray-500 hover:text-gray-700">English</a>
                              @else
                                 @php
                                     $p = request()->path();
                                     if(\Illuminate\Support\Str::startsWith($p, 'en/')) $p = substr($p, 3);
                                     elseif($p === 'en') $p = '';
                                 @endphp
-                                <a href="{{ url($p) }}" class="hover:underline">العربية</a>
+                                <a href="{{ url($p) }}" class="text-sm font-medium text-gray-500 hover:text-gray-700">العربية</a>
                              @endif
                         </div>
+
                         <form method="POST" action="{{ route('logout') }}" class="inline">
                             @csrf
-                            <x-button variant="outline" type="submit">@lang('admin.logout')</x-button>
+                            <button type="submit" class="text-gray-600 hover:text-gray-900 underline">
+                                @lang('admin.logout')
+                            </button>
                         </form>
                     </div>
                 </div>
             </header>
 
             <!-- Page Content -->
-            <main>
-                        @if(session('success'))
-                            <div class="dashboard-card" role="alert">
-                                <div class="card-meta">
-                                    <span class="badge is-success">{{ __('Success') }}</span>
-                                    <span class="card-subtitle">{{ now()->format('Y-m-d H:i') }}</span>
-                                </div>
-                                <div class="card-title">{{ session('success') }}</div>
-                            </div>
-                        @endif
+            <main class="flex-1 overflow-auto p-6">
+                @if(session('success'))
+                    <div class="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded relative mb-4" role="alert">
+                        {{ session('success') }}
+                    </div>
+                @endif
 
-                        @if($errors->any())
-                            <div class="dashboard-card" role="alert">
-                                <div class="card-meta">
-                                    <span class="badge is-error">{{ __('Error') }}</span>
-                                    <span class="card-subtitle">{{ __('Please review the validation messages') }}</span>
-                                </div>
-                        <ul class="list-disc ms-5" style="margin-block: var(--spacing-2); color: var(--neutral-4);">
+                @if($errors->any())
+                    <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-4" role="alert">
+                        <ul class="list-disc list-inside">
                             @foreach ($errors->all() as $error)
                                 <li>{{ $error }}</li>
                             @endforeach
@@ -197,29 +181,17 @@
 
     @stack('scripts')
     <script>
-        function toggleSidebar(force) {
+        function toggleSidebar() {
             const sidebar = document.getElementById('admin-sidebar');
             const backdrop = document.getElementById('sidebar-backdrop');
             if (!sidebar || !backdrop) return;
 
-            const isOpen = sidebar.classList.contains('is-open');
-            const next = typeof force === 'boolean' ? force : !isOpen;
-            sidebar.classList.toggle('is-open', next);
-            const shouldShowBackdrop = next && window.innerWidth < 1024;
-            backdrop.classList.toggle('is-visible', shouldShowBackdrop);
+            const hiddenClass = sidebar.dataset.hiddenClass || '-translate-x-full';
+            const willShow = sidebar.classList.contains(hiddenClass);
+
+            sidebar.classList.toggle(hiddenClass);
+            backdrop.classList.toggle('hidden', !willShow);
         }
-
-        window.addEventListener('resize', () => {
-            const sidebar = document.getElementById('admin-sidebar');
-            const backdrop = document.getElementById('sidebar-backdrop');
-            if (!sidebar || !backdrop) return;
-            if (window.innerWidth >= 1024) {
-                sidebar.classList.add('is-open');
-                backdrop.classList.remove('is-visible');
-            } else {
-                sidebar.classList.remove('is-open');
-            }
-        });
 
         window.addEventListener('click', function(e) {
             const toggleButton = document.getElementById('sidebar-toggle');
@@ -230,15 +202,10 @@
             const clickedToggle = toggleButton && toggleButton.contains(e.target);
             const clickedClose = closeButton && closeButton.contains(e.target);
 
-            if (backdrop && backdrop.classList.contains('is-visible') && sidebar && !sidebar.contains(e.target) && !clickedToggle && !clickedClose) {
-                toggleSidebar(false);
+            if (backdrop && !backdrop.classList.contains('hidden') && sidebar && !sidebar.contains(e.target) && !clickedToggle && !clickedClose) {
+                toggleSidebar();
             }
         });
-
-        // keep sidebar open on desktop load
-        if (window.innerWidth >= 1024) {
-            toggleSidebar(true);
-        }
     </script>
 </body>
 </html>
