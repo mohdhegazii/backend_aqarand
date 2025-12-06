@@ -15,8 +15,6 @@ class ProjectMediaService
 
     public function __construct()
     {
-        // We assume Intervention Image v3 is available.
-        // If not installed, this line will throw an error in runtime.
         if (class_exists(ImageManager::class)) {
             $this->manager = new ImageManager(new Driver());
         }
@@ -47,26 +45,32 @@ class ProjectMediaService
     /**
      * Handle Gallery Images Upload.
      * Stores in: storage/app/public/projects/{project_id}/gallery/
-     * Returns array of objects structure for DB.
+     * Returns array of objects structure for DB, merging with existing if provided (though controller usually handles merge).
+     *
+     * @param Project $project
+     * @param array $files Array of UploadedFile
+     * @param array $existingGallery Existing gallery items (optional context)
+     * @return array New items only (controller should merge) OR merged items if logic requires.
+     *               Standard pattern: Return NEW items. Controller appends.
      */
-    public function handleGalleryUpload(Project $project, array $files): array
+    public function handleGalleryUpload(Project $project, array $files, array $existingGallery = []): array
     {
-        $galleryItems = [];
+        $newItems = [];
         foreach ($files as $index => $file) {
-            $filename = $this->generateFilename($project->id, "gallery_{$index}", 'webp');
+            $filename = $this->generateFilename($project->id, "gallery_" . uniqid(), 'webp');
             $path = "projects/{$project->id}/gallery/{$filename}";
 
             $this->processImage($file, $path, 1600);
 
-            $galleryItems[] = [
+            $newItems[] = [
                 'path' => $path,
-                'name' => null,
-                'alt' => null,
+                'name' => null, // Default
+                'alt' => null,  // Default
                 'is_hero_candidate' => false,
             ];
         }
 
-        return $galleryItems;
+        return $newItems;
     }
 
     /**
