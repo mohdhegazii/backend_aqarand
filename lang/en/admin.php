@@ -179,6 +179,7 @@ return [
     'description_detailed' => 'Detailed Description',
     'seo_settings' => 'SEO Settings',
     'meta_title' => 'Meta Title',
+    // meta_description already exists but maybe check context
 
     'videos_photos' => 'Videos & Photos',
     'hero_image' => 'Hero Image',
