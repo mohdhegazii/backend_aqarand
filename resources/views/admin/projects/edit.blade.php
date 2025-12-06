@@ -1,478 +1,397 @@
 @extends('admin.layouts.app')
 
-@section('header', __('admin.edit') . ' ' . __('admin.projects'))
+@push('styles')
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.css" />
+    <style>
+        .step-active { border-bottom: 2px solid #2563eb; color: #2563eb; }
+        .step-inactive { border-bottom: 2px solid transparent; color: #6b7280; }
+    </style>
+@endpush
+
+@section('header')
+    تعديل المشروع: {{ $project->name_ar ?? $project->name }}
+@endsection
 
 @section('content')
-<div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
-    <div class="p-6 bg-white border-b border-gray-200">
-        <form method="POST" action="{{ route('admin.projects.update', $project) }}" id="projectForm" enctype="multipart/form-data">
-            @csrf
-            @method('PUT')
+<div x-data="projectForm()" x-init="initForm()" class="bg-white rounded-lg shadow-md p-6">
 
-            <!-- =========================
-                 Common Section (Top)
-                 ========================= -->
-            <div class="mb-8 border-b pb-6">
-                <h3 class="text-lg font-medium text-gray-900 mb-4">@lang('admin.common_info')</h3>
+    <!-- Steps Navigation -->
+    <div class="flex border-b border-gray-200 mb-6">
+        <button type="button" @click="step = 1" :class="step === 1 ? 'step-active' : 'step-inactive'" class="py-2 px-4 font-semibold text-lg focus:outline-none">
+            الخطوة ١: بيانات المشروع
+        </button>
+        <button type="button" @click="validateStep1() ? step = 2 : null" :class="step === 2 ? 'step-active' : 'step-inactive'" class="py-2 px-4 font-semibold text-lg focus:outline-none">
+            الخطوة ٢: الوسائط (الصور والبروشور)
+        </button>
+    </div>
 
-                <!-- Unified Location Search -->
-                <div class="mb-6 relative">
-                    <label class="block text-sm font-medium text-gray-700 mb-1">@lang('admin.location_search')</label>
-                    <input type="text" id="locationSearch" class="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50" placeholder="Search Country, Region, City, District...">
-                    <div id="searchResults" class="absolute z-50 bg-white shadow-lg w-full mt-1 rounded-md hidden max-h-60 overflow-y-auto border border-gray-200"></div>
+    <form action="{{ route('admin.projects.update', $project) }}" method="POST" enctype="multipart/form-data">
+        @csrf
+        @method('PUT')
+
+        <!-- STEP 1: Basic Info & Location -->
+        <div x-show="step === 1" class="space-y-6">
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <!-- Name AR -->
+                <div>
+                    <label class="block text-gray-700 font-bold mb-2">اسم المشروع (عربي) <span class="text-red-500">*</span></label>
+                    <input type="text" name="name_ar" required class="w-full rounded border-gray-300 p-2" value="{{ old('name_ar', $project->name_ar) }}">
+                </div>
+                <!-- Name EN -->
+                <div>
+                    <label class="block text-gray-700 font-bold mb-2">اسم المشروع (إنجليزي) <span class="text-red-500">*</span></label>
+                    <input type="text" name="name_en" required class="w-full rounded border-gray-300 p-2" value="{{ old('name_en', $project->name_en) }}">
+                </div>
+
+                <!-- Developer -->
+                <div>
+                    <label class="block text-gray-700 font-bold mb-2">المطور العقاري</label>
+                    <select name="developer_id" class="w-full rounded border-gray-300 p-2">
+                        <option value="">اختر المطور</option>
+                        @foreach($developers as $developer)
+                            <option value="{{ $developer->id }}" {{ old('developer_id', $project->developer_id) == $developer->id ? 'selected' : '' }}>{{ $developer->name }}</option>
+                        @endforeach
+                    </select>
+                </div>
+
+                <!-- Tagline -->
+                <div>
+                    <label class="block text-gray-700 font-bold mb-2">شعار نصي (Tagline)</label>
+                    <input type="text" name="tagline_ar" class="w-full rounded border-gray-300 p-2" value="{{ old('tagline_ar', $project->tagline_ar) }}">
+                </div>
+            </div>
+
+            <!-- Description -->
+            <div>
+                <label class="block text-gray-700 font-bold mb-2">وصف المشروع</label>
+                <textarea name="description_long" rows="4" class="w-full rounded border-gray-300 p-2">{{ old('description_long', $project->description_long) }}</textarea>
+            </div>
+
+            <hr class="border-gray-200">
+
+            <!-- LOCATION SECTION -->
+            <div>
+                <h3 class="text-lg font-bold mb-4">موقع المشروع</h3>
+
+                <!-- Unified Search -->
+                <div class="mb-4 relative">
+                    <label class="block text-gray-700 font-bold mb-2">بحث موحد</label>
+                    <input type="text" x-model="searchQuery" @input.debounce.500ms="performSearch" placeholder="ابحث لتغيير الموقع..." class="w-full rounded border-gray-300 p-2">
+                    <div x-show="searchResults.length > 0" class="absolute z-50 bg-white border border-gray-200 w-full mt-1 rounded shadow-lg max-h-60 overflow-y-auto">
+                        <template x-for="result in searchResults" :key="result.id">
+                            <div @click="selectLocation(result)" class="p-2 hover:bg-gray-100 cursor-pointer border-b">
+                                <span x-text="result.name"></span> <span class="text-xs text-gray-500" x-text="'(' + result.type + ')'"></span>
+                            </div>
+                        </template>
+                    </div>
                 </div>
 
                 <!-- Cascading Dropdowns -->
-                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
+                <div x-show="locationSelected" class="grid grid-cols-1 md:grid-cols-4 gap-4 bg-gray-50 p-4 rounded">
                     <div>
-                        <label for="country_id" class="block text-sm font-medium text-gray-700">@lang('admin.country') *</label>
-                        <select name="country_id" id="country_id" onchange="fetchRegions(this.value)" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50" required>
-                            <option value="">@lang('admin.select_option')</option>
+                        <label class="block text-gray-700 text-sm font-bold mb-1">الدولة <span class="text-red-500">*</span></label>
+                        <select name="country_id" x-model="selectedCountry" @change="fetchRegions" required class="w-full rounded border-gray-300 text-sm">
+                            <option value="">اختر الدولة</option>
                             @foreach($countries as $country)
-                                <option value="{{ $country->id }}" {{ old('country_id', $project->country_id) == $country->id ? 'selected' : '' }}>
-                                    {{ $country->name_en }}
-                                </option>
+                                <option value="{{ $country->id }}">{{ $country->name_local ?? $country->name_en }}</option>
                             @endforeach
                         </select>
                     </div>
                     <div>
-                        <label for="region_id" class="block text-sm font-medium text-gray-700">@lang('admin.region') *</label>
-                        <select name="region_id" id="region_id" onchange="fetchCities(this.value)" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50" required>
-                            <option value="">@lang('admin.select_option')</option>
+                        <label class="block text-gray-700 text-sm font-bold mb-1">المحافظة <span class="text-red-500">*</span></label>
+                        <select name="region_id" x-model="selectedRegion" @change="fetchCities" required class="w-full rounded border-gray-300 text-sm">
+                            <option value="">اختر المحافظة</option>
+                            <template x-for="region in regions" :key="region.id">
+                                <option :value="region.id" x-text="region.name_local || region.name_en" :selected="region.id == selectedRegion"></option>
+                            </template>
                         </select>
                     </div>
                     <div>
-                        <label for="city_id" class="block text-sm font-medium text-gray-700">@lang('admin.city') *</label>
-                        <select name="city_id" id="city_id" onchange="fetchDistricts(this.value)" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50" required>
-                             <option value="">@lang('admin.select_option')</option>
+                        <label class="block text-gray-700 text-sm font-bold mb-1">المدينة <span class="text-red-500">*</span></label>
+                        <select name="city_id" x-model="selectedCity" @change="fetchDistricts" required class="w-full rounded border-gray-300 text-sm">
+                            <option value="">اختر المدينة</option>
+                            <template x-for="city in cities" :key="city.id">
+                                <option :value="city.id" x-text="city.name_local || city.name_en" :selected="city.id == selectedCity"></option>
+                            </template>
                         </select>
                     </div>
                     <div>
-                        <label for="district_id" class="block text-sm font-medium text-gray-700">@lang('admin.district')</label>
-                        <select name="district_id" id="district_id" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50">
-                            <option value="">@lang('admin.select_option')</option>
+                        <label class="block text-gray-700 text-sm font-bold mb-1">الحي</label>
+                        <select name="district_id" x-model="selectedDistrict" class="w-full rounded border-gray-300 text-sm">
+                            <option value="">اختر الحي</option>
+                            <template x-for="district in districts" :key="district.id">
+                                <option :value="district.id" x-text="district.name_local || district.name_en" :selected="district.id == selectedDistrict"></option>
+                            </template>
                         </select>
                     </div>
                 </div>
+            </div>
 
-                <!-- Map & Coordinates -->
-                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
-                    <div class="lg:col-span-2">
-                         <label class="block text-sm font-medium text-gray-700 mb-2">@lang('admin.map') (Click to set coordinates)</label>
-                         <div id="map" class="w-full h-80 bg-gray-200 rounded-md border"></div>
-                    </div>
-                    <div class="space-y-4">
-                        <div>
-                            <label for="lat" class="block text-sm font-medium text-gray-700">@lang('admin.lat')</label>
-                            <input type="text" name="lat" id="lat" value="{{ old('lat', $project->lat) }}" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50">
-                        </div>
-                        <div>
-                            <label for="lng" class="block text-sm font-medium text-gray-700">@lang('admin.lng')</label>
-                            <input type="text" name="lng" id="lng" value="{{ old('lng', $project->lng) }}" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50">
-                        </div>
-                    </div>
+            <!-- MAP SECTION -->
+            <div>
+                <h3 class="text-lg font-bold mb-2">خريطة المشروع وحدود الأرض</h3>
+                <div id="map" style="height: 400px;" class="w-full rounded border border-gray-300 z-0"></div>
+                <input type="hidden" name="map_polygon" id="map_polygon_input" value="{{ is_string($project->map_polygon) ? $project->map_polygon : json_encode($project->map_polygon) }}">
+                <input type="hidden" name="lat" id="lat_input" value="{{ $project->lat }}">
+                <input type="hidden" name="lng" id="lng_input" value="{{ $project->lng }}">
+            </div>
+
+        </div>
+
+        <!-- STEP 2: Media -->
+        <div x-show="step === 2" class="space-y-6">
+            <h3 class="text-xl font-bold mb-4 border-b pb-2">قسم الوسائط</h3>
+
+            <!-- Hero Image -->
+            <div class="bg-gray-50 p-4 rounded border border-gray-200">
+                <label class="block text-gray-700 font-bold mb-2">تحديث صورة الغلاف (Hero Image)</label>
+                <div class="flex items-center space-x-4 rtl:space-x-reverse mb-2">
+                    @if($project->hero_image_url)
+                        <img src="{{ asset('storage/'.$project->hero_image_url) }}" class="h-16 w-16 object-cover rounded border">
+                        <span class="text-sm text-gray-500">الصورة الحالية</span>
+                    @endif
                 </div>
+                <input type="file" name="hero_image" accept="image/*" class="w-full">
+            </div>
 
-                <!-- Basic Common Fields -->
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-                    <div>
-                        <label for="developer_id" class="block text-sm font-medium text-gray-700">@lang('admin.developer')</label>
-                        <select name="developer_id" id="developer_id" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50">
-                            <option value="">@lang('admin.select_option')</option>
-                            @foreach($developers as $developer)
-                                <option value="{{ $developer->id }}" {{ old('developer_id', $project->developer_id) == $developer->id ? 'selected' : '' }}>
-                                    {{ $developer->name }}
-                                </option>
-                            @endforeach
-                        </select>
-                    </div>
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700">@lang('admin.status') (Derived from Units)</label>
-                        <input type="text" value="{{ ucfirst(str_replace('_', ' ', $project->status)) }}" readonly class="mt-1 block w-full rounded-md border-gray-300 bg-gray-100 text-gray-500 cursor-not-allowed shadow-sm">
-                        <input type="hidden" name="status" value="{{ $project->status }}">
-                    </div>
-                    <div>
-                         <label class="block text-sm font-medium text-gray-700">Delivery Year (Derived from Units)</label>
-                         <input type="text" value="{{ $project->delivery_year }}" readonly class="mt-1 block w-full rounded-md border-gray-300 bg-gray-100 text-gray-500 cursor-not-allowed shadow-sm">
-                         <input type="hidden" name="delivery_year" value="{{ $project->delivery_year }}">
-                    </div>
-                    <div>
-                        <label for="amenities" class="block text-sm font-medium text-gray-700">@lang('admin.amenities')</label>
-                        <select name="amenities[]" id="amenities" multiple class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 h-32">
-                            @foreach($amenities as $amenity)
-                                <option value="{{ $amenity->id }}" {{ collect(old('amenities', $project->amenities->pluck('id')))->contains($amenity->id) ? 'selected' : '' }}>
-                                    {{ $amenity->name_en }}
-                                </option>
-                            @endforeach
-                        </select>
-                    </div>
-                    <div class="flex items-center mt-6">
-                        <input type="checkbox" name="is_active" id="is_active" value="1" {{ old('is_active', $project->is_active) ? 'checked' : '' }} class="rounded border-gray-300 text-indigo-600 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50">
-                        <label for="is_active" class="ml-2 block text-sm text-gray-900">@lang('admin.is_active')</label>
-                    </div>
-                </div>
+            <!-- Existing Gallery Management -->
+            <div class="bg-white p-4 rounded border border-gray-200 shadow-sm">
+                <h4 class="font-bold mb-4">إدارة الصور الحالية</h4>
+                @if(!empty($project->gallery) && is_array($project->gallery))
+                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                        @foreach($project->gallery as $key => $image)
+                            @php
+                                $path = is_array($image) ? $image['path'] : $image;
+                                $name = is_array($image) ? ($image['name'] ?? '') : '';
+                                $alt = is_array($image) ? ($image['alt'] ?? '') : '';
+                                $isHero = $project->hero_image_url === $path;
+                            @endphp
+                            <div class="border rounded p-3 relative group bg-gray-50">
+                                <img src="{{ asset('storage/' . $path) }}" class="w-full h-32 object-cover rounded mb-2">
 
-                 <!-- =========================
-                     Media & Brochure Section
-                     ========================= -->
-                <div class="mb-8 border-b pb-6">
-                    <h3 class="text-lg font-medium text-gray-900 mb-4">Media & Brochure</h3>
+                                <input type="hidden" name="gallery_data[{{$key}}][path]" value="{{ $path }}">
 
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <!-- Brochure -->
-                        <div class="mb-3">
-                            <label for="brochure" class="block text-sm font-medium text-gray-700">Project Brochure (PDF)</label>
-                            @if($project->brochure_url)
                                 <div class="mb-2">
-                                     <a href="{{ asset('storage/' . $project->brochure_url) }}" target="_blank" class="text-indigo-600 text-xs hover:underline">View Current Brochure</a>
+                                    <label class="text-xs font-bold text-gray-600">اسم الصورة</label>
+                                    <input type="text" name="gallery_data[{{$key}}][name]" value="{{ $name }}" class="w-full text-xs rounded border-gray-300 p-1">
                                 </div>
-                            @endif
-                             <input type="file" name="brochure" id="brochure" class="mt-1 block w-full text-sm text-gray-500
-                                file:mr-4 file:py-2 file:px-4
-                                file:rounded-full file:border-0
-                                file:text-sm file:font-semibold
-                                file:bg-indigo-50 file:text-indigo-700
-                                hover:file:bg-indigo-100">
-                            <small class="text-muted text-xs">PDF only, max 5MB. Uploading new replaces old.</small>
-                            @error('brochure') <div class="text-red-500 text-xs mt-1">{{ $message }}</div> @enderror
-                        </div>
-                    </div>
+                                <div class="mb-2">
+                                    <label class="text-xs font-bold text-gray-600">نص بديل (Alt)</label>
+                                    <input type="text" name="gallery_data[{{$key}}][alt]" value="{{ $alt }}" class="w-full text-xs rounded border-gray-300 p-1">
+                                </div>
 
-                    <!-- Gallery & Hero Selection -->
-                    <div class="mt-4">
-                        <label class="block text-sm font-medium text-gray-700 mb-2">Gallery Images (Select Hero Image)</label>
+                                <div class="flex items-center justify-between mt-2">
+                                    <label class="inline-flex items-center text-xs cursor-pointer">
+                                        <input type="radio" name="selected_hero" value="{{ $path }}" {{ $isHero ? 'checked' : '' }} class="form-radio text-blue-600 h-4 w-4">
+                                        <span class="mr-2">تعيين كغلاف</span>
+                                    </label>
 
-                        @if($project->gallery && count($project->gallery) > 0)
-                            <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
-                                @foreach($project->gallery as $imagePath)
-                                    <div class="relative border rounded p-2 {{ $project->hero_image_url === $imagePath ? 'border-indigo-500 bg-indigo-50' : 'border-gray-200' }}">
-                                        <img src="{{ asset('storage/' . $imagePath) }}" class="w-full h-32 object-cover rounded mb-2">
-                                        <div class="flex items-center justify-between">
-                                            <label class="flex items-center space-x-2 cursor-pointer">
-                                                <input type="radio" name="selected_hero" value="{{ $imagePath }}" {{ $project->hero_image_url === $imagePath ? 'checked' : '' }} class="text-indigo-600">
-                                                <span class="text-xs font-semibold text-gray-700">Hero</span>
-                                            </label>
-                                            <a href="{{ asset('storage/' . $imagePath) }}" target="_blank" class="text-xs text-blue-600 hover:underline">View</a>
-                                        </div>
-                                    </div>
-                                @endforeach
+                                    <button type="button" onclick="this.closest('.group').remove()" class="text-red-500 hover:text-red-700 p-1" title="حذف الصورة">
+                                        <i class="bi bi-trash"></i>
+                                    </button>
+                                </div>
                             </div>
-                        @else
-                            <div class="mb-2 text-sm text-gray-500">No images in gallery yet.</div>
-                        @endif
-
-                        <label for="gallery" class="block text-sm font-medium text-gray-700 mt-4">Upload New Images</label>
-                        <input type="file" name="gallery[]" id="gallery" multiple class="mt-1 block w-full text-sm text-gray-500
-                            file:mr-4 file:py-2 file:px-4
-                            file:rounded-full file:border-0
-                            file:text-sm file:font-semibold
-                            file:bg-indigo-50 file:text-indigo-700
-                            hover:file:bg-indigo-100">
-                        <small class="text-muted text-xs">Multiple images allowed, JPEG/PNG/WebP, max 4MB per file. Will be resized to 1600px. New images will be appended.</small>
-                        @error('gallery') <div class="text-red-500 text-xs mt-1">{{ $message }}</div> @enderror
-                        @error('gallery.*') <div class="text-red-500 text-xs mt-1">{{ $message }}</div> @enderror
+                        @endforeach
                     </div>
-                </div>
-
-                <!-- SEO Keywords -->
-                <div class="bg-gray-50 p-4 rounded mb-6">
-                    <h4 class="font-medium text-gray-700 mb-2">SEO Keywords</h4>
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div>
-                             <label for="main_keyword_en" class="block text-sm font-medium text-gray-700">Main Keyword (EN)</label>
-                             <input type="text" name="main_keyword_en" id="main_keyword_en" value="{{ old('main_keyword_en', $project->main_keyword_en) }}" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm">
-                             <label for="secondary_keywords_en_str" class="block text-sm font-medium text-gray-700 mt-2">Secondary Keywords (EN) (Comma separated)</label>
-                             <input type="text" name="secondary_keywords_en_str" id="secondary_keywords_en_str" value="{{ old('secondary_keywords_en_str', implode(', ', $project->secondary_keywords_en ?? [])) }}" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm">
-                        </div>
-                        <div>
-                             <label for="main_keyword_ar" class="block text-sm font-medium text-gray-700">Main Keyword (AR)</label>
-                             <input type="text" name="main_keyword_ar" id="main_keyword_ar" value="{{ old('main_keyword_ar', $project->main_keyword_ar) }}" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm">
-                             <label for="secondary_keywords_ar_str" class="block text-sm font-medium text-gray-700 mt-2">Secondary Keywords (AR) (Comma separated)</label>
-                             <input type="text" name="secondary_keywords_ar_str" id="secondary_keywords_ar_str" value="{{ old('secondary_keywords_ar_str', implode(', ', $project->secondary_keywords_ar ?? [])) }}" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm">
-                        </div>
-                    </div>
-                </div>
-
+                @else
+                    <p class="text-gray-500 text-sm">لا توجد صور في المعرض حالياً.</p>
+                @endif
             </div>
 
-            <!-- =========================
-                 Tabs Section (Languages)
-                 ========================= -->
-            <div x-data="{ activeTab: 'en' }">
-                <div class="border-b border-gray-200 mb-4">
-                    <nav class="-mb-px flex space-x-8" aria-label="Tabs">
-                        <button type="button" @click="activeTab = 'en'" :class="{ 'border-indigo-500 text-indigo-600': activeTab === 'en', 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300': activeTab !== 'en' }" class="whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm">
-                            English
-                        </button>
-                        <button type="button" @click="activeTab = 'ar'" :class="{ 'border-indigo-500 text-indigo-600': activeTab === 'ar', 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300': activeTab !== 'ar' }" class="whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm">
-                            Arabic
-                        </button>
-                    </nav>
-                </div>
-
-                <!-- English Content -->
-                <div x-show="activeTab === 'en'" class="space-y-6">
-                    <div>
-                        <label for="name_en" class="block text-sm font-medium text-gray-700">@lang('admin.name_en') *</label>
-                        <input type="text" name="name_en" id="name_en" value="{{ old('name_en', $project->name_en) }}" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50" required>
-                    </div>
-                    <div>
-                        <label for="tagline_en" class="block text-sm font-medium text-gray-700">Tagline (EN)</label>
-                        <input type="text" name="tagline_en" id="tagline_en" value="{{ old('tagline_en', $project->tagline_en) }}" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50">
-                    </div>
-                    <div>
-                        <label for="description_en" class="block text-sm font-medium text-gray-700">Description (EN)</label>
-                        <textarea name="description_en" id="description_en" class="wysiwyg mt-1 block w-full rounded-md border-gray-300 shadow-sm">{{ old('description_en', $project->description_en) }}</textarea>
-                    </div>
-                    <div>
-                        <label for="seo_slug_en" class="block text-sm font-medium text-gray-700">SEO Slug (EN) (Auto-generated)</label>
-                        <input type="text" name="seo_slug_en" id="seo_slug_en" value="{{ old('seo_slug_en', $project->seo_slug_en) }}" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50">
-                    </div>
-                    <div>
-                        <label for="meta_title_en" class="block text-sm font-medium text-gray-700">Meta Title (EN)</label>
-                        <input type="text" name="meta_title_en" id="meta_title_en" value="{{ old('meta_title_en', $project->meta_title_en) }}" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50">
-                    </div>
-                    <div>
-                        <label for="meta_description_en" class="block text-sm font-medium text-gray-700">Meta Description (EN)</label>
-                        <textarea name="meta_description_en" id="meta_description_en" rows="2" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50">{{ old('meta_description_en', $project->meta_description_en) }}</textarea>
-                    </div>
-                </div>
-
-                <!-- Arabic Content -->
-                <div x-show="activeTab === 'ar'" class="space-y-6" style="display: none;">
-                    <div>
-                        <label for="name_ar" class="block text-sm font-medium text-gray-700">@lang('admin.name_ar')</label>
-                        <input type="text" name="name_ar" id="name_ar" value="{{ old('name_ar', $project->name_ar) }}" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50">
-                    </div>
-                    <div>
-                        <label for="tagline_ar" class="block text-sm font-medium text-gray-700">Tagline (AR)</label>
-                        <input type="text" name="tagline_ar" id="tagline_ar" value="{{ old('tagline_ar', $project->tagline_ar) }}" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50">
-                    </div>
-                    <div>
-                        <label for="description_ar" class="block text-sm font-medium text-gray-700">Description (AR)</label>
-                        <textarea name="description_ar" id="description_ar" class="wysiwyg mt-1 block w-full rounded-md border-gray-300 shadow-sm">{{ old('description_ar', $project->description_ar) }}</textarea>
-                    </div>
-                    <div>
-                        <label for="seo_slug_ar" class="block text-sm font-medium text-gray-700">SEO Slug (AR) (Auto-generated)</label>
-                        <input type="text" name="seo_slug_ar" id="seo_slug_ar" value="{{ old('seo_slug_ar', $project->seo_slug_ar) }}" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50">
-                    </div>
-                     <div>
-                        <label for="meta_title_ar" class="block text-sm font-medium text-gray-700">Meta Title (AR)</label>
-                        <input type="text" name="meta_title_ar" id="meta_title_ar" value="{{ old('meta_title_ar', $project->meta_title_ar) }}" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50">
-                    </div>
-                    <div>
-                        <label for="meta_description_ar" class="block text-sm font-medium text-gray-700">Meta Description (AR)</label>
-                        <textarea name="meta_description_ar" id="meta_description_ar" rows="2" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50">{{ old('meta_description_ar', $project->meta_description_ar) }}</textarea>
-                    </div>
-                </div>
+            <!-- Add New Gallery Images -->
+            <div class="bg-gray-50 p-4 rounded border border-gray-200 mt-4">
+                <label class="block text-gray-700 font-bold mb-2">إضافة صور جديدة للمعرض</label>
+                <input type="file" name="gallery[]" accept="image/*" multiple class="w-full">
             </div>
 
-            <div class="flex justify-end mt-8">
-                <a href="{{ route('admin.projects.index') }}" class="bg-gray-500 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded mr-2">
-                    @lang('admin.cancel')
-                </a>
-                <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
-                    @lang('admin.save')
-                </button>
+            <!-- Brochure -->
+            <div class="bg-gray-50 p-4 rounded border border-gray-200">
+                <label class="block text-gray-700 font-bold mb-2">البروشور (PDF)</label>
+                @if($project->brochure_url)
+                    <div class="flex items-center mb-2">
+                        <i class="bi bi-file-pdf text-red-500 text-xl ml-2"></i>
+                        <a href="{{ asset('storage/'.$project->brochure_url) }}" target="_blank" class="text-blue-600 hover:underline text-sm">عرض البروشور الحالي</a>
+                    </div>
+                @endif
+                <input type="file" name="brochure" accept="application/pdf" class="w-full">
             </div>
-        </form>
 
-        <!-- Media Upload Section - OLD AJAX (kept for reference but commented or pushed down) -->
-        <!-- The user asked to implement the Media Section INSIDE the create/edit form.
-             The previous AJAX based "Media Manager" section is at the bottom.
-             I will keep it but it might be redundant now. The new section is part of the main form. -->
+        </div>
 
-    </div>
+        <!-- Buttons -->
+        <div class="flex justify-between mt-8 pt-4 border-t border-gray-200">
+            <button type="button" x-show="step > 1" @click="step--" class="bg-gray-500 hover:bg-gray-600 text-white font-bold py-2 px-6 rounded">
+                السابق
+            </button>
+            <div class="flex-1"></div>
+            <button type="button" x-show="step < 2" @click="validateStep1() && step++" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-6 rounded">
+                التالي
+            </button>
+            <button type="submit" x-show="step === 2" class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-6 rounded">
+                حفظ التعديلات
+            </button>
+        </div>
+
+    </form>
 </div>
+@endsection
 
-<!-- Scripts -->
-<script src="https://cdn.tiny.cloud/1/qgkphze48t0eieue0gqhegrc25hz9hyt75xojlt84f36f9md/tinymce/6/tinymce.min.js" referrerpolicy="origin"></script>
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-
+@push('scripts')
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.js"></script>
 <script>
-    // TinyMCE
-    tinymce.init({
-        selector: '.wysiwyg',
-        plugins: 'table lists link image preview',
-        toolbar: 'undo redo | blocks | bold italic | alignleft aligncenter alignright | bullist numlist outdent indent | table link image | preview',
-        height: 300,
-        menubar: false
-    });
+    function projectForm() {
+        return {
+            step: 1,
+            searchQuery: '',
+            searchResults: [],
+            locationSelected: true, // Initially true for edit if data exists
 
-    const initialLat = "{{ old('lat', $project->lat) }}";
-    const initialLng = "{{ old('lng', $project->lng) }}";
-    const initialCountry = "{{ old('country_id', $project->country_id) }}";
-    const initialRegion = "{{ old('region_id', $project->region_id) }}";
-    const initialCity = "{{ old('city_id', $project->city_id) }}";
-    const initialDistrict = "{{ old('district_id', $project->district_id) }}";
+            selectedCountry: '',
+            selectedRegion: '',
+            selectedCity: '',
+            selectedDistrict: '',
 
-    // Map
-    let map, marker;
-    document.addEventListener('DOMContentLoaded', function() {
-        // Initialize Map
-        const defaultLat = initialLat || 30.0444;
-        const defaultLng = initialLng || 31.2357;
+            regions: [],
+            cities: [],
+            districts: [],
 
-        map = L.map('map').setView([defaultLat, defaultLng], 10);
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-            attribution: '© OpenStreetMap'
-        }).addTo(map);
+            async initForm() {
+                // Pre-populate logic
+                this.selectedCountry = "{{ $project->country_id }}";
+                if(this.selectedCountry) await this.fetchRegions();
 
-        if (initialLat && initialLng) {
-            marker = L.marker([initialLat, initialLng]).addTo(map);
-        }
+                this.selectedRegion = "{{ $project->region_id }}";
+                if(this.selectedRegion) await this.fetchCities();
 
-        map.on('click', function(e) {
-            const lat = e.latlng.lat.toFixed(7);
-            const lng = e.latlng.lng.toFixed(7);
+                this.selectedCity = "{{ $project->city_id }}";
+                if(this.selectedCity) await this.fetchDistricts();
 
-            document.getElementById('lat').value = lat;
-            document.getElementById('lng').value = lng;
+                this.selectedDistrict = "{{ $project->district_id }}";
 
-            if (marker) map.removeLayer(marker);
-            marker = L.marker([lat, lng]).addTo(map);
-        });
+                initMap();
+            },
 
-        // Bi-directional binding: If user manually changes inputs, update map
-        const latInput = document.getElementById('lat');
-        const lngInput = document.getElementById('lng');
+            validateStep1() {
+                if(!this.selectedCountry || !this.selectedRegion || !this.selectedCity) {
+                    alert('يرجى استكمال بيانات الموقع');
+                    return false;
+                }
+                return true;
+            },
 
-        function updateMapFromInputs() {
-            const lat = parseFloat(latInput.value);
-            const lng = parseFloat(lngInput.value);
+            async performSearch() {
+                if (this.searchQuery.length < 2) return;
+                try {
+                    let response = await fetch(`/admin/locations/search?q=${this.searchQuery}`);
+                    this.searchResults = await response.json();
+                } catch (e) { console.error(e); }
+            },
 
-            if (!isNaN(lat) && !isNaN(lng)) {
-                if (marker) map.removeLayer(marker);
-                marker = L.marker([lat, lng]).addTo(map);
-                map.setView([lat, lng], 14);
+            selectLocation(result) {
+                this.searchQuery = result.name;
+                this.searchResults = [];
+                if (result.lat && result.lng) {
+                     window.mapInstance.setView([result.lat, result.lng], 13);
+                     document.getElementById('lat_input').value = result.lat;
+                     document.getElementById('lng_input').value = result.lng;
+                }
+            },
+
+            async fetchRegions() {
+                this.regions = [];
+                // Don't reset selectedRegion if we are initiating?
+                // Logic: If user changes country, reset region. If script calls it, preserve.
+                // We'll rely on bound value. If selectedRegion is not in new list, it becomes invalid visually.
+
+                if(!this.selectedCountry) return;
+                let res = await fetch(`/admin/locations/countries/${this.selectedCountry}`);
+                this.regions = await res.json();
+            },
+
+            async fetchCities() {
+                this.cities = [];
+                if(!this.selectedRegion) return;
+                let res = await fetch(`/admin/locations/regions/${this.selectedRegion}`);
+                this.cities = await res.json();
+            },
+
+            async fetchDistricts() {
+                this.districts = [];
+                if(!this.selectedCity) return;
+                let res = await fetch(`/admin/locations/cities/${this.selectedCity}`);
+                this.districts = await res.json();
             }
         }
+    }
 
-        latInput.addEventListener('change', updateMapFromInputs);
-        lngInput.addEventListener('change', updateMapFromInputs);
+    function initMap() {
+        var lat = {{ $project->lat ?? 30.0444 }};
+        var lng = {{ $project->lng ?? 31.2357 }};
 
-         // Load Initial Dropdowns
-        if (initialCountry) fetchRegions(initialCountry, initialRegion);
-        if (initialRegion) fetchCities(initialRegion, initialCity);
-        if (initialCity) fetchDistricts(initialCity, initialDistrict);
-    });
+        var map = L.map('map').setView([lat, lng], 13);
+        window.mapInstance = map;
 
-    // Location Search Logic
-    const searchInput = document.getElementById('locationSearch');
-    const searchResults = document.getElementById('searchResults');
-    let searchTimeout;
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '&copy; OpenStreetMap contributors'
+        }).addTo(map);
 
-    searchInput.addEventListener('input', function() {
-        clearTimeout(searchTimeout);
-        const query = this.value;
-        if (query.length < 2) {
-            searchResults.classList.add('hidden');
-            return;
+        var drawnItems = new L.FeatureGroup();
+        map.addLayer(drawnItems);
+
+        // Load existing polygon
+        var existingPolygon = @json($project->map_polygon);
+        if (existingPolygon) {
+             // If stored as {type:..., coordinates:...} GeoJSON geometry
+             var geoJsonLayer = L.geoJSON(existingPolygon);
+             geoJsonLayer.eachLayer(function(l) {
+                 drawnItems.addLayer(l);
+             });
+             try {
+                 map.fitBounds(drawnItems.getBounds());
+             } catch(e) {}
         }
 
-        searchTimeout = setTimeout(() => {
-            fetch(`{{ route('admin.locations.search') }}?q=${query}`)
-                .then(res => res.json())
-                .then(data => {
-                    searchResults.innerHTML = '';
-                    if (data.length > 0) {
-                        searchResults.classList.remove('hidden');
-                        data.forEach(item => {
-                            const div = document.createElement('div');
-                            div.className = 'p-2 hover:bg-gray-100 cursor-pointer border-b last:border-b-0';
-                            div.innerHTML = `<span class="font-bold text-xs uppercase text-gray-500 mr-2">[${item.type}]</span> ${item.name}`;
-                            div.onclick = () => selectLocation(item);
-                            searchResults.appendChild(div);
-                        });
-                    } else {
-                        searchResults.classList.add('hidden');
-                    }
-                });
-        }, 300);
-    });
-
-    function selectLocation(item) {
-        searchInput.value = item.name;
-        searchResults.classList.add('hidden');
-
-        // Auto-fill and Trigger Changes
-        const d = item.data;
-
-        // 1. Set Country
-        document.getElementById('country_id').value = d.country_id;
-        fetchRegions(d.country_id, () => {
-             document.getElementById('region_id').value = d.region_id;
-             if (d.region_id) {
-                 fetchCities(d.region_id, () => {
-                     if (d.city_id) {
-                         document.getElementById('city_id').value = d.city_id;
-                         fetchDistricts(d.city_id, () => {
-                             if (d.district_id) {
-                                 document.getElementById('district_id').value = d.district_id;
-                             } else {
-                                 document.getElementById('district_id').value = "";
-                             }
-                         });
-                     } else {
-                         document.getElementById('city_id').value = "";
-                         document.getElementById('district_id').innerHTML = '<option value="">@lang("admin.select_option")</option>';
-                     }
-                 });
-             }
+        var drawControl = new L.Control.Draw({
+            draw: {
+                polygon: true,
+                marker: false,
+                circle: false,
+                circlemarker: false,
+                rectangle: true,
+                polyline: false
+            },
+            edit: {
+                featureGroup: drawnItems,
+                remove: true
+            }
         });
-    }
+        map.addControl(drawControl);
 
-    function fetchRegions(countryId, selectedId = null, callback) {
-        if (!countryId) return;
-        fetch(`/admin/locations/countries/${countryId}`)
-            .then(response => response.json())
-            .then(data => {
-                const regionSelect = document.getElementById('region_id');
-                regionSelect.innerHTML = '<option value="">@lang("admin.select_option")</option>';
-                data.regions.forEach(region => {
-                    const isSelected = selectedId == region.id ? 'selected' : '';
-                    regionSelect.innerHTML += `<option value="${region.id}" ${isSelected}>${region.name_en}</option>`;
-                });
-                if (callback) callback();
+        map.on(L.Draw.Event.CREATED, function (e) {
+            drawnItems.clearLayers();
+            drawnItems.addLayer(e.layer);
+            updateInputs(e.layer);
+        });
+
+        map.on(L.Draw.Event.EDITED, function (e) {
+            e.layers.eachLayer(function (layer) {
+                updateInputs(layer);
             });
-    }
+        });
 
-    function fetchCities(regionId, selectedId = null, callback) {
-        if (!regionId) return;
-        fetch(`/admin/locations/regions/${regionId}`)
-            .then(response => response.json())
-            .then(data => {
-                const citySelect = document.getElementById('city_id');
-                citySelect.innerHTML = '<option value="">@lang("admin.select_option")</option>';
-                data.cities.forEach(city => {
-                    const isSelected = selectedId == city.id ? 'selected' : '';
-                    citySelect.innerHTML += `<option value="${city.id}" ${isSelected}>${city.name_en}</option>`;
-                });
-                 if (callback) callback();
-            });
-    }
+        map.on(L.Draw.Event.DELETED, function(e) {
+             document.getElementById('map_polygon_input').value = '';
+        });
 
-    function fetchDistricts(cityId, selectedId = null, callback) {
-        if (!cityId) return;
-        fetch(`/admin/locations/cities/${cityId}`)
-            .then(response => response.json())
-            .then(data => {
-                const districtSelect = document.getElementById('district_id');
-                districtSelect.innerHTML = '<option value="">@lang("admin.select_option")</option>';
-                data.districts.forEach(district => {
-                    const isSelected = selectedId == district.id ? 'selected' : '';
-                    districtSelect.innerHTML += `<option value="${district.id}" ${isSelected}>${district.name_en}</option>`;
-                });
-                 if (callback) callback();
-            });
-    }
+        function updateInputs(layer) {
+            var geoJson = layer.toGeoJSON();
+            document.getElementById('map_polygon_input').value = JSON.stringify(geoJson.geometry);
 
-    // Close search results on click outside
-    document.addEventListener('click', function(e) {
-        if (!searchInput.contains(e.target) && !searchResults.contains(e.target)) {
-            searchResults.classList.add('hidden');
+            var center = layer.getBounds().getCenter();
+            document.getElementById('lat_input').value = center.lat;
+            document.getElementById('lng_input').value = center.lng;
         }
-    });
+    }
 </script>
-@endsection
+@endpush
