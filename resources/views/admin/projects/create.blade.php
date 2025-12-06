@@ -5,7 +5,7 @@
 @endpush
 
 @section('header')
-    إضافة مشروع جديد
+    {{ __('admin.create_new') }}
 @endsection
 
 @section('content')
