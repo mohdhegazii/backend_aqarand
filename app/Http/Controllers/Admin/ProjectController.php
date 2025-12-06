@@ -87,10 +87,16 @@ class ProjectController extends Controller
             'brochure' => 'nullable|file|mimes:pdf|max:5120',
         ]);
 
-        // Auto-generate slugs if missing
-        $validated['name'] = $validated['name_en']; // Fallback
+        try {
+            // Auto-generate slugs if missing
+            if (empty($validated['seo_slug_en'])) {
+                $validated['seo_slug_en'] = Str::slug($validated['name_en']);
+            }
 
-            // Main slug fallback
+            if (empty($validated['seo_slug_ar']) && $request->filled('name_ar')) {
+                $validated['seo_slug_ar'] = preg_replace('/\s+/u', '-', trim($request->name_ar));
+            }
+
             $validated['slug'] = $validated['seo_slug_en'];
 
             // Ensure slug uniqueness
@@ -102,28 +108,12 @@ class ProjectController extends Controller
             }
 
             $project = Project::create($request->except('amenities', 'seo_slug_en', 'seo_slug_ar', 'hero_image', 'gallery', 'brochure') + [
-                'name' => $validated['name'],
+                'name' => $validated['name_en'],
                 'slug' => $validated['slug'],
                 'seo_slug_en' => $validated['seo_slug_en'],
                 'seo_slug_ar' => $validated['seo_slug_ar'],
                 'is_active' => $request->has('is_active'),
             ]);
-
-        // Ensure slug uniqueness
-        $originalSlug = $validated['slug'];
-        $count = 1;
-        while (Project::where('slug', $validated['slug'])->exists()) {
-            $validated['slug'] = $originalSlug . '-' . $count;
-            $count++;
-        }
-
-        $project = Project::create($request->except('amenities', 'seo_slug_en', 'seo_slug_ar', 'hero_image', 'gallery', 'brochure') + [
-            'name' => $validated['name'],
-            'slug' => $validated['slug'],
-            'seo_slug_en' => $validated['seo_slug_en'],
-            'seo_slug_ar' => $validated['seo_slug_ar'],
-            'is_active' => $request->has('is_active'),
-        ]);
 
             // Media Handling
             $updates = [];
@@ -150,7 +140,8 @@ class ProjectController extends Controller
             return redirect()->route('admin.projects.index')
                 ->with('success', __('admin.created_successfully'));
         } catch (\Throwable $e) {
-            dd($e);
+            report($e);
+            return back()->with('error', __('admin.unexpected_error'));
         }
     }
 
@@ -194,10 +185,11 @@ class ProjectController extends Controller
             'brochure' => 'nullable|file|mimes:pdf|max:5120',
         ]);
 
-        // Auto-generate slugs if missing
-        if (empty($validated['seo_slug_en'])) {
-            $validated['seo_slug_en'] = Str::slug($validated['name_en']);
-        }
+        try {
+            // Auto-generate slugs if missing
+            if (empty($validated['seo_slug_en'])) {
+                $validated['seo_slug_en'] = Str::slug($validated['name_en']);
+            }
 
             if (empty($validated['seo_slug_ar']) && $request->filled('name_ar')) {
                 $validated['seo_slug_ar'] = preg_replace('/\s+/u', '-', trim($request->name_ar));
@@ -248,7 +240,8 @@ class ProjectController extends Controller
             return redirect()->route('admin.projects.index')
                 ->with('success', __('admin.updated_successfully'));
         } catch (\Throwable $e) {
-            dd($e);
+            report($e);
+            return back()->with('error', __('admin.unexpected_error'));
         }
     }
 
