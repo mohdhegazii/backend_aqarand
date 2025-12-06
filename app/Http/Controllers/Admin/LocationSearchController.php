@@ -11,49 +11,67 @@ class LocationSearchController extends Controller
 {
     public function search(Request $request)
     {
-        $query = $request->input('q');
-        if (empty($query) || strlen($query) < 2) {
+        $query = trim((string) $request->input('q'));
+
+        if (strlen($query) < 2) {
             return response()->json([]);
         }
 
-        // Search Cities
         $cities = City::with(['region', 'region.country'])
-            ->where('name_en', 'like', "%{$query}%")
-            ->orWhere('name_local', 'like', "%{$query}%")
-            ->take(5)
+            ->where(function ($builder) use ($query) {
+                $builder->where('name_en', 'like', "%{$query}%")
+                    ->orWhere('name_local', 'like', "%{$query}%");
+            })
+            ->orderBy('name_en')
+            ->limit(8)
             ->get()
-            ->map(function ($city) {
+            ->map(function (City $city) {
                 return [
-                    'id' => $city->id,
                     'type' => 'city',
-                    'name' => $city->name_en . ' / ' . $city->name_local,
-                    'text' => $city->name_en, // For display
+                    'label' => trim($city->name_en . ' - ' . ($city->region->name_en ?? '')),
+                    'path' => $city->region?->country?->name_en,
                     'country_id' => $city->region->country_id,
                     'region_id' => $city->region_id,
                     'city_id' => $city->id,
-                    'district_id' => null, // Needs selection
+                    'district_id' => null,
+                    'lat' => $city->lat,
+                    'lng' => $city->lng,
                 ];
             });
 
-        // Search Districts
         $districts = District::with(['city', 'city.region', 'city.region.country'])
-            ->where('name_en', 'like', "%{$query}%")
-            ->orWhere('name_local', 'like', "%{$query}%")
-            ->take(10)
+            ->where(function ($builder) use ($query) {
+                $builder->where('name_en', 'like', "%{$query}%")
+                    ->orWhere('name_local', 'like', "%{$query}%");
+            })
+            ->orderBy('name_en')
+            ->limit(8)
             ->get()
-            ->map(function ($district) {
+            ->map(function (District $district) {
+                $city = $district->city;
+                $region = $city?->region;
+
+                $cityName = $city?->name_en;
+                $regionName = $region?->name_en;
+
+                $labelParts = array_filter([
+                    $district->name_en,
+                    $cityName,
+                ]);
+
                 return [
-                    'id' => $district->id,
                     'type' => 'district',
-                    'name' => $district->name_en . ' / ' . $district->name_local . ' (' . $district->city->name_en . ')',
-                    'text' => $district->name_en,
-                    'country_id' => $district->city->region->country_id,
-                    'region_id' => $district->city->region_id,
-                    'city_id' => $district->city_id,
+                    'label' => implode(' - ', $labelParts),
+                    'path' => $region?->country?->name_en,
+                    'country_id' => $region?->country_id,
+                    'region_id' => $region?->id,
+                    'city_id' => $city?->id,
                     'district_id' => $district->id,
+                    'lat' => $district->lat ?? $city?->lat,
+                    'lng' => $district->lng ?? $city?->lng,
                 ];
             });
 
-        return response()->json($cities->merge($districts));
+        return response()->json($cities->merge($districts)->values());
     }
 }

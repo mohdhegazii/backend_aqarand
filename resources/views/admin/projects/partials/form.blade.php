@@ -124,18 +124,31 @@
 
                 <!-- Search Input -->
                 <div class="mb-4 relative">
-                    <label class="block text-sm font-bold text-gray-700 mb-1">{{ __('admin.unified_search') }}</label>
+                    <label class="block text-sm font-bold text-gray-700 mb-1">{{ __('admin.location_search') }}</label>
+                    <p class="text-xs text-gray-500 mb-2">{{ __('admin.location_search_helper') }}</p>
                     <input type="text"
                            x-model="searchQuery"
                            @input.debounce.500ms="performSearch"
-                           placeholder="{{ __('admin.search_placeholder') }}"
+                           placeholder="{{ __('admin.location_search_placeholder') }}"
                            class="w-full rounded border-gray-300 p-2 shadow-sm focus:ring-indigo-500 focus:border-indigo-500">
 
+                    <div x-show="isSearching" class="absolute bg-white border border-gray-200 w-full mt-1 rounded shadow p-3 text-sm text-gray-500" style="display: none;">
+                        {{ __('admin.searching') }}
+                    </div>
+
                     <!-- Dropdown Results -->
-                    <div x-show="searchResults.length > 0" class="absolute z-50 bg-white border border-gray-200 w-full mt-1 rounded shadow-lg max-h-60 overflow-y-auto" style="display: none;">
-                        <template x-for="result in searchResults" :key="result.id">
-                            <div @click="selectSearchResult(result)" class="p-2 hover:bg-gray-100 cursor-pointer border-b text-sm">
-                                <span x-text="result.name" class="font-medium"></span>
+                    <div x-show="!isSearching && searchResults.length > 0" class="absolute z-50 bg-white border border-gray-200 w-full mt-1 rounded shadow-lg max-h-60 overflow-y-auto" style="display: none;">
+                        <template x-for="result in searchResults" :key="`${result.type}-${result.city_id ?? ''}-${result.district_id ?? ''}`">
+                            <div @click="selectSearchResult(result)" class="p-3 hover:bg-gray-100 cursor-pointer border-b text-sm">
+                                <div class="flex items-center justify-between">
+                                    <div>
+                                        <p class="font-semibold text-gray-800" x-text="result.label"></p>
+                                        <p class="text-xs text-gray-500" x-text="result.path"></p>
+                                    </div>
+                                    <span class="px-2 py-1 text-xs rounded-full bg-blue-50 text-blue-700 border border-blue-100">
+                                        <span x-text="result.type === 'district' ? '{{ __('admin.location_type_district') }}' : '{{ __('admin.location_type_city') }}'"></span>
+                                    </span>
+                                </div>
                             </div>
                         </template>
                     </div>
@@ -172,7 +185,7 @@
                     </div>
                     <div>
                         <label class="block text-xs font-bold text-gray-500 mb-1">{{ __('admin.district') }}</label>
-                        <select name="district_id" x-model="selectedDistrict" class="w-full rounded border-gray-300 p-2 text-sm">
+                        <select name="district_id" x-model="selectedDistrict" required class="w-full rounded border-gray-300 p-2 text-sm">
                             <option value="">{{ __('admin.select_district') }}</option>
                             <template x-for="district in districts" :key="district.id">
                                 <option :value="district.id" x-text="district.name_local || district.name_en"></option>
@@ -642,7 +655,9 @@
             step: 1,
             searchQuery: '',
             searchResults: [],
-            showCascading: isEdit, // Show if editing
+            isSearching: false,
+            showCascading: {{ old('country_id', $project->country_id ?? '') ? 'true' : ($isEdit ? 'true' : 'false') }},
+            locationSearchUrl: '{{ route('admin.location.search') }}',
 
             // Dropdowns
             selectedCountry: '{{ old('country_id', $project->country_id ?? '') }}',
@@ -655,10 +670,22 @@
             districts: [],
 
             init() {
+                if (this.selectedCountry || this.selectedRegion || this.selectedCity || this.selectedDistrict) {
+                    this.showCascading = true;
+                }
+
                 // Pre-load dropdowns if values exist (Edit mode)
-                if (this.selectedCountry) this.fetchRegions();
-                if (this.selectedRegion) this.fetchCities();
-                if (this.selectedCity) this.fetchDistricts();
+                if (this.selectedCountry) {
+                    this.fetchRegions(this.selectedRegion).then(() => {
+                        if (this.selectedRegion) {
+                            this.fetchCities(this.selectedCity).then(() => {
+                                if (this.selectedCity) {
+                                    this.fetchDistricts(this.selectedDistrict);
+                                }
+                            });
+                        }
+                    });
+                }
             },
 
             goToStep(n) {
@@ -672,7 +699,7 @@
             },
 
             validateStep1() {
-                if (!this.selectedCountry || !this.selectedRegion || !this.selectedCity) {
+                if (!this.selectedCountry || !this.selectedRegion || !this.selectedCity || !this.selectedDistrict) {
                     alert('{{ __('admin.fill_location') }}');
                     return false;
                 }
@@ -680,71 +707,95 @@
             },
 
             async performSearch() {
-                if (this.searchQuery.length < 2) return;
-                let res = await fetch(`/admin/locations/search?q=${this.searchQuery}`);
-                this.searchResults = await res.json();
-            },
+                const query = this.searchQuery.trim();
+                if (query.length < 2) {
+                    this.searchResults = [];
+                    return;
+                }
 
-            selectSearchResult(result) {
-                this.searchQuery = result.name;
-                this.searchResults = [];
-                this.showCascading = true;
-
-                // Set Dropdown Values from Result Data
-                // Note: result.data contains IDs. We need to set them and trigger fetches sequentially or rely on simple binding?
-                // Binding won't populate options automatically. We must fetch.
-
-                this.selectedCountry = result.data.country_id;
-                this.fetchRegions().then(() => {
-                    this.selectedRegion = result.data.region_id;
-                    this.fetchCities().then(() => {
-                        this.selectedCity = result.data.city_id;
-                        if(result.data.city_id) {
-                            this.fetchDistricts().then(() => {
-                                this.selectedDistrict = result.data.district_id;
-                            });
-                        }
-                    });
-                });
-
-                // Center Map
-                if (result.lat && result.lng) {
-                     // Leaflet map instance
-                     if(window.mapInstance) {
-                         window.mapInstance.flyTo([result.lat, result.lng], 13);
-                         // Update hidden inputs if no polygon
-                         document.getElementById('lat').value = result.lat;
-                         document.getElementById('lng').value = result.lng;
-                     }
+                this.isSearching = true;
+                try {
+                    let res = await fetch(`${this.locationSearchUrl}?q=${encodeURIComponent(query)}`);
+                    this.searchResults = await res.json();
+                } catch (error) {
+                    console.error('Location search failed', error);
+                    this.searchResults = [];
+                } finally {
+                    this.isSearching = false;
                 }
             },
 
-            async fetchRegions() {
-                if(!this.selectedCountry) return;
+            async selectSearchResult(result) {
+                this.searchQuery = result.label;
+                this.searchResults = [];
+                this.showCascading = true;
+
+                this.selectedCountry = result.country_id || '';
+                await this.fetchRegions(result.region_id || '');
+                await this.fetchCities(result.city_id || '');
+                await this.fetchDistricts(result.district_id || '');
+                this.selectedDistrict = result.district_id || '';
+
+                // Center Map
+                if (result.lat && result.lng && window.projectMapControls) {
+                    window.projectMapControls.focus(result.lat, result.lng);
+                }
+            },
+
+            async fetchRegions(preset = '') {
+                if(!this.selectedCountry) {
+                    this.regions = [];
+                    this.selectedRegion = '';
+                    return;
+                }
                 let res = await fetch(`/admin/locations/countries/${this.selectedCountry}`);
                 let data = await res.json();
-                this.regions = data.regions;
-                // Reset child
-                // this.selectedRegion = ''; // Keep if valid?
+                this.regions = data.regions || [];
+                if (preset) {
+                    this.selectedRegion = preset;
+                } else if (!this.regions.some(region => String(region.id) === String(this.selectedRegion))) {
+                    this.selectedRegion = '';
+                }
             },
-            async fetchCities() {
-                if(!this.selectedRegion) return;
+            async fetchCities(preset = '') {
+                if(!this.selectedRegion) {
+                    this.cities = [];
+                    this.selectedCity = '';
+                    return;
+                }
                 let res = await fetch(`/admin/locations/regions/${this.selectedRegion}`);
                 let data = await res.json();
-                this.cities = data.cities;
+                this.cities = data.cities || [];
+                if (preset) {
+                    this.selectedCity = preset;
+                } else if (!this.cities.some(city => String(city.id) === String(this.selectedCity))) {
+                    this.selectedCity = '';
+                }
             },
-            async fetchDistricts() {
-                if(!this.selectedCity) return;
+            async fetchDistricts(preset = '') {
+                if(!this.selectedCity) {
+                    this.districts = [];
+                    this.selectedDistrict = '';
+                    return;
+                }
                 let res = await fetch(`/admin/locations/cities/${this.selectedCity}`);
                 let data = await res.json();
-                this.districts = data.districts;
+                this.districts = data.districts || [];
+                if (preset) {
+                    this.selectedDistrict = preset;
+                } else if (!this.districts.some(district => String(district.id) === String(this.selectedDistrict))) {
+                    this.selectedDistrict = '';
+                }
             }
         }
     }
 
     function initMap() {
-        var lat = parseFloat(document.getElementById('lat').value) || 30.0444;
-        var lng = parseFloat(document.getElementById('lng').value) || 31.2357;
+        var defaultLat = 30.0444;
+        var defaultLng = 31.2357;
+
+        var lat = parseFloat(document.getElementById('lat').value) || defaultLat;
+        var lng = parseFloat(document.getElementById('lng').value) || defaultLng;
 
         var map = L.map('project_map').setView([lat, lng], 10);
         window.mapInstance = map;
@@ -756,18 +807,38 @@
         var drawnItems = new L.FeatureGroup();
         map.addLayer(drawnItems);
 
+        var markerLayer = null;
+
+        function setMarker(markerLat, markerLng, shouldFly = false) {
+            if (!isFinite(markerLat) || !isFinite(markerLng)) {
+                return;
+            }
+
+            if (markerLayer) {
+                markerLayer.setLatLng([markerLat, markerLng]);
+            } else {
+                markerLayer = L.marker([markerLat, markerLng]).addTo(map);
+            }
+
+            document.getElementById('lat').value = markerLat;
+            document.getElementById('lng').value = markerLng;
+
+            if (shouldFly) {
+                map.flyTo([markerLat, markerLng], 13);
+            }
+        }
+
         // Load existing polygon
         var existingPoly = document.getElementById('map_polygon').value;
         if (existingPoly && existingPoly !== 'null') {
             try {
                 var geoJson = JSON.parse(existingPoly);
-                // If it's pure geometry (type: Polygon), wrap in Feature or L.geoJSON handles geometry too?
-                // L.geoJSON expects GeoJSON object (Feature, FeatureCollection, or Geometry).
                 var layer = L.geoJSON(geoJson).addTo(drawnItems);
                 map.fitBounds(layer.getBounds());
+                setMarker(layer.getBounds().getCenter().lat, layer.getBounds().getCenter().lng);
             } catch(e) { console.error("Map JSON Error", e); }
-        } else if (lat && lng && lat !== 30.0444) {
-             L.marker([lat, lng]).addTo(map);
+        } else if (lat && lng && (lat !== defaultLat || lng !== defaultLng)) {
+            setMarker(lat, lng);
         }
 
         var drawControl = new L.Control.Draw({
@@ -803,15 +874,26 @@
             document.getElementById('map_polygon').value = '';
         });
 
+        map.on('click', function(e) {
+            setMarker(e.latlng.lat, e.latlng.lng, false);
+        });
+
         function updatePolygonInput(layer) {
             var geoJson = layer.toGeoJSON();
             document.getElementById('map_polygon').value = JSON.stringify(geoJson.geometry);
 
             // Update Center Lat/Lng
             var center = layer.getBounds().getCenter();
-            document.getElementById('lat').value = center.lat;
-            document.getElementById('lng').value = center.lng;
+            setMarker(center.lat, center.lng, false);
         }
+
+        window.projectMapControls = {
+            focus(lat, lng) {
+                setMarker(lat, lng, true);
+            },
+            setMarker,
+            mapInstance: map,
+        };
     }
 </script>
 @endpush
