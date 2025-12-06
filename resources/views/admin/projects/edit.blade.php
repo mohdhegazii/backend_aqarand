@@ -5,7 +5,7 @@
 @endpush
 
 @section('header')
-    تعديل المشروع: {{ $project->name_ar ?? $project->name_en }}
+    {{ __('admin.edit_project') }}: {{ $project->name_ar ?? $project->name_en }}
 @endsection
 
 @section('content')

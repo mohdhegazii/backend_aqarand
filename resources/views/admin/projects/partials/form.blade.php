@@ -12,7 +12,7 @@
     <!-- Steps Navigation -->
     <div class="mb-8 border-b border-gray-200">
         <ul class="flex flex-wrap -mb-px text-sm font-medium text-center" id="myTab" data-tabs-toggle="#myTabContent" role="tablist">
-            @foreach(['١- المعلومات الأساسية', '٢- تفاصيل العقار والسعر', '٣- وصف العقار', '٤- الفيديوهات والصور', '٥- النشر'] as $index => $label)
+            @foreach([__('admin.step_basic_info'), __('admin.step_details'), __('admin.step_description'), __('admin.step_media'), __('admin.step_publish')] as $index => $label)
             <li class="mr-2" role="presentation">
                 <button type="button"
                         class="inline-block p-4 rounded-t-lg border-b-2"
@@ -36,7 +36,7 @@
         <!-- Validation Errors -->
         @if($errors->any())
             <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-4" role="alert">
-                <strong class="font-bold">يرجى تصحيح الأخطاء التالية:</strong>
+                <strong class="font-bold">{{ __('admin.correct_errors') }}</strong>
                 <ul class="mt-1 list-disc list-inside">
                     @foreach($errors->all() as $error)
                         <li>{{ $error }}</li>
@@ -47,24 +47,24 @@
 
         <!-- STEP 1: Basic Info & Location -->
         <div x-show="step === 1" class="space-y-6">
-            <h3 class="text-lg font-bold text-gray-800 border-b pb-2">المعلومات الأساسية</h3>
+            <h3 class="text-lg font-bold text-gray-800 border-b pb-2">{{ __('admin.basic_info') }}</h3>
 
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <!-- Name AR -->
                 <div>
-                    <label class="block text-gray-700 font-bold mb-2">اسم المشروع (عربي) <span class="text-red-500">*</span></label>
+                    <label class="block text-gray-700 font-bold mb-2">{{ __('admin.project_name_ar') }} <span class="text-red-500">*</span></label>
                     <input type="text" name="name_ar" value="{{ old('name_ar', $project->name_ar ?? '') }}" required class="w-full rounded border-gray-300 p-2 focus:ring-blue-500 focus:border-blue-500">
                 </div>
                 <!-- Name EN -->
                 <div>
-                    <label class="block text-gray-700 font-bold mb-2">اسم المشروع (إنجليزي) <span class="text-red-500">*</span></label>
+                    <label class="block text-gray-700 font-bold mb-2">{{ __('admin.project_name_en') }} <span class="text-red-500">*</span></label>
                     <input type="text" name="name_en" value="{{ old('name_en', $project->name_en ?? '') }}" required class="w-full rounded border-gray-300 p-2 focus:ring-blue-500 focus:border-blue-500">
                 </div>
                 <!-- Developer -->
                 <div>
-                    <label class="block text-gray-700 font-bold mb-2">المطور العقاري</label>
+                    <label class="block text-gray-700 font-bold mb-2">{{ __('admin.developer') }}</label>
                     <select name="developer_id" class="w-full rounded border-gray-300 p-2">
-                        <option value="">اختر المطور</option>
+                        <option value="">{{ __('admin.select_developer') }}</option>
                         @foreach($developers as $dev)
                             <option value="{{ $dev->id }}" {{ old('developer_id', $project->developer_id ?? '') == $dev->id ? 'selected' : '' }}>
                                 {{ $dev->name }}
@@ -74,22 +74,22 @@
                 </div>
                 <!-- Tagline (optional) -->
                 <div>
-                    <label class="block text-gray-700 font-bold mb-2">شعار نصي (Tagline)</label>
+                    <label class="block text-gray-700 font-bold mb-2">{{ __('admin.tagline') }}</label>
                     <input type="text" name="tagline_ar" value="{{ old('tagline_ar', $project->tagline_ar ?? '') }}" class="w-full rounded border-gray-300 p-2">
                 </div>
             </div>
 
             <!-- Unified Search & Location -->
             <div class="bg-gray-50 p-4 rounded border border-gray-200 mt-6">
-                <h4 class="font-bold text-gray-700 mb-4">موقع المشروع</h4>
+                <h4 class="font-bold text-gray-700 mb-4">{{ __('admin.project_location') }}</h4>
 
                 <!-- Search Input -->
                 <div class="mb-4 relative">
-                    <label class="block text-sm font-bold text-gray-700 mb-1">بحث موحد</label>
+                    <label class="block text-sm font-bold text-gray-700 mb-1">{{ __('admin.unified_search') }}</label>
                     <input type="text"
                            x-model="searchQuery"
                            @input.debounce.500ms="performSearch"
-                           placeholder="ابحث عن موقع المشروع (مدينة، حي، مشروع...)"
+                           placeholder="{{ __('admin.search_placeholder') }}"
                            class="w-full rounded border-gray-300 p-2 shadow-sm focus:ring-indigo-500 focus:border-indigo-500">
 
                     <!-- Dropdown Results -->
@@ -105,36 +105,36 @@
                 <!-- Cascading Dropdowns (Hidden until selection) -->
                 <div x-show="showCascading" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mt-4 transition-all duration-300">
                     <div>
-                        <label class="block text-xs font-bold text-gray-500 mb-1">الدولة <span class="text-red-500">*</span></label>
+                        <label class="block text-xs font-bold text-gray-500 mb-1">{{ __('admin.country') }} <span class="text-red-500">*</span></label>
                         <select name="country_id" x-model="selectedCountry" @change="fetchRegions()" required class="w-full rounded border-gray-300 p-2 text-sm">
-                            <option value="">اختر الدولة</option>
+                            <option value="">{{ __('admin.select_country') }}</option>
                             @foreach($countries as $country)
                                 <option value="{{ $country->id }}">{{ $country->name_local ?? $country->name_en }}</option>
                             @endforeach
                         </select>
                     </div>
                     <div>
-                        <label class="block text-xs font-bold text-gray-500 mb-1">المحافظة / المنطقة <span class="text-red-500">*</span></label>
+                        <label class="block text-xs font-bold text-gray-500 mb-1">{{ __('admin.region') }} <span class="text-red-500">*</span></label>
                         <select name="region_id" x-model="selectedRegion" @change="fetchCities()" required class="w-full rounded border-gray-300 p-2 text-sm">
-                            <option value="">اختر المحافظة</option>
+                            <option value="">{{ __('admin.select_region') }}</option>
                             <template x-for="region in regions" :key="region.id">
                                 <option :value="region.id" x-text="region.name_local || region.name_en"></option>
                             </template>
                         </select>
                     </div>
                     <div>
-                        <label class="block text-xs font-bold text-gray-500 mb-1">المدينة <span class="text-red-500">*</span></label>
+                        <label class="block text-xs font-bold text-gray-500 mb-1">{{ __('admin.city') }} <span class="text-red-500">*</span></label>
                         <select name="city_id" x-model="selectedCity" @change="fetchDistricts()" required class="w-full rounded border-gray-300 p-2 text-sm">
-                            <option value="">اختر المدينة</option>
+                            <option value="">{{ __('admin.select_city') }}</option>
                             <template x-for="city in cities" :key="city.id">
                                 <option :value="city.id" x-text="city.name_local || city.name_en"></option>
                             </template>
                         </select>
                     </div>
                     <div>
-                        <label class="block text-xs font-bold text-gray-500 mb-1">الحي / المنطقة الفرعية</label>
+                        <label class="block text-xs font-bold text-gray-500 mb-1">{{ __('admin.district') }}</label>
                         <select name="district_id" x-model="selectedDistrict" class="w-full rounded border-gray-300 p-2 text-sm">
-                            <option value="">اختر الحي</option>
+                            <option value="">{{ __('admin.select_district') }}</option>
                             <template x-for="district in districts" :key="district.id">
                                 <option :value="district.id" x-text="district.name_local || district.name_en"></option>
                             </template>
@@ -145,52 +145,52 @@
 
             <!-- Map Section -->
             <div class="mt-6">
-                <h3 class="text-lg font-bold text-gray-800 mb-2">خريطة المشروع وحدود الأرض</h3>
+                <h3 class="text-lg font-bold text-gray-800 mb-2">{{ __('admin.project_map') }}</h3>
                 <div id="project_map" style="height: 400px; width: 100%; border-radius: 0.5rem; z-index: 1;" class="border border-gray-300"></div>
 
                 <input type="hidden" name="map_polygon" id="map_polygon" value="{{ old('map_polygon', json_encode($project->map_polygon ?? null)) }}">
                 <input type="hidden" name="lat" id="lat" value="{{ old('lat', $project->lat ?? '') }}">
                 <input type="hidden" name="lng" id="lng" value="{{ old('lng', $project->lng ?? '') }}">
 
-                <p class="text-xs text-gray-500 mt-1">استخدم أدوات الرسم لتحديد حدود المشروع على الخريطة.</p>
+                <p class="text-xs text-gray-500 mt-1">{{ __('admin.map_instruction') }}</p>
             </div>
         </div>
 
         <!-- STEP 2: Details -->
         <div x-show="step === 2" class="space-y-6">
-            <h3 class="text-lg font-bold text-gray-800 border-b pb-2">تفاصيل العقار والسعر</h3>
+            <h3 class="text-lg font-bold text-gray-800 border-b pb-2">{{ __('admin.property_details_price') }}</h3>
 
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <!-- Prices -->
                 <div>
-                    <label class="block text-gray-700 font-bold mb-2">أقل سعر</label>
+                    <label class="block text-gray-700 font-bold mb-2">{{ __('admin.min_price') }}</label>
                     <input type="number" name="min_price" value="{{ old('min_price', $project->min_price ?? '') }}" class="w-full rounded border-gray-300 p-2">
                 </div>
                 <div>
-                    <label class="block text-gray-700 font-bold mb-2">أعلى سعر</label>
+                    <label class="block text-gray-700 font-bold mb-2">{{ __('admin.max_price') }}</label>
                     <input type="number" name="max_price" value="{{ old('max_price', $project->max_price ?? '') }}" class="w-full rounded border-gray-300 p-2">
                 </div>
 
                 <!-- Areas -->
                 <div>
-                    <label class="block text-gray-700 font-bold mb-2">أقل مساحة (م٢)</label>
+                    <label class="block text-gray-700 font-bold mb-2">{{ __('admin.min_area') }}</label>
                     <input type="number" name="min_bua" value="{{ old('min_bua', $project->min_bua ?? '') }}" class="w-full rounded border-gray-300 p-2">
                 </div>
                 <div>
-                    <label class="block text-gray-700 font-bold mb-2">أكبر مساحة (م٢)</label>
+                    <label class="block text-gray-700 font-bold mb-2">{{ __('admin.max_area') }}</label>
                     <input type="number" name="max_bua" value="{{ old('max_bua', $project->max_bua ?? '') }}" class="w-full rounded border-gray-300 p-2">
                 </div>
 
                 <!-- Total Units -->
                 <div>
-                    <label class="block text-gray-700 font-bold mb-2">عدد الوحدات</label>
+                    <label class="block text-gray-700 font-bold mb-2">{{ __('admin.total_units') }}</label>
                     <input type="number" name="total_units" value="{{ old('total_units', $project->total_units ?? '') }}" class="w-full rounded border-gray-300 p-2">
                 </div>
             </div>
 
             <!-- Amenities -->
             <div class="mt-4">
-                <label class="block text-gray-700 font-bold mb-2">المرافق والخدمات</label>
+                <label class="block text-gray-700 font-bold mb-2">{{ __('admin.amenities') }}</label>
                 <div class="grid grid-cols-2 md:grid-cols-4 gap-4 bg-gray-50 p-4 rounded border">
                     @php
                         $selectedAmenities = $isEdit ? $project->amenities->pluck('id')->toArray() : [];
@@ -209,22 +209,22 @@
 
         <!-- STEP 3: Description -->
         <div x-show="step === 3" class="space-y-6">
-            <h3 class="text-lg font-bold text-gray-800 border-b pb-2">وصف العقار</h3>
+            <h3 class="text-lg font-bold text-gray-800 border-b pb-2">{{ __('admin.step_description') }}</h3>
 
             <div>
-                <label class="block text-gray-700 font-bold mb-2">وصف تفصيلي</label>
+                <label class="block text-gray-700 font-bold mb-2">{{ __('admin.description_detailed') }}</label>
                 <textarea name="description_long" rows="10" class="w-full rounded border-gray-300 p-2">{{ old('description_long', $project->description_long ?? '') }}</textarea>
             </div>
 
             <div class="mt-6">
-                <h4 class="font-bold text-gray-700 mb-2">تحسين محركات البحث (SEO)</h4>
+                <h4 class="font-bold text-gray-700 mb-2">{{ __('admin.seo_settings') }}</h4>
                 <div class="grid grid-cols-1 gap-4">
                     <div>
-                        <label class="block text-gray-700 text-sm mb-1">عنوان الصفحة (Meta Title)</label>
+                        <label class="block text-gray-700 text-sm mb-1">{{ __('admin.meta_title') }}</label>
                         <input type="text" name="meta_title_ar" value="{{ old('meta_title_ar', $project->meta_title_ar ?? '') }}" class="w-full rounded border-gray-300 p-2">
                     </div>
                     <div>
-                        <label class="block text-gray-700 text-sm mb-1">وصف الصفحة (Meta Description)</label>
+                        <label class="block text-gray-700 text-sm mb-1">{{ __('admin.meta_description') }}</label>
                         <textarea name="meta_description_ar" rows="3" class="w-full rounded border-gray-300 p-2">{{ old('meta_description_ar', $project->meta_description_ar ?? '') }}</textarea>
                     </div>
                 </div>
@@ -233,30 +233,30 @@
 
         <!-- STEP 4: Media -->
         <div x-show="step === 4" class="space-y-6">
-            <h3 class="text-lg font-bold text-gray-800 border-b pb-2">الفيديوهات والصور</h3>
+            <h3 class="text-lg font-bold text-gray-800 border-b pb-2">{{ __('admin.videos_photos') }}</h3>
 
             <!-- Hero Image -->
             <div class="bg-blue-50 p-4 rounded border border-blue-200">
-                <label class="block text-blue-800 font-bold mb-2">صورة الغلاف (Hero Image)</label>
+                <label class="block text-blue-800 font-bold mb-2">{{ __('admin.hero_image') }}</label>
                 @if($isEdit && $project->hero_image_url)
                     <div class="mb-2">
                         <img src="{{ Storage::url($project->hero_image_url) }}" class="h-40 w-auto object-cover rounded shadow">
-                        <p class="text-xs text-gray-500 mt-1">الصورة الحالية</p>
+                        <p class="text-xs text-gray-500 mt-1">{{ __('admin.current_image') }}</p>
                     </div>
                 @endif
                 <input type="file" name="hero_image" accept="image/*" {{ $isEdit ? '' : 'required' }} class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100">
-                <p class="text-xs text-gray-500 mt-1">يجب اختيار صورة واحدة. الحد الأقصى ٢ ميجا.</p>
+                <p class="text-xs text-gray-500 mt-1">{{ __('admin.hero_image_help') }}</p>
             </div>
 
             <!-- Video URL -->
             <div class="bg-gray-50 p-4 rounded border border-gray-200">
-                <label class="block text-gray-700 font-bold mb-2">رابط الفيديو (YouTube/Vimeo)</label>
+                <label class="block text-gray-700 font-bold mb-2">{{ __('admin.video_url') }}</label>
                 <input type="url" name="video_url" value="{{ old('video_url', $project->video_url ?? '') }}" class="w-full rounded border-gray-300 p-2" placeholder="https://youtube.com/...">
             </div>
 
             <!-- Gallery Grid -->
             <div class="bg-gray-50 p-4 rounded border border-gray-200">
-                <label class="block text-gray-700 font-bold mb-4">معرض الصور</label>
+                <label class="block text-gray-700 font-bold mb-4">{{ __('admin.gallery') }}</label>
 
                 <!-- Existing Images -->
                 @if(count($gallery) > 0)
@@ -268,19 +268,19 @@
                         <!-- Inputs -->
                         <div class="space-y-2">
                             <input type="hidden" name="gallery_data[{{ $idx }}][path]" value="{{ $img['path'] }}">
-                            <input type="text" name="gallery_data[{{ $idx }}][name]" value="{{ $img['name'] ?? '' }}" placeholder="اسم الصورة" class="w-full text-xs p-1 border rounded">
-                            <input type="text" name="gallery_data[{{ $idx }}][alt]" value="{{ $img['alt'] ?? '' }}" placeholder="نص بديل" class="w-full text-xs p-1 border rounded">
+                            <input type="text" name="gallery_data[{{ $idx }}][name]" value="{{ $img['name'] ?? '' }}" placeholder="{{ __('admin.image_name') }}" class="w-full text-xs p-1 border rounded">
+                            <input type="text" name="gallery_data[{{ $idx }}][alt]" value="{{ $img['alt'] ?? '' }}" placeholder="{{ __('admin.alt_text') }}" class="w-full text-xs p-1 border rounded">
 
                             <label class="flex items-center space-x-2 text-xs cursor-pointer">
                                 <input type="radio" name="selected_hero" value="{{ $img['path'] }}"
                                        {{ ($project->hero_image_url ?? '') == $img['path'] ? 'checked' : '' }}
                                        class="text-blue-600">
-                                <span class="mr-1">تعيين كصورة غلاف</span>
+                                <span class="mr-1">{{ __('admin.set_as_hero') }}</span>
                             </label>
                         </div>
 
                         <!-- Delete -->
-                        <button type="button" onclick="document.getElementById('gallery-item-{{ $idx }}').remove()" class="absolute top-1 left-1 bg-red-600 text-white rounded-full p-1 hover:bg-red-700" title="حذف الصورة">
+                        <button type="button" onclick="document.getElementById('gallery-item-{{ $idx }}').remove()" class="absolute top-1 left-1 bg-red-600 text-white rounded-full p-1 hover:bg-red-700" title="{{ __('admin.delete_image') }}">
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
                         </button>
                     </div>
@@ -290,40 +290,40 @@
 
                 <!-- Upload New -->
                 <div class="mt-4">
-                    <label class="block text-sm font-bold text-gray-700 mb-1">إضافة صور جديدة</label>
+                    <label class="block text-sm font-bold text-gray-700 mb-1">{{ __('admin.add_new_images') }}</label>
                     <input type="file" name="gallery[]" accept="image/*" multiple class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-gray-50 file:text-gray-700 hover:file:bg-gray-100">
-                    <p class="text-xs text-gray-500 mt-1">يمكنك رفع صور متعددة. سيتم إضافتها للمعرض.</p>
+                    <p class="text-xs text-gray-500 mt-1">{{ __('admin.gallery_help') }}</p>
                 </div>
             </div>
 
             <!-- Brochure -->
             <div class="bg-green-50 p-4 rounded border border-green-200">
-                <label class="block text-green-800 font-bold mb-2">البروشور (PDF)</label>
+                <label class="block text-green-800 font-bold mb-2">{{ __('admin.brochure') }}</label>
                 @if($isEdit && $project->brochure_url)
                     <div class="mb-2 flex items-center">
                         <svg class="w-6 h-6 text-red-500 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path></svg>
-                        <a href="{{ route('admin.media.download', ['path' => $project->brochure_url]) }}" target="_blank" class="text-blue-600 hover:underline text-sm">عرض البروشور الحالي</a>
+                        <a href="{{ route('admin.media.download', ['path' => $project->brochure_url]) }}" target="_blank" class="text-blue-600 hover:underline text-sm">{{ __('admin.view_current_brochure') }}</a>
                     </div>
                 @endif
                 <input type="file" name="brochure" accept="application/pdf" class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-green-50 file:text-green-700 hover:file:bg-green-100">
-                <p class="text-xs text-gray-500 mt-1">ملف PDF فقط. تخزين في storage/app/public/projects/.../brochures/</p>
+                <p class="text-xs text-gray-500 mt-1">{{ __('admin.brochure_help') }}</p>
             </div>
         </div>
 
         <!-- STEP 5: Publish -->
         <div x-show="step === 5" class="space-y-6">
-            <h3 class="text-lg font-bold text-gray-800 border-b pb-2">النشر</h3>
+            <h3 class="text-lg font-bold text-gray-800 border-b pb-2">{{ __('admin.publish') }}</h3>
 
             <div class="bg-gray-50 p-6 rounded border border-gray-200 text-center">
                 <label class="flex items-center justify-center space-x-4 cursor-pointer mb-6">
                     <input type="checkbox" name="is_active" value="1" {{ old('is_active', $project->is_active ?? true) ? 'checked' : '' }} class="form-checkbox h-6 w-6 text-green-600">
-                    <span class="mr-3 text-lg font-bold text-gray-700">تفعيل المشروع وعرضه في الموقع</span>
+                    <span class="mr-3 text-lg font-bold text-gray-700">{{ __('admin.activate_project') }}</span>
                 </label>
 
-                <p class="text-gray-500 mb-6">عند الحفظ، سيتم تحديث جميع البيانات والملفات المرفقة.</p>
+                <p class="text-gray-500 mb-6">{{ __('admin.save_note') }}</p>
 
                 <button type="submit" class="bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-12 rounded-lg text-lg shadow-lg transform transition hover:scale-105">
-                    {{ $isEdit ? 'حفظ التعديلات' : 'حفظ المشروع' }}
+                    {{ $isEdit ? __('admin.save_changes') : __('admin.save_project') }}
                 </button>
             </div>
         </div>
@@ -331,11 +331,11 @@
         <!-- Navigation Buttons -->
         <div class="flex justify-between mt-8 pt-4 border-t border-gray-200">
             <button type="button" x-show="step > 1" @click="step--" class="bg-gray-500 hover:bg-gray-600 text-white font-bold py-2 px-6 rounded">
-                السابق
+                {{ __('admin.previous') }}
             </button>
             <div class="flex-1"></div>
             <button type="button" x-show="step < 5" @click="nextStep()" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-6 rounded">
-                التالي
+                {{ __('admin.next') }}
             </button>
         </div>
     </form>
@@ -379,7 +379,7 @@
 
             validateStep1() {
                 if (!this.selectedCountry || !this.selectedRegion || !this.selectedCity) {
-                    alert('يرجى استكمال بيانات الموقع (الدولة، المحافظة، المدينة)');
+                    alert('{{ __('admin.fill_location') }}');
                     return false;
                 }
                 return true;
