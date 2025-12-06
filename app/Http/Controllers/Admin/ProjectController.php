@@ -75,18 +75,24 @@ class ProjectController extends Controller
             }
 
             // FAQs
-            if ($request->has('faqs')) {
-                foreach ($request->faqs as $index => $faqData) {
-                    if (!empty($faqData['question_en']) || !empty($faqData['question_ar'])) {
-                        $project->faqs()->create([
-                            'question_ar' => $faqData['question_ar'],
-                            'answer_ar' => $faqData['answer_ar'],
-                            'question_en' => $faqData['question_en'],
-                            'answer_en' => $faqData['answer_en'],
-                            'sort_order' => $index,
-                        ]);
-                    }
-                }
+            $faqItems = collect($request->input('faqs', []))
+                ->filter(function ($faq) {
+                    return !empty(array_filter([
+                        $faq['question_ar'] ?? null,
+                        $faq['answer_ar'] ?? null,
+                        $faq['question_en'] ?? null,
+                        $faq['answer_en'] ?? null,
+                    ], fn($value) => $value !== null && $value !== ''));
+                });
+
+            foreach ($faqItems as $index => $faqData) {
+                $project->faqs()->create([
+                    'question_ar' => $faqData['question_ar'] ?? null,
+                    'answer_ar' => $faqData['answer_ar'] ?? null,
+                    'question_en' => $faqData['question_en'] ?? null,
+                    'answer_en' => $faqData['answer_en'] ?? null,
+                    'sort_order' => $faqData['sort_order'] ?? $index,
+                ]);
             }
 
             DB::commit();
@@ -137,20 +143,43 @@ class ProjectController extends Controller
                 $project->amenities()->detach();
             }
 
-            // FAQs - Replace Strategy
-            $project->faqs()->delete();
-            if ($request->has('faqs')) {
-                foreach ($request->faqs as $index => $faqData) {
-                    if (!empty($faqData['question_en']) || !empty($faqData['question_ar'])) {
-                        $project->faqs()->create([
-                            'question_ar' => $faqData['question_ar'],
-                            'answer_ar' => $faqData['answer_ar'],
-                            'question_en' => $faqData['question_en'],
-                            'answer_en' => $faqData['answer_en'],
-                            'sort_order' => $index,
-                        ]);
-                    }
+            // FAQs - Update existing, add new, delete removed based on submitted IDs
+            $existingFaqIds = $project->faqs()->pluck('id')->toArray();
+            $keptFaqIds = [];
+
+            $faqItems = collect($request->input('faqs', []))
+                ->filter(function ($faq) {
+                    return !empty(array_filter([
+                        $faq['question_ar'] ?? null,
+                        $faq['answer_ar'] ?? null,
+                        $faq['question_en'] ?? null,
+                        $faq['answer_en'] ?? null,
+                    ], fn($value) => $value !== null && $value !== ''));
+                })
+                ->values();
+
+            foreach ($faqItems as $index => $faqData) {
+                $payload = [
+                    'question_ar' => $faqData['question_ar'] ?? null,
+                    'answer_ar' => $faqData['answer_ar'] ?? null,
+                    'question_en' => $faqData['question_en'] ?? null,
+                    'answer_en' => $faqData['answer_en'] ?? null,
+                    'sort_order' => $faqData['sort_order'] ?? $index,
+                ];
+
+                if (!empty($faqData['id']) && in_array((int) $faqData['id'], $existingFaqIds, true)) {
+                    $project->faqs()->where('id', $faqData['id'])->update($payload);
+                    $keptFaqIds[] = (int) $faqData['id'];
+                } else {
+                    $newFaq = $project->faqs()->create($payload);
+                    $keptFaqIds[] = $newFaq->id;
                 }
+            }
+
+            // Detect removed FAQs by comparing submitted IDs to existing ones.
+            $faqsToDelete = array_diff($existingFaqIds, $keptFaqIds);
+            if (!empty($faqsToDelete)) {
+                $project->faqs()->whereIn('id', $faqsToDelete)->delete();
             }
 
             DB::commit();
