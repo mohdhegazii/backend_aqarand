@@ -10,21 +10,27 @@ return new class extends Migration
     {
         // 1. Update Projects table status to support new values
         // We convert to VARCHAR to avoid ENUM constraints issues during dev
-        Schema::table('projects', function (Blueprint $table) {
-            $table->string('status', 50)->default('new_launch')->change();
-        });
+        if (Schema::hasTable('projects') && Schema::hasColumn('projects', 'status')) {
+            Schema::table('projects', function (Blueprint $table) {
+                $table->string('status', 50)->default('new_launch')->change();
+            });
+        }
 
         // 2. Add construction_status to Units
-        Schema::table('units', function (Blueprint $table) {
-            $table->string('construction_status', 50)->default('new_launch')->after('unit_status');
-        });
+        if (Schema::hasTable('units') && !Schema::hasColumn('units', 'construction_status')) {
+            Schema::table('units', function (Blueprint $table) {
+                $table->string('construction_status', 50)->default('new_launch')->after('unit_status');
+            });
+        }
     }
 
     public function down()
     {
-        Schema::table('units', function (Blueprint $table) {
-            $table->dropColumn('construction_status');
-        });
+        if (Schema::hasTable('units') && Schema::hasColumn('units', 'construction_status')) {
+            Schema::table('units', function (Blueprint $table) {
+                $table->dropColumn('construction_status');
+            });
+        }
 
         // Reverting project status is hard if data exists, but we can try
         // DB::statement("ALTER TABLE projects MODIFY COLUMN status ENUM('planned','under_construction','delivered') DEFAULT 'planned'");
