@@ -18,19 +18,19 @@ class StoreProjectRequest extends FormRequest
             'name_ar' => 'required|string|max:255',
             'name_en' => 'required|string|max:255',
             'project_area_value' => 'nullable|numeric|min:0',
-            'project_area_unit' => 'required|in:feddan,sqm',
+            'project_area_unit' => 'nullable|in:feddan,sqm|required_with:project_area_value',
+            'sales_launch_date' => 'nullable|date',
+            'status' => 'required|in:draft,published',
+            'construction_status' => 'nullable|in:planned,under_construction,delivered',
 
             // Master Project
             'is_part_of_master_project' => 'boolean',
             'master_project_id' => 'nullable|required_if:is_part_of_master_project,1|exists:projects,id',
 
             // Flags & Dates
-            'sales_launch_date' => 'nullable|date',
             'is_featured' => 'boolean',
             'is_top_project' => 'boolean',
             'include_in_sitemap' => 'boolean',
-            'publish_status' => 'required|in:draft,published',
-            'construction_status' => 'required|in:planned,under_construction,delivered', // Mapping to 'status' column
 
             // Location
             'country_id' => 'required|exists:countries,id',
@@ -78,10 +78,10 @@ class StoreProjectRequest extends FormRequest
     public function prepareForValidation()
     {
         $this->merge([
-            'is_part_of_master_project' => $this->has('is_part_of_master_project'),
-            'is_featured' => $this->has('is_featured'),
-            'is_top_project' => $this->has('is_top_project'),
-            'include_in_sitemap' => $this->has('include_in_sitemap'),
+            'is_part_of_master_project' => (bool) $this->input('is_part_of_master_project', false),
+            'is_featured' => (bool) $this->input('is_featured', false),
+            'is_top_project' => (bool) $this->input('is_top_project', false),
+            'include_in_sitemap' => (bool) $this->input('include_in_sitemap', false),
         ]);
     }
 }

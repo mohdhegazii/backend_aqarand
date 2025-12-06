@@ -11,7 +11,6 @@ use App\Models\Developer;
 use App\Models\Project;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Str;
 
 class ProjectController extends Controller
 {
@@ -61,18 +60,9 @@ class ProjectController extends Controller
         try {
             $data = $request->validated();
 
-            // Map 'construction_status' back to 'status' column
-            $data['status'] = $data['construction_status'];
-            unset($data['construction_status']);
-
             // Slug Generation
             $slugBase = $data['name_en'] ?? $data['name_ar'];
-            $data['slug'] = Str::slug($slugBase);
-            // Ensure unique slug logic here if needed (ProjectObserver usually handles this or explicit check)
-            $count = Project::where('slug', $data['slug'])->count();
-            if ($count > 0) {
-                $data['slug'] .= '-' . ($count + 1);
-            }
+            $data['slug'] = Project::generateSlug($slugBase);
 
             // Fallback for 'name' legacy column
             $data['name'] = $data['name_en'] ?? $data['name_ar'];
@@ -130,16 +120,9 @@ class ProjectController extends Controller
         DB::beginTransaction();
         try {
             $data = $request->validated();
-
-            // Map 'construction_status' back to 'status' column
-            $data['status'] = $data['construction_status'];
-            unset($data['construction_status']);
-
-            // Slug update if name changes? Usually good practice to keep slug unless explicitly requested,
-            // but requirement says "generating slugs...". For update, let's keep it stable unless empty.
+            $slugBase = $data['name_en'] ?? $data['name_ar'];
             if (empty($project->slug)) {
-                 $slugBase = $data['name_en'] ?? $data['name_ar'];
-                 $data['slug'] = Str::slug($slugBase);
+                $data['slug'] = Project::generateSlug($slugBase, $project->id);
             }
 
              // Fallback for 'name' legacy column
