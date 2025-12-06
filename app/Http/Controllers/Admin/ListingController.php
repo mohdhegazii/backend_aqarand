@@ -60,7 +60,7 @@ class ListingController extends Controller
             'published_at' => $request->status === 'published' ? now() : null,
         ]);
 
-        return redirect()->route('admin.listings.index')
+        return redirect()->route($this->adminRoutePrefix().'listings.index')
             ->with('success', __('admin.created_successfully'));
     }
 
@@ -96,14 +96,14 @@ class ListingController extends Controller
 
         $listing->update($data);
 
-        return redirect()->route('admin.listings.index')
+        return redirect()->route($this->adminRoutePrefix().'listings.index')
             ->with('success', __('admin.updated_successfully'));
     }
 
     public function destroy(Listing $listing)
     {
         $listing->delete();
-        return redirect()->route('admin.listings.index')
+        return redirect()->route($this->adminRoutePrefix().'listings.index')
             ->with('success', __('admin.deleted_successfully'));
     }
 }

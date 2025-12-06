@@ -4,10 +4,10 @@
 
 @section('content')
     <div class="mb-4 flex flex-col md:flex-row justify-between space-y-4 md:space-y-0">
-        <a href="{{ route('admin.cities.create') }}" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded w-fit">
+        <a href="{{ route($adminRoutePrefix.'cities.create') }}" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded w-fit">
             @lang('admin.create_new')
         </a>
-        <form action="{{ route('admin.cities.index') }}" method="GET" class="flex flex-col md:flex-row space-y-2 md:space-y-0 md:space-x-2 rtl:md:space-x-reverse">
+        <form action="{{ route($adminRoutePrefix.'cities.index') }}" method="GET" class="flex flex-col md:flex-row space-y-2 md:space-y-0 md:space-x-2 rtl:md:space-x-reverse">
              <select name="filter" class="border rounded px-4 py-2" onchange="this.form.submit()">
                 <option value="active" {{ request('filter') === 'active' || !request('filter') ? 'selected' : '' }}>@lang('admin.activate')</option>
                 <option value="inactive" {{ request('filter') === 'inactive' ? 'selected' : '' }}>@lang('admin.deactivate')</option>
@@ -31,7 +31,7 @@
     </div>
 
     <div class="bg-white shadow-md rounded my-6 overflow-x-auto">
-        <form action="{{ route('admin.cities.bulk') }}" method="POST" id="bulk-form">
+        <form action="{{ route($adminRoutePrefix.'cities.bulk') }}" method="POST" id="bulk-form">
             @csrf
             <div class="p-4 border-b flex items-center space-x-2">
                 <select name="action" class="border-gray-300 rounded text-sm">
@@ -74,10 +74,10 @@
                             </td>
                             <td class="py-3 px-6 text-center">
                                 <div class="flex item-center justify-center space-x-2 rtl:space-x-reverse">
-                                    <a href="{{ route('admin.cities.edit', $city) }}" class="text-purple-600 hover:text-purple-900">
+                                    <a href="{{ route($adminRoutePrefix.'cities.edit', $city) }}" class="text-purple-600 hover:text-purple-900">
                                         @lang('admin.edit')
                                     </a>
-                                    <form action="{{ route('admin.cities.destroy', $city) }}" method="POST" onsubmit="return confirm('@lang('admin.confirm_delete')')" class="inline">
+                                    <form action="{{ route($adminRoutePrefix.'cities.destroy', $city) }}" method="POST" onsubmit="return confirm('@lang('admin.confirm_delete')')" class="inline">
                                         @csrf
                                         @method('DELETE')
                                         <button type="submit" class="text-red-600 hover:text-red-900">

@@ -66,7 +66,7 @@ class UnitController extends Controller
             'is_furnished' => $request->has('is_furnished'),
         ]);
 
-        return redirect()->route('admin.units.index')
+        return redirect()->route($this->adminRoutePrefix().'units.index')
             ->with('success', __('admin.created_successfully'));
     }
 
@@ -109,14 +109,14 @@ class UnitController extends Controller
             'is_furnished' => $request->has('is_furnished'),
         ]);
 
-        return redirect()->route('admin.units.index')
+        return redirect()->route($this->adminRoutePrefix().'units.index')
             ->with('success', __('admin.updated_successfully'));
     }
 
     public function destroy(Unit $unit)
     {
         $unit->delete();
-        return redirect()->route('admin.units.index')
+        return redirect()->route($this->adminRoutePrefix().'units.index')
             ->with('success', __('admin.deleted_successfully'));
     }
 }

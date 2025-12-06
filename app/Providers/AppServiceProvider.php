@@ -2,8 +2,9 @@
 
 namespace App\Providers;
 
-use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Facades\View;
+use Illuminate\Support\ServiceProvider;
 use App\Models\AmenityCategory;
 use App\Models\Country;
 use App\Models\Region;
@@ -44,5 +45,12 @@ class AppServiceProvider extends ServiceProvider
         Route::model('amenity', Amenity::class);
         Route::model('developer', Developer::class);
         Route::model('category', Category::class);
+
+        View::composer('*', function ($view) {
+            $locale = app()->getLocale();
+            $adminRoutePrefix = $locale === config('app.locale') ? 'admin.' : 'localized.admin.';
+
+            $view->with('adminRoutePrefix', $adminRoutePrefix);
+        });
     }
 }

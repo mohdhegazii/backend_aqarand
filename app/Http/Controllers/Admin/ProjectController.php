@@ -96,7 +96,7 @@ class ProjectController extends Controller
 
             DB::commit();
 
-            return redirect()->route('admin.projects.index')->with('success', 'Project created successfully.');
+            return redirect()->route($this->adminRoutePrefix().'projects.index')->with('success', 'Project created successfully.');
 
         } catch (\Throwable $e) {
             DB::rollBack();
@@ -181,7 +181,7 @@ class ProjectController extends Controller
 
             DB::commit();
 
-            return redirect()->route('admin.projects.index')->with('success', 'Project updated successfully.');
+            return redirect()->route($this->adminRoutePrefix().'projects.index')->with('success', 'Project updated successfully.');
 
         } catch (\Throwable $e) {
             DB::rollBack();
@@ -194,6 +194,6 @@ class ProjectController extends Controller
     {
         // Check dependencies if needed
         $project->delete();
-        return redirect()->route('admin.projects.index')->with('success', 'Project deleted successfully.');
+        return redirect()->route($this->adminRoutePrefix().'projects.index')->with('success', 'Project deleted successfully.');
     }
 }

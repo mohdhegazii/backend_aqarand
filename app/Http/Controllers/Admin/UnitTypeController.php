@@ -84,7 +84,7 @@ class UnitTypeController extends Controller
 
         UnitType::create($validated);
 
-        return redirect()->route('admin.unit-types.index')
+        return redirect()->route($this->adminRoutePrefix().'unit-types.index')
             ->with('success', __('admin.created_successfully'));
     }
 
@@ -138,7 +138,7 @@ class UnitTypeController extends Controller
 
         $unitType->update($validated);
 
-        return redirect()->route('admin.unit-types.index')
+        return redirect()->route($this->adminRoutePrefix().'unit-types.index')
             ->with('success', __('admin.updated_successfully'));
     }
 
@@ -146,7 +146,7 @@ class UnitTypeController extends Controller
     {
         $unitType->update(['is_active' => false]);
 
-        return redirect()->route('admin.unit-types.index')
+        return redirect()->route($this->adminRoutePrefix().'unit-types.index')
             ->with('success', __('admin.deleted_successfully'));
     }
 

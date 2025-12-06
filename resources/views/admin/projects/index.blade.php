@@ -9,13 +9,13 @@
         <div class="p-6 bg-white border-b border-gray-200">
             <div class="flex justify-between items-center mb-6">
                 <h3 class="text-lg font-semibold text-gray-800">إدارة المشاريع</h3>
-                <a href="{{ route('admin.projects.create') }}" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline">
+                <a href="{{ route($adminRoutePrefix.'projects.create') }}" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline">
                     <i class="bi bi-plus-lg"></i> إضافة مشروع جديد
                 </a>
             </div>
 
             <!-- Search and Filter -->
-            <form action="{{ route('admin.projects.index') }}" method="GET" class="mb-6">
+            <form action="{{ route($adminRoutePrefix.'projects.index') }}" method="GET" class="mb-6">
                 <div class="flex flex-col md:flex-row gap-4">
                     <div class="w-full md:w-1/3">
                         <input type="text" name="search" value="{{ request('search') }}" placeholder="بحث باسم المشروع..." class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50">
@@ -34,7 +34,7 @@
                         <button type="submit" class="bg-gray-800 text-white px-4 py-2 rounded hover:bg-gray-700">
                             بحث
                         </button>
-                        <a href="{{ route('admin.projects.index') }}" class="text-gray-600 px-4 py-2 hover:underline">إعادة تعيين</a>
+                        <a href="{{ route($adminRoutePrefix.'projects.index') }}" class="text-gray-600 px-4 py-2 hover:underline">إعادة تعيين</a>
                     </div>
                 </div>
             </form>
@@ -81,9 +81,9 @@
                                     </div>
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                                    <a href="{{ route('admin.projects.edit', $project) }}" class="text-indigo-600 hover:text-indigo-900 ml-4">تعديل</a>
+                                    <a href="{{ route($adminRoutePrefix.'projects.edit', $project) }}" class="text-indigo-600 hover:text-indigo-900 ml-4">تعديل</a>
 
-                                    <form action="{{ route('admin.projects.destroy', $project) }}" method="POST" class="inline-block" onsubmit="return confirm('هل أنت متأكد من حذف هذا المشروع؟');">
+                                    <form action="{{ route($adminRoutePrefix.'projects.destroy', $project) }}" method="POST" class="inline-block" onsubmit="return confirm('هل أنت متأكد من حذف هذا المشروع؟');">
                                         @csrf
                                         @method('DELETE')
                                         <button type="submit" class="text-red-600 hover:text-red-900">حذف</button>

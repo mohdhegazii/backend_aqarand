@@ -4,7 +4,7 @@
             <h3 class="text-lg font-bold text-gray-800">Property Models</h3>
             <p class="text-sm text-gray-600">Manage the unit models that belong to this project.</p>
         </div>
-        <a href="{{ route('admin.property-models.create', ['project_id' => $project->id, 'redirect' => route('admin.projects.edit', $project)]) }}"
+        <a href="{{ route($adminRoutePrefix.'property-models.create', ['project_id' => $project->id, 'redirect' => route($adminRoutePrefix.'projects.edit', $project)]) }}"
            class="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded">
             Add new property model
         </a>
@@ -43,11 +43,11 @@
                             </td>
                             <td class="px-4 py-2 whitespace-nowrap text-sm text-gray-700">
                                 <div class="flex items-center space-x-3">
-                                    <a href="{{ route('admin.property-models.edit', [$model, 'project_id' => $project->id, 'redirect' => route('admin.projects.edit', $project)]) }}" class="text-indigo-600 hover:text-indigo-900 text-sm">Edit</a>
-                                    <form action="{{ route('admin.property-models.destroy', $model) }}" method="POST" onsubmit="return confirm('Are you sure you want to delete this property model?')">
+                                    <a href="{{ route($adminRoutePrefix.'property-models.edit', [$model, 'project_id' => $project->id, 'redirect' => route($adminRoutePrefix.'projects.edit', $project)]) }}" class="text-indigo-600 hover:text-indigo-900 text-sm">Edit</a>
+                                    <form action="{{ route($adminRoutePrefix.'property-models.destroy', $model) }}" method="POST" onsubmit="return confirm('Are you sure you want to delete this property model?')">
                                         @csrf
                                         @method('DELETE')
-                                        <input type="hidden" name="redirect" value="{{ route('admin.projects.edit', $project) }}">
+                                        <input type="hidden" name="redirect" value="{{ route($adminRoutePrefix.'projects.edit', $project) }}">
                                         <button type="submit" class="text-red-600 hover:text-red-800 text-sm">Delete</button>
                                     </form>
                                 </div>

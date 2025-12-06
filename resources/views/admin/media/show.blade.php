@@ -34,7 +34,7 @@
 
                         <!-- Metadata Edit -->
                         <div>
-                            <form action="{{ route('admin.media.update', $mediaFile) }}" method="POST">
+                            <form action="{{ route($adminRoutePrefix.'media.update', $mediaFile) }}" method="POST">
                                 @csrf
                                 @method('PUT')
 
@@ -76,7 +76,7 @@
                                         {{ __('admin.save_changes') }}
                                     </button>
 
-                                    <a href="{{ route('admin.media.index') }}" class="text-gray-600 hover:text-gray-900">
+                                    <a href="{{ route($adminRoutePrefix.'media.index') }}" class="text-gray-600 hover:text-gray-900">
                                         {{ __('admin.back_to_list') }}
                                     </a>
                                 </div>
@@ -90,7 +90,7 @@
                             <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
                                 @foreach($mediaFile->variants as $variant)
                                     <div class="border rounded p-2">
-                                        <a href="{{ route('admin.media.show', $variant) }}">
+                                        <a href="{{ route($adminRoutePrefix.'media.show', $variant) }}">
                                             <img src="{{ $variant->url }}" class="h-24 object-cover mx-auto mb-2">
                                             <div class="text-center text-xs">
                                                 <span class="font-bold">{{ $variant->variant_role }}</span><br>

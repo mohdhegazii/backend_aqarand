@@ -65,7 +65,7 @@ class MediaFile extends Model
         if ($this->is_private) {
             // Private files cannot be accessed directly via storage URL
             // They should be routed through a controller
-            return route('admin.media.download', $this->id);
+            return route($this->adminRoutePrefix().'media.download', $this->id);
         }
         return Storage::disk($this->disk)->url($this->path);
     }
@@ -76,6 +76,13 @@ class MediaFile extends Model
     public function originalFile(): BelongsTo
     {
         return $this->belongsTo(MediaFile::class, 'variant_of_id');
+    }
+
+    private function adminRoutePrefix(): string
+    {
+        $locale = app()->getLocale();
+
+        return $locale === config('app.locale') ? 'admin.' : 'localized.admin.';
     }
 
     /**

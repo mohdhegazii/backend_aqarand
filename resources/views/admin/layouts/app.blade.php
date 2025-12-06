@@ -50,6 +50,7 @@
     @php
         $locale = app()->getLocale();
         $isRtl = $locale === 'ar';
+        $adminRoutePrefix = $adminRoutePrefix ?? 'admin.';
     @endphp
     <div class="min-h-screen bg-gray-100 flex flex-col md:flex-row">
         <!-- Sidebar -->
@@ -61,48 +62,48 @@
                 </button>
             </div>
             <nav class="mt-4 px-2 space-y-1 overflow-y-auto max-h-[calc(100vh-4rem)]">
-                <a href="{{ route('admin.dashboard') }}" class="block px-4 py-2 text-gray-700 hover:bg-gray-100 rounded">
+                <a href="{{ route($adminRoutePrefix.'dashboard') }}" class="block px-4 py-2 text-gray-700 hover:bg-gray-100 rounded">
                     @lang('admin.dashboard')
                 </a>
 
                 <div class="mt-4 px-4 text-xs font-semibold text-gray-500 uppercase">
                     @lang('admin.countries') / @lang('admin.regions')
                 </div>
-                <a href="{{ route('admin.countries.index') }}" class="block px-4 py-2 text-gray-700 hover:bg-gray-100 rounded">@lang('admin.countries')</a>
-                <a href="{{ route('admin.regions.index') }}" class="block px-4 py-2 text-gray-700 hover:bg-gray-100 rounded">@lang('admin.regions')</a>
-                <a href="{{ route('admin.cities.index') }}" class="block px-4 py-2 text-gray-700 hover:bg-gray-100 rounded">@lang('admin.cities')</a>
-                <a href="{{ route('admin.districts.index') }}" class="block px-4 py-2 text-gray-700 hover:bg-gray-100 rounded">@lang('admin.districts')</a>
+                <a href="{{ route($adminRoutePrefix.'countries.index') }}" class="block px-4 py-2 text-gray-700 hover:bg-gray-100 rounded">@lang('admin.countries')</a>
+                <a href="{{ route($adminRoutePrefix.'regions.index') }}" class="block px-4 py-2 text-gray-700 hover:bg-gray-100 rounded">@lang('admin.regions')</a>
+                <a href="{{ route($adminRoutePrefix.'cities.index') }}" class="block px-4 py-2 text-gray-700 hover:bg-gray-100 rounded">@lang('admin.cities')</a>
+                <a href="{{ route($adminRoutePrefix.'districts.index') }}" class="block px-4 py-2 text-gray-700 hover:bg-gray-100 rounded">@lang('admin.districts')</a>
 
                 <div class="mt-4 px-4 text-xs font-semibold text-gray-500 uppercase">
                     @lang('admin.property_types') / @lang('admin.unit_types')
                 </div>
-                <a href="{{ route('admin.property-types.index') }}" class="block px-4 py-2 text-gray-700 hover:bg-gray-100 rounded">@lang('admin.property_types')</a>
-                <a href="{{ route('admin.unit-types.index') }}" class="block px-4 py-2 text-gray-700 hover:bg-gray-100 rounded">@lang('admin.unit_types')</a>
-                <a href="{{ route('admin.amenities.index') }}" class="block px-4 py-2 text-gray-700 hover:bg-gray-100 rounded">@lang('admin.amenities')</a>
-                <a href="{{ route('admin.developers.index') }}" class="block px-4 py-2 text-gray-700 hover:bg-gray-100 rounded">@lang('admin.developers')</a>
+                <a href="{{ route($adminRoutePrefix.'property-types.index') }}" class="block px-4 py-2 text-gray-700 hover:bg-gray-100 rounded">@lang('admin.property_types')</a>
+                <a href="{{ route($adminRoutePrefix.'unit-types.index') }}" class="block px-4 py-2 text-gray-700 hover:bg-gray-100 rounded">@lang('admin.unit_types')</a>
+                <a href="{{ route($adminRoutePrefix.'amenities.index') }}" class="block px-4 py-2 text-gray-700 hover:bg-gray-100 rounded">@lang('admin.amenities')</a>
+                <a href="{{ route($adminRoutePrefix.'developers.index') }}" class="block px-4 py-2 text-gray-700 hover:bg-gray-100 rounded">@lang('admin.developers')</a>
 
                 <div class="mt-4 px-4 text-xs font-semibold text-gray-500 uppercase">
                     @lang('admin.taxonomies')
                 </div>
-                <a href="{{ route('admin.categories.index') }}" class="block px-4 py-2 text-gray-700 hover:bg-gray-100 rounded">@lang('admin.categories')</a>
+                <a href="{{ route($adminRoutePrefix.'categories.index') }}" class="block px-4 py-2 text-gray-700 hover:bg-gray-100 rounded">@lang('admin.categories')</a>
 
                 <div class="mt-4 px-4 text-xs font-semibold text-gray-500 uppercase">
                     @lang('admin.amenity_categories')
                 </div>
-                <a href="{{ route('admin.amenity-categories.index') }}" class="block px-4 py-2 text-gray-700 hover:bg-gray-100 rounded">@lang('admin.amenity_categories')</a>
+                <a href="{{ route($adminRoutePrefix.'amenity-categories.index') }}" class="block px-4 py-2 text-gray-700 hover:bg-gray-100 rounded">@lang('admin.amenity_categories')</a>
 
                 <div class="mt-4 px-4 text-xs font-semibold text-gray-500 uppercase">
                     @lang('admin.real_estate')
                 </div>
-                <a href="{{ route('admin.projects.index') }}" class="block px-4 py-2 text-gray-700 hover:bg-gray-100 rounded">@lang('admin.projects')</a>
+                <a href="{{ route($adminRoutePrefix.'projects.index') }}" class="block px-4 py-2 text-gray-700 hover:bg-gray-100 rounded">@lang('admin.projects')</a>
                 <!-- Property Models now accessed via Projects -->
-                <a href="{{ route('admin.units.index') }}" class="block px-4 py-2 text-gray-700 hover:bg-gray-100 rounded">@lang('admin.units')</a>
-                <a href="{{ route('admin.listings.index') }}" class="block px-4 py-2 text-gray-700 hover:bg-gray-100 rounded">@lang('admin.listings')</a>
+                <a href="{{ route($adminRoutePrefix.'units.index') }}" class="block px-4 py-2 text-gray-700 hover:bg-gray-100 rounded">@lang('admin.units')</a>
+                <a href="{{ route($adminRoutePrefix.'listings.index') }}" class="block px-4 py-2 text-gray-700 hover:bg-gray-100 rounded">@lang('admin.listings')</a>
 
                 <div class="mt-4 px-4 text-xs font-semibold text-gray-500 uppercase">
                     @lang('admin.media_manager')
                 </div>
-                <a href="{{ route('admin.media.index') }}" class="block px-4 py-2 text-gray-700 hover:bg-gray-100 rounded">@lang('admin.file_manager')</a>
+                <a href="{{ route($adminRoutePrefix.'media.index') }}" class="block px-4 py-2 text-gray-700 hover:bg-gray-100 rounded">@lang('admin.file_manager')</a>
             </nav>
         </aside>
 
@@ -122,41 +123,7 @@
                         </h2>
                     </div>
                     <div class="flex items-center space-x-4 rtl:space-x-reverse">
-                        <!-- Language Switcher -->
-                        @php
-                            $currentLocale = app()->getLocale();
-                            $languages = [
-                                'en' => __('admin.english'),
-                                'ar' => __('admin.arabic'),
-                            ];
-                        @endphp
-
-                        <div class="relative">
-                            <button onclick="document.getElementById('language-dropdown').classList.toggle('hidden')" class="flex items-center text-sm font-medium text-gray-500 hover:text-gray-700 hover:border-gray-300 focus:outline-none focus:text-gray-700 focus:border-gray-300 transition duration-150 ease-in-out">
-                                <div>{{ $languages[$currentLocale] ?? __('admin.language') }}</div>
-                                <div class="ml-1">
-                                    <svg class="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
-                                        <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
-                                    </svg>
-                                </div>
-                            </button>
-
-                            <div id="language-dropdown" class="hidden absolute right-0 mt-2 w-48 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 z-50">
-                                <div class="py-1" role="menu" aria-orientation="vertical" aria-labelledby="options-menu">
-                                    @foreach($languages as $localeKey => $label)
-                                        @if($localeKey === $currentLocale)
-                                            <span class="block px-4 py-2 text-sm text-gray-700 font-bold bg-gray-100 cursor-default">
-                                                {{ $label }}
-                                            </span>
-                                        @else
-                                            <a href="{{ route('lang.switch', ['locale' => $localeKey]) }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100" role="menuitem">
-                                                {{ $label }}
-                                            </a>
-                                        @endif
-                                    @endforeach
-                                </div>
-                            </div>
-                        </div>
+                        @include('partials.lang-switcher')
 
                         <form method="POST" action="{{ route('logout') }}" class="inline">
                             @csrf
@@ -206,18 +173,10 @@
         }
 
         window.addEventListener('click', function(e) {
-            const dropdown = document.getElementById('language-dropdown');
             const toggleButton = document.getElementById('sidebar-toggle');
             const closeButton = document.getElementById('sidebar-close-button');
             const sidebar = document.getElementById('admin-sidebar');
             const backdrop = document.getElementById('sidebar-backdrop');
-
-            if (dropdown) {
-                const button = dropdown.previousElementSibling;
-                if (button && !button.contains(e.target) && !dropdown.contains(e.target)) {
-                    dropdown.classList.add('hidden');
-                }
-            }
 
             const clickedToggle = toggleButton && toggleButton.contains(e.target);
             const clickedClose = closeButton && closeButton.contains(e.target);
