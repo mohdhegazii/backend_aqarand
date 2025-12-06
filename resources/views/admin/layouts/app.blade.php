@@ -43,6 +43,8 @@
 
     <!-- Alpine.js -->
     <script src="//unpkg.com/alpinejs" defer></script>
+
+    @stack('styles')
 </head>
 <body class="font-sans antialiased bg-gray-100">
     @php
@@ -189,6 +191,7 @@
         </div>
     </div>
 
+    @stack('scripts')
     <script>
         function toggleSidebar() {
             const sidebar = document.getElementById('admin-sidebar');

@@ -41,6 +41,7 @@ class Project extends Model
         'max_bua',
         'lat',
         'lng',
+        'map_polygon',
         'address_text',
         'address_en',
         'address_ar',
@@ -63,6 +64,7 @@ class Project extends Model
 
     protected $casts = [
         'gallery' => 'array',
+        'map_polygon' => 'array',
         'is_active' => 'boolean',
         'total_area' => 'decimal:2',
         'built_up_ratio' => 'decimal:2',
