@@ -1,13 +1,5 @@
 @php
     $isEdit = isset($project);
-
-    // FIX: Determine Route Prefix and Locale
-    $currentLocale = app()->getLocale();
-    $isLocalized = request()->segment(1) === 'en';
-    $adminRoutePrefix = $isLocalized ? 'localized.admin.' : 'admin.';
-    $routeParams = $isLocalized ? ['locale' => $currentLocale] : [];
-    $ajaxBaseUrl = $isLocalized ? "/$currentLocale/admin" : '/admin';
-
     $gallery = $isEdit && $project->gallery ? $project->gallery : [];
     if (!is_array($gallery)) $gallery = [];
 
@@ -21,7 +13,6 @@
         'details' => ['min_price', 'max_price', 'min_bua', 'max_bua', 'delivery_year', 'total_units'],
         'location' => ['country_id', 'region_id', 'city_id', 'district_id', 'lat', 'lng', 'map_polygon'],
         'amenities' => ['amenities'],
-        'models' => [],
         'faq' => ['faqs', 'faqs.*'],
     ];
 
@@ -38,45 +29,51 @@
     }
 @endphp
 
-@if (config('app.debug'))
-    <div style="background:#222;color:#0f0;padding:6px;font-size:11px;margin-bottom:10px;border-radius:4px;">
-        <strong>Project Form DEBUG</strong><br>
-        Locale: {{ app()->getLocale() }}<br>
-        URL: {{ url()->current() }}<br>
-        Segment[1]: {{ request()->segment(1) ?? 'null' }}<br>
-        Route Prefix: {{ $adminRoutePrefix }}<br>
-        Ajax Base: {{ $ajaxBaseUrl }}
-    </div>
-@endif
-
-<div x-data="projectForm({{ $isEdit ? 'true' : 'false' }}, {{ $isEdit ? $project->id : 'null' }}, '{{ $activeTab }}', '{{ $ajaxBaseUrl }}')"
+<div x-data="projectForm({{ $isEdit ? 'true' : 'false' }}, {{ $isEdit ? $project->id : 'null' }}, '{{ $activeTab }}')"
      x-init="initMap()"
      class="bg-white rounded-lg shadow-md p-6">
 
-    <div class="mb-6">
-        <ul class="flex flex-wrap border-b border-gray-200" role="tablist">
-            @foreach([
-                'basic' => __('admin.basic_info'),
-                'description' => __('admin.description'),
-                'details' => __('admin.project_details_pricing'),
-                'location' => __('admin.project_location'),
-                'amenities' => __('admin.services_amenities') ?? 'Services & Amenities',
-                'models' => __('admin.property_models') ?? 'Property Models',
-                'faq' => 'FAQ'
-            ] as $key => $label)
-            <li class="mr-2" role="presentation">
-                <button type="button"
-                        class="inline-block p-4 rounded-t-lg border-b-2 font-medium"
-                        :class="activeTab === '{{ $key }}' ? 'text-blue-600 border-blue-600 active' : 'border-transparent text-gray-500 hover:text-gray-600 hover:border-gray-300'"
-                        @click="activeTab = '{{ $key }}'">
-                    {{ $label }}
+    <div class="mb-4">
+        <ul class="nav nav-tabs flex flex-wrap" role="tablist">
+            <li class="nav-item" role="presentation">
+                <button type="button" class="nav-link" :class="{ 'active': activeTab === 'basic' }" @click="activeTab = 'basic'">
+                    {{ __('admin.basic_info') }}
                 </button>
             </li>
-            @endforeach
+            <li class="nav-item" role="presentation">
+                <button type="button" class="nav-link" :class="{ 'active': activeTab === 'description' }" @click="activeTab = 'description'">
+                    {{ __('admin.description') }}
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button type="button" class="nav-link" :class="{ 'active': activeTab === 'details' }" @click="activeTab = 'details'">
+                    {{ __('admin.project_details_pricing') }}
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button type="button" class="nav-link" :class="{ 'active': activeTab === 'location' }" @click="activeTab = 'location'">
+                    {{ __('admin.project_location') }}
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button type="button" class="nav-link" :class="{ 'active': activeTab === 'amenities' }" @click="activeTab = 'amenities'">
+                    {{ __('admin.services_amenities') ?? 'Services & Amenities' }}
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button type="button" class="nav-link" :class="{ 'active': activeTab === 'models' }" @click="activeTab = 'models'">
+                    {{ __('admin.property_models') ?? 'Property Models' }}
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button type="button" class="nav-link" :class="{ 'active': activeTab === 'faq' }" @click="activeTab = 'faq'">
+                    FAQ
+                </button>
+            </li>
         </ul>
     </div>
 
-    <form action="{{ $isEdit ? route($adminRoutePrefix.'projects.update', array_merge($routeParams, ['project' => $project->id])) : route($adminRoutePrefix.'projects.store', $routeParams) }}"
+    <form action="{{ $isEdit ? route($adminRoutePrefix.'projects.update', $project->id) : route($adminRoutePrefix.'projects.store') }}"
           method="POST"
           enctype="multipart/form-data"
           id="project-form">
@@ -94,7 +91,7 @@
             </div>
         @endif
 
-        <div class="tab-content min-h-[400px]">
+        <div class="tab-content">
             <!-- TAB 1: Basic Info -->
             <div x-show="activeTab === 'basic'" x-cloak class="tab-pane fade show active space-y-6">
                 <h3 class="text-lg font-bold text-gray-800 border-b pb-2">{{ __('admin.basic_info') }}</h3>
@@ -262,14 +259,6 @@
                         <p class="text-xs text-gray-500 mt-1">{{ __('admin.brochure_help') }}</p>
                     </div>
                 </div>
-
-                <!-- NAVIGATION -->
-                <div class="mt-6 flex justify-between items-center pt-4 border-t">
-                    <div class="text-xs text-gray-400">Step 1 of 7</div>
-                    <button type="button" @click="nextTab()" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-6 rounded shadow">
-                        {{ __('admin.next') ?? 'Next' }} &rarr;
-                    </button>
-                </div>
             </div>
 
             <!-- TAB 2: Description -->
@@ -321,17 +310,6 @@
                         </div>
                     </div>
                 </div>
-
-                <!-- NAVIGATION -->
-                <div class="mt-6 flex justify-between items-center pt-4 border-t">
-                    <button type="button" @click="prevTab()" class="bg-gray-500 hover:bg-gray-600 text-white font-bold py-2 px-4 rounded shadow">
-                        &larr; {{ __('admin.previous') ?? 'Previous' }}
-                    </button>
-                    <div class="text-xs text-gray-400">Step 2 of 7</div>
-                    <button type="button" @click="nextTab()" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-6 rounded shadow">
-                        {{ __('admin.next') ?? 'Next' }} &rarr;
-                    </button>
-                </div>
             </div>
 
             <!-- TAB 3: Details & Pricing -->
@@ -376,17 +354,6 @@
                         @endforeach
                     </select>
                     <p class="text-xs text-gray-500 mt-1">{{ __('admin.project_status_hint') ?? 'Status is managed in the Basic Info tab.' }}</p>
-                </div>
-
-                <!-- NAVIGATION -->
-                <div class="mt-6 flex justify-between items-center pt-4 border-t">
-                    <button type="button" @click="prevTab()" class="bg-gray-500 hover:bg-gray-600 text-white font-bold py-2 px-4 rounded shadow">
-                        &larr; {{ __('admin.previous') ?? 'Previous' }}
-                    </button>
-                    <div class="text-xs text-gray-400">Step 3 of 7</div>
-                    <button type="button" @click="nextTab()" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-6 rounded shadow">
-                        {{ __('admin.next') ?? 'Next' }} &rarr;
-                    </button>
                 </div>
             </div>
 
@@ -475,17 +442,6 @@
 
                     <p class="text-xs text-gray-500 mt-1">{{ __('admin.map_instruction') }}</p>
                 </div>
-
-                <!-- NAVIGATION -->
-                <div class="mt-6 flex justify-between items-center pt-4 border-t">
-                    <button type="button" @click="prevTab()" class="bg-gray-500 hover:bg-gray-600 text-white font-bold py-2 px-4 rounded shadow">
-                        &larr; {{ __('admin.previous') ?? 'Previous' }}
-                    </button>
-                    <div class="text-xs text-gray-400">Step 4 of 7</div>
-                    <button type="button" @click="nextTab()" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-6 rounded shadow">
-                        {{ __('admin.next') ?? 'Next' }} &rarr;
-                    </button>
-                </div>
             </div>
 
             <!-- TAB 5: Services & Amenities -->
@@ -521,17 +477,6 @@
                         <p class="text-sm text-gray-500">No amenities available.</p>
                     @endforelse
                 </div>
-
-                <!-- NAVIGATION -->
-                <div class="mt-6 flex justify-between items-center pt-4 border-t">
-                    <button type="button" @click="prevTab()" class="bg-gray-500 hover:bg-gray-600 text-white font-bold py-2 px-4 rounded shadow">
-                        &larr; {{ __('admin.previous') ?? 'Previous' }}
-                    </button>
-                    <div class="text-xs text-gray-400">Step 5 of 7</div>
-                    <button type="button" @click="nextTab()" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-6 rounded shadow">
-                        {{ __('admin.next') ?? 'Next' }} &rarr;
-                    </button>
-                </div>
             </div>
 
             <!-- TAB 6: Property Models -->
@@ -543,17 +488,6 @@
                         <p class="font-semibold">{{ __('admin.save_project_first') ?? 'Save the project first to add property models.' }}</p>
                     </div>
                 @endif
-
-                <!-- NAVIGATION -->
-                <div class="mt-6 flex justify-between items-center pt-4 border-t">
-                    <button type="button" @click="prevTab()" class="bg-gray-500 hover:bg-gray-600 text-white font-bold py-2 px-4 rounded shadow">
-                        &larr; {{ __('admin.previous') ?? 'Previous' }}
-                    </button>
-                    <div class="text-xs text-gray-400">Step 6 of 7</div>
-                    <button type="button" @click="nextTab()" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-6 rounded shadow">
-                        {{ __('admin.next') ?? 'Next' }} &rarr;
-                    </button>
-                </div>
             </div>
 
             <!-- TAB 7: FAQ -->
@@ -644,14 +578,6 @@
                         </div>
                     </div>
                 </template>
-
-                <!-- NAVIGATION -->
-                <div class="mt-6 flex justify-between items-center pt-4 border-t">
-                    <button type="button" @click="prevTab()" class="bg-gray-500 hover:bg-gray-600 text-white font-bold py-2 px-4 rounded shadow">
-                        &larr; {{ __('admin.previous') ?? 'Previous' }}
-                    </button>
-                    <!-- Final step, no Next button, only Submit below -->
-                </div>
             </div>
         </div>
 
@@ -735,12 +661,9 @@
         };
     }
 
-    function projectForm(isEdit, projectId, defaultTab, ajaxBaseUrl) {
+    function projectForm(isEdit, projectId, defaultTab) {
         return {
             activeTab: defaultTab || 'basic',
-            ajaxBaseUrl: ajaxBaseUrl,
-            tabs: ['basic', 'description', 'details', 'location', 'amenities', 'models', 'faq'],
-
             searchQuery: '',
             isSearching: false,
             searchResults: [],
@@ -752,7 +675,7 @@
             regions: [],
             cities: [],
             districts: [],
-            locationSearchUrl: '{{ route($adminRoutePrefix.'locations.search') }}', // This is safe as it's generated on server side
+            locationSearchUrl: '{{ route($adminRoutePrefix.'locations.search') }}',
 
             async init() {
                 if (this.selectedCountry) {
@@ -765,21 +688,6 @@
                             });
                         }
                     });
-                }
-            },
-
-            nextTab() {
-                let idx = this.tabs.indexOf(this.activeTab);
-                if (idx !== -1 && idx < this.tabs.length - 1) {
-                    this.activeTab = this.tabs[idx + 1];
-                    window.scrollTo(0, 0);
-                }
-            },
-            prevTab() {
-                let idx = this.tabs.indexOf(this.activeTab);
-                if (idx > 0) {
-                    this.activeTab = this.tabs[idx - 1];
-                    window.scrollTo(0, 0);
                 }
             },
 
@@ -824,8 +732,7 @@
                     this.selectedRegion = '';
                     return;
                 }
-                // FIX: Use dynamic ajaxBaseUrl
-                let res = await fetch(`${this.ajaxBaseUrl}/locations/countries/${this.selectedCountry}`);
+                let res = await fetch(`/admin/locations/countries/${this.selectedCountry}`);
                 let data = await res.json();
                 this.regions = data.regions || [];
                 if (preset) {
@@ -840,8 +747,7 @@
                     this.selectedCity = '';
                     return;
                 }
-                // FIX: Use dynamic ajaxBaseUrl
-                let res = await fetch(`${this.ajaxBaseUrl}/locations/regions/${this.selectedRegion}`);
+                let res = await fetch(`/admin/locations/regions/${this.selectedRegion}`);
                 let data = await res.json();
                 this.cities = data.cities || [];
                 if (preset) {
@@ -856,8 +762,7 @@
                     this.selectedDistrict = '';
                     return;
                 }
-                // FIX: Use dynamic ajaxBaseUrl
-                let res = await fetch(`${this.ajaxBaseUrl}/locations/cities/${this.selectedCity}`);
+                let res = await fetch(`/admin/locations/cities/${this.selectedCity}`);
                 let data = await res.json();
                 this.districts = data.districts || [];
                 if (preset) {
@@ -873,16 +778,8 @@
         var defaultLat = 30.0444;
         var defaultLng = 31.2357;
 
-        var latElement = document.getElementById('lat');
-        var lngElement = document.getElementById('lng');
-
-        if (!latElement || !lngElement) return;
-
-        var lat = parseFloat(latElement.value) || defaultLat;
-        var lng = parseFloat(lngElement.value) || defaultLng;
-
-        var mapContainer = document.getElementById('project_map');
-        if(!mapContainer) return;
+        var lat = parseFloat(document.getElementById('lat').value) || defaultLat;
+        var lng = parseFloat(document.getElementById('lng').value) || defaultLng;
 
         var map = L.map('project_map').setView([lat, lng], 10);
         window.projectMapControls = {
