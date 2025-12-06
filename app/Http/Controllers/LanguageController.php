@@ -9,17 +9,17 @@ use Illuminate\Support\Facades\Auth;
 
 class LanguageController extends Controller
 {
-    public function switch(Request $request, string $locale): RedirectResponse
+    public function switch(Request $request, string $targetLocale): RedirectResponse
     {
         $supportedLocales = config('app.supported_locales', ['ar', 'en']);
         $defaultLocale = config('app.locale', 'ar');
 
-        if (! in_array($locale, $supportedLocales, true)) {
+        if (! in_array($targetLocale, $supportedLocales, true)) {
             abort(400);
         }
 
-        session(['locale' => $locale]);
-        App::setLocale($locale);
+        session(['locale' => $targetLocale]);
+        App::setLocale($targetLocale);
 
         $previousPath = trim(parse_url(url()->previous(), PHP_URL_PATH) ?? '/', '/');
         $segments = $previousPath === '' ? [] : explode('/', $previousPath);
