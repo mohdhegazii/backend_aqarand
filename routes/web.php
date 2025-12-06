@@ -15,7 +15,6 @@ use App\Http\Controllers\Admin\PropertyTypeController;
 use App\Http\Controllers\Admin\RegionController;
 use App\Http\Controllers\Admin\UnitController;
 use App\Http\Controllers\Admin\UnitTypeController;
-use App\Http\Controllers\LanguageController;
 use Illuminate\Routing\Middleware\SubstituteBindings;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
@@ -119,9 +118,7 @@ Route::group([
 ], function () use ($registerPublicRoutes, $registerAdminRoutes) {
     $registerPublicRoutes();
 
-    Route::get('lang/{targetLocale}', [LanguageController::class, 'switch'])
-        ->name('lang.switch')
-        ->where('targetLocale', '[a-zA-Z_]{2,5}');
+    // Removed the problematic lang/{targetLocale} route
 
     $registerAdminRoutes('admin.');
 
@@ -136,6 +133,8 @@ Route::group([
     'prefix' => '{locale}',
     'as' => 'localized.',
     'middleware' => ['web', 'set.locale'],
+    // Ensure we strictly match supported locales (en) and prevent 'ar'
+    'where' => ['locale' => '^(?!ar$)[a-zA-Z_]{2,5}$'],
 ], function () use ($registerPublicRoutes, $registerAdminRoutes) {
     $registerPublicRoutes('localized.');
 
@@ -145,4 +144,4 @@ Route::group([
     if (file_exists(__DIR__.'/auth.php')) {
         require __DIR__.'/auth.php';
     }
-})->where('locale', '^(?!ar$)[a-zA-Z_]{2,5}$');
+});
