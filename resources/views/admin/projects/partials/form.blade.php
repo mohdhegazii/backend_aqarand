@@ -245,21 +245,38 @@
                 </div>
             </div>
 
-            <!-- Amenities -->
-            <div class="mt-4">
-                <label class="block text-gray-700 font-bold mb-2">{{ __('admin.amenities') }}</label>
-                <div class="grid grid-cols-2 md:grid-cols-4 gap-4 bg-gray-50 p-4 rounded border">
-                    @php
-                        $selectedAmenities = $isEdit ? $project->amenities->pluck('id')->toArray() : [];
-                    @endphp
-                    @foreach($amenities as $amenity)
-                        <label class="inline-flex items-center">
-                            <input type="checkbox" name="amenities[]" value="{{ $amenity->id }}"
-                                   {{ in_array($amenity->id, $selectedAmenities) ? 'checked' : '' }}
-                                   class="rounded border-gray-300 text-blue-600 shadow-sm focus:border-blue-300 focus:ring focus:ring-blue-200 focus:ring-opacity-50">
-                            <span class="ml-2 text-sm">{{ $amenity->name_local ?? $amenity->name_en }}</span>
-                        </label>
-                    @endforeach
+            <!-- Services & Amenities -->
+            <div class="mt-6">
+                <div class="flex items-center justify-between border-b pb-2 mb-3">
+                    <h3 class="text-lg font-bold text-gray-800">Services &amp; Amenities</h3>
+                    <p class="text-sm text-gray-500">Select all services available for this project.</p>
+                </div>
+
+                @php
+                    $selectedAmenities = $isEdit ? $project->amenities->pluck('id')->toArray() : [];
+                    $amenityGroups = ($amenities instanceof \Illuminate\Support\Collection && $amenities->first() instanceof \Illuminate\Support\Collection)
+                        ? $amenities
+                        : collect(['amenities' => $amenities]);
+                @endphp
+
+                <div class="space-y-4">
+                    @forelse($amenityGroups as $groupKey => $groupAmenities)
+                        <div>
+                            <p class="text-sm font-semibold text-gray-700 capitalize mb-2">{{ str_replace('_', ' ', $groupKey) }}</p>
+                            <div class="grid grid-cols-2 md:grid-cols-4 gap-4 bg-gray-50 p-4 rounded border">
+                                @foreach($groupAmenities as $amenity)
+                                    <label class="inline-flex items-center">
+                                        <input type="checkbox" name="amenities[]" value="{{ $amenity->id }}"
+                                               {{ in_array($amenity->id, $selectedAmenities) ? 'checked' : '' }}
+                                               class="rounded border-gray-300 text-blue-600 shadow-sm focus:border-blue-300 focus:ring focus:ring-blue-200 focus:ring-opacity-50">
+                                        <span class="ml-2 text-sm">{{ $amenity->name_local ?? $amenity->name_en }}</span>
+                                    </label>
+                                @endforeach
+                            </div>
+                        </div>
+                    @empty
+                        <p class="text-sm text-gray-500">No amenities available.</p>
+                    @endforelse
                 </div>
             </div>
 

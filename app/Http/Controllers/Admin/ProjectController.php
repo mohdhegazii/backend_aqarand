@@ -43,10 +43,11 @@ class ProjectController extends Controller
     {
         $developers = Developer::where('is_active', true)->orderBy('name')->get();
         $countries = Country::all();
-        $amenities = Amenity::where('amenity_type', 'project')
-                            ->orWhere('amenity_type', 'both')
+        $amenities = Amenity::whereIn('amenity_type', ['project', 'both'])
+                            ->orderBy('sort_order')
+                            ->orderBy('name_en')
                             ->get()
-                            ->groupBy('type_label'); // Or group by category if implemented
+                            ->groupBy(fn ($amenity) => $amenity->amenity_type ?? 'other');
 
         // For Master Project Dropdown
         $existingProjects = Project::select('id', 'name_en', 'name_ar', 'name')->get();
@@ -70,9 +71,7 @@ class ProjectController extends Controller
             $project = Project::create($data);
 
             // Amenities
-            if ($request->has('amenities')) {
-                $project->amenities()->sync($request->amenities);
-            }
+            $project->amenities()->sync($request->input('amenities', []));
 
             // FAQs
             $faqItems = collect($request->input('faqs', []))
@@ -112,9 +111,11 @@ class ProjectController extends Controller
 
         $developers = Developer::where('is_active', true)->orderBy('name')->get();
         $countries = Country::all();
-        $amenities = Amenity::where('amenity_type', 'project')
-                            ->orWhere('amenity_type', 'both')
-                            ->get(); // Grouping in view if needed
+        $amenities = Amenity::whereIn('amenity_type', ['project', 'both'])
+                            ->orderBy('sort_order')
+                            ->orderBy('name_en')
+                            ->get()
+                            ->groupBy(fn ($amenity) => $amenity->amenity_type ?? 'other');
 
         $existingProjects = Project::where('id', '!=', $project->id)->select('id', 'name_en', 'name_ar', 'name')->get();
 
@@ -137,11 +138,7 @@ class ProjectController extends Controller
             $project->update($data);
 
             // Amenities
-            if ($request->has('amenities')) {
-                $project->amenities()->sync($request->amenities);
-            } else {
-                $project->amenities()->detach();
-            }
+            $project->amenities()->sync($request->input('amenities', []));
 
             // FAQs - Update existing, add new, delete removed based on submitted IDs
             $existingFaqIds = $project->faqs()->pluck('id')->toArray();
