@@ -40,6 +40,9 @@
 
     <!-- Leaflet JS -->
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+
+    <!-- Alpine.js -->
+    <script src="//unpkg.com/alpinejs" defer></script>
 </head>
 <body class="font-sans antialiased bg-gray-100">
     @php

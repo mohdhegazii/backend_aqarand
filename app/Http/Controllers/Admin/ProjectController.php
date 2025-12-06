@@ -75,7 +75,7 @@ class ProjectController extends Controller
             'main_keyword_ar' => 'nullable|string',
 
             // Media Validation
-            'hero_image' => 'required|image|mimes:jpeg,png,jpg,webp|max:2048',
+            // Hero image is selected from gallery, so not required as separate upload
             'gallery' => 'nullable|array',
             'gallery.*' => 'image|mimes:jpeg,png,jpg,webp|max:4096',
             'brochure' => 'nullable|file|mimes:pdf|max:5120',
@@ -110,13 +110,16 @@ class ProjectController extends Controller
 
         // Media Handling
         $updates = [];
-
-        if ($request->hasFile('hero_image')) {
-            $updates['hero_image_url'] = $this->projectMediaService->handleHeroImageUpload($project, $request->file('hero_image'));
-        }
+        $galleryPaths = [];
 
         if ($request->hasFile('gallery')) {
-            $updates['gallery'] = $this->projectMediaService->handleGalleryUpload($project, $request->file('gallery'));
+            $galleryPaths = $this->projectMediaService->handleGalleryUpload($project, $request->file('gallery'));
+            $updates['gallery'] = $galleryPaths;
+
+            // Set first gallery image as hero by default on create
+            if (!empty($galleryPaths) && isset($galleryPaths[0])) {
+                $updates['hero_image_url'] = $galleryPaths[0];
+            }
         }
 
         if ($request->hasFile('brochure')) {
@@ -160,7 +163,6 @@ class ProjectController extends Controller
             'main_keyword_ar' => 'nullable|string',
 
             // Media Validation (Optional on update)
-            'hero_image' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:2048',
             'gallery' => 'nullable|array',
             'gallery.*' => 'image|mimes:jpeg,png,jpg,webp|max:4096',
             'brochure' => 'nullable|file|mimes:pdf|max:5120',
@@ -195,20 +197,12 @@ class ProjectController extends Controller
         }
 
         // Media Handling
-        // Hero Image: Delete old if new is uploaded
-        if ($request->hasFile('hero_image')) {
-            if ($project->hero_image_url && Storage::disk('public')->exists($project->hero_image_url)) {
-                Storage::disk('public')->delete($project->hero_image_url);
-            }
-            $project->hero_image_url = $this->projectMediaService->handleHeroImageUpload($project, $request->file('hero_image'));
+        // Update Hero Image from selection
+        if ($request->filled('selected_hero')) {
+            $project->hero_image_url = $request->selected_hero;
         }
 
-        // Gallery: Replace completely or append?
-        // Instructions say: "Decide behavior: Append to existing gallery, OR Replace completely (choose one and document in comments)."
-        // Common admin behavior is Append if the field allows multi-select upload, but often "replacing" gallery needs a way to delete old ones.
-        // Since we don't have a UI to delete individual images yet, "Replace Completely" is dangerous (user might just want to add one).
-        // "Append" is safer. The user can't delete yet without a delete UI, but that's better than losing all images.
-        // I will choose APPEND.
+        // Gallery: Append new images
         if ($request->hasFile('gallery')) {
             $newGallery = $this->projectMediaService->handleGalleryUpload($project, $request->file('gallery'));
             $currentGallery = $project->gallery ?? [];
