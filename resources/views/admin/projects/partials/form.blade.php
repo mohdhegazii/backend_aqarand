@@ -262,6 +262,12 @@
                     @endforeach
                 </div>
             </div>
+
+            @if($isEdit)
+                <div class="mt-6">
+                    @include('admin.projects.partials.property-models-section', ['project' => $project])
+                </div>
+            @endif
         </div>
 
         <!-- STEP 3: Description -->

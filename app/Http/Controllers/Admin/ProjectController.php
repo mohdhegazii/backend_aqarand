@@ -108,7 +108,7 @@ class ProjectController extends Controller
 
     public function edit(Project $project)
     {
-        $project->load(['amenities', 'faqs', 'propertyModels', 'masterProject']);
+        $project->load(['amenities', 'faqs', 'propertyModels.unitType', 'masterProject']);
 
         $developers = Developer::where('is_active', true)->orderBy('name')->get();
         $countries = Country::all();

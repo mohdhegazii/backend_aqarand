@@ -8,16 +8,26 @@
         <form method="POST" action="{{ route('admin.property-models.update', $propertyModel) }}">
             @csrf
             @method('PUT')
+            @if(!empty($redirectTo))
+                <input type="hidden" name="redirect" value="{{ $redirectTo }}">
+            @endif
 
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
                 <!-- Context -->
                 <div>
                     <label class="block text-sm font-medium text-gray-700">Project *</label>
-                    <select name="project_id" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50" required>
+                    @php
+                        $isLockedProject = !empty($lockedProjectId);
+                        $selectedProject = old('project_id', $lockedProjectId ?? $propertyModel->project_id);
+                    @endphp
+                    <select name="project_id" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50" required {{ $isLockedProject ? 'disabled' : '' }}>
                         @foreach($projects as $project)
-                            <option value="{{ $project->id }}" {{ old('project_id', $propertyModel->project_id) == $project->id ? 'selected' : '' }}>{{ $project->name_en }}</option>
+                            <option value="{{ $project->id }}" {{ $selectedProject == $project->id ? 'selected' : '' }}>{{ $project->name_en }}</option>
                         @endforeach
                     </select>
+                    @if($isLockedProject)
+                        <input type="hidden" name="project_id" value="{{ $selectedProject }}">
+                    @endif
                 </div>
                 <div>
                     <label class="block text-sm font-medium text-gray-700">Unit Type *</label>

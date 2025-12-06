@@ -30,11 +30,14 @@ class PropertyModelController extends Controller
         return view('admin.property_models.index', compact('propertyModels', 'projects', 'unitTypes'));
     }
 
-    public function create()
+    public function create(Request $request)
     {
         $projects = Project::orderBy('name_en')->get();
         $unitTypes = UnitType::orderBy('name_en')->get();
-        return view('admin.property_models.create', compact('projects', 'unitTypes'));
+        $projectId = $request->input('project_id');
+        $redirectTo = $request->input('redirect');
+
+        return view('admin.property_models.create', compact('projects', 'unitTypes', 'projectId', 'redirectTo'));
     }
 
     public function store(Request $request)
@@ -63,7 +66,7 @@ class PropertyModelController extends Controller
             $validated['seo_slug_en'] = Str::slug($validated['name_en']);
         }
 
-        PropertyModel::create($request->except('seo_slug_en', 'seo_slug_ar') + [
+        $propertyModel = PropertyModel::create($request->except('seo_slug_en', 'seo_slug_ar') + [
             'name' => $validated['name'],
             'seo_slug' => $validated['seo_slug_en'], // legacy/fallback
             'seo_slug_en' => $validated['seo_slug_en'],
@@ -71,15 +74,20 @@ class PropertyModelController extends Controller
             'is_active' => $request->has('is_active'),
         ]);
 
-        return redirect()->route('admin.property-models.index')
+        $redirectUrl = $this->resolveRedirect($request, $propertyModel->project_id);
+
+        return redirect($redirectUrl)
             ->with('success', __('admin.created_successfully'));
     }
 
-    public function edit(PropertyModel $propertyModel)
+    public function edit(PropertyModel $propertyModel, Request $request)
     {
         $projects = Project::orderBy('name_en')->get();
         $unitTypes = UnitType::orderBy('name_en')->get();
-        return view('admin.property_models.edit', compact('propertyModel', 'projects', 'unitTypes'));
+        $redirectTo = $request->input('redirect');
+        $lockedProjectId = $request->input('project_id');
+
+        return view('admin.property_models.edit', compact('propertyModel', 'projects', 'unitTypes', 'redirectTo', 'lockedProjectId'));
     }
 
     public function update(Request $request, PropertyModel $propertyModel)
@@ -104,14 +112,32 @@ class PropertyModelController extends Controller
 
         $propertyModel->update($data);
 
-        return redirect()->route('admin.property-models.index')
+        $redirectUrl = $this->resolveRedirect($request, $propertyModel->project_id);
+
+        return redirect($redirectUrl)
             ->with('success', __('admin.updated_successfully'));
     }
 
     public function destroy(PropertyModel $propertyModel)
     {
+        $projectId = $propertyModel->project_id;
         $propertyModel->delete();
-        return redirect()->route('admin.property-models.index')
+
+        $redirectUrl = $this->resolveRedirect(request(), $projectId);
+
+        return redirect($redirectUrl)
             ->with('success', __('admin.deleted_successfully'));
+    }
+
+    private function resolveRedirect(Request $request, int $projectId): string
+    {
+        $fallback = route('admin.property-models.index');
+        $redirectUrl = $request->input('redirect');
+
+        if ($redirectUrl && Str::startsWith($redirectUrl, url('/'))) {
+            return $redirectUrl;
+        }
+
+        return route('admin.projects.edit', $projectId) ?? $fallback;
     }
 }
