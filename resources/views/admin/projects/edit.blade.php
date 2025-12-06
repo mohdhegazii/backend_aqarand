@@ -119,24 +119,6 @@
                     <h3 class="text-lg font-medium text-gray-900 mb-4">Media & Brochure</h3>
 
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <!-- Hero Image -->
-                        <div class="mb-3">
-                            <label for="hero_image" class="block text-sm font-medium text-gray-700">Hero Image</label>
-                            @if($project->hero_image_url)
-                                <div class="mb-2">
-                                    <a href="{{ asset('storage/' . $project->hero_image_url) }}" target="_blank" class="text-indigo-600 text-xs hover:underline">View Current Hero</a>
-                                </div>
-                            @endif
-                            <input type="file" name="hero_image" id="hero_image" class="mt-1 block w-full text-sm text-gray-500
-                                file:mr-4 file:py-2 file:px-4
-                                file:rounded-full file:border-0
-                                file:text-sm file:font-semibold
-                                file:bg-indigo-50 file:text-indigo-700
-                                hover:file:bg-indigo-100">
-                            <small class="text-muted text-xs">JPEG/PNG/WebP, max 2MB. Will be resized to 1920px. Uploading new replaces old.</small>
-                            @error('hero_image') <div class="text-red-500 text-xs mt-1">{{ $message }}</div> @enderror
-                        </div>
-
                         <!-- Brochure -->
                         <div class="mb-3">
                             <label for="brochure" class="block text-sm font-medium text-gray-700">Project Brochure (PDF)</label>
@@ -156,21 +138,37 @@
                         </div>
                     </div>
 
-                    <!-- Gallery -->
+                    <!-- Gallery & Hero Selection -->
                     <div class="mt-4">
-                        <label for="gallery" class="block text-sm font-medium text-gray-700">Gallery Images</label>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Gallery Images (Select Hero Image)</label>
+
                         @if($project->gallery && count($project->gallery) > 0)
-                            <div class="mb-2 text-xs text-gray-600">
-                                {{ count($project->gallery) }} images currently in gallery. New uploads will be appended.
+                            <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
+                                @foreach($project->gallery as $imagePath)
+                                    <div class="relative border rounded p-2 {{ $project->hero_image_url === $imagePath ? 'border-indigo-500 bg-indigo-50' : 'border-gray-200' }}">
+                                        <img src="{{ asset('storage/' . $imagePath) }}" class="w-full h-32 object-cover rounded mb-2">
+                                        <div class="flex items-center justify-between">
+                                            <label class="flex items-center space-x-2 cursor-pointer">
+                                                <input type="radio" name="selected_hero" value="{{ $imagePath }}" {{ $project->hero_image_url === $imagePath ? 'checked' : '' }} class="text-indigo-600">
+                                                <span class="text-xs font-semibold text-gray-700">Hero</span>
+                                            </label>
+                                            <a href="{{ asset('storage/' . $imagePath) }}" target="_blank" class="text-xs text-blue-600 hover:underline">View</a>
+                                        </div>
+                                    </div>
+                                @endforeach
                             </div>
+                        @else
+                            <div class="mb-2 text-sm text-gray-500">No images in gallery yet.</div>
                         @endif
+
+                        <label for="gallery" class="block text-sm font-medium text-gray-700 mt-4">Upload New Images</label>
                         <input type="file" name="gallery[]" id="gallery" multiple class="mt-1 block w-full text-sm text-gray-500
                             file:mr-4 file:py-2 file:px-4
                             file:rounded-full file:border-0
                             file:text-sm file:font-semibold
                             file:bg-indigo-50 file:text-indigo-700
                             hover:file:bg-indigo-100">
-                        <small class="text-muted text-xs">Multiple images allowed, JPEG/PNG/WebP, max 4MB per file. Will be resized to 1600px.</small>
+                        <small class="text-muted text-xs">Multiple images allowed, JPEG/PNG/WebP, max 4MB per file. Will be resized to 1600px. New images will be appended.</small>
                         @error('gallery') <div class="text-red-500 text-xs mt-1">{{ $message }}</div> @enderror
                         @error('gallery.*') <div class="text-red-500 text-xs mt-1">{{ $message }}</div> @enderror
                     </div>

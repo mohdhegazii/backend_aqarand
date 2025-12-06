@@ -114,17 +114,12 @@
                     <h3 class="text-lg font-medium text-gray-900 mb-4">Media & Brochure</h3>
 
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <!-- Hero Image -->
+                        <!-- Hero Image (Selection Note) -->
                         <div class="mb-3">
-                            <label for="hero_image" class="block text-sm font-medium text-gray-700">Hero Image *</label>
-                            <input type="file" name="hero_image" id="hero_image" class="mt-1 block w-full text-sm text-gray-500
-                                file:mr-4 file:py-2 file:px-4
-                                file:rounded-full file:border-0
-                                file:text-sm file:font-semibold
-                                file:bg-indigo-50 file:text-indigo-700
-                                hover:file:bg-indigo-100" required>
-                            <small class="text-muted text-xs">JPEG/PNG/WebP, max 2MB. Will be resized to 1920px.</small>
-                            @error('hero_image') <div class="text-red-500 text-xs mt-1">{{ $message }}</div> @enderror
+                            <label class="block text-sm font-medium text-gray-700">Hero Image</label>
+                            <div class="p-3 bg-gray-50 rounded text-sm text-gray-600 border">
+                                @lang('admin.hero_image_note', ['default' => 'The first uploaded gallery image will be automatically set as the Hero Image. You can change this later in the Edit screen.'])
+                            </div>
                         </div>
 
                         <!-- Brochure -->
