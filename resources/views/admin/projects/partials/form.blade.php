@@ -72,10 +72,49 @@
                         @endforeach
                     </select>
                 </div>
-                <!-- Tagline (optional) -->
+                <!-- Sales Launch Date -->
                 <div>
-                    <label class="block text-gray-700 font-bold mb-2">{{ __('admin.tagline') }}</label>
-                    <input type="text" name="tagline_ar" value="{{ old('tagline_ar', $project->tagline_ar ?? '') }}" class="w-full rounded border-gray-300 p-2">
+                    <label class="block text-gray-700 font-bold mb-2">{{ __('admin.sales_launch_date') }}</label>
+                    <input type="date" name="sales_launch_date" value="{{ old('sales_launch_date', $isEdit && $project->sales_launch_date ? $project->sales_launch_date->format('Y-m-d') : '') }}" class="w-full rounded border-gray-300 p-2">
+                </div>
+                <!-- Project Area -->
+                <div x-data="areaConverter({{ json_encode(old('project_area_value', $project->project_area_value ?? null)) }}, '{{ old('project_area_unit', $project->project_area_unit ?? 'sqm') }}')">
+                    <label class="block text-gray-700 font-bold mb-2">{{ __('admin.project_area') }}</label>
+                    <div class="flex space-x-2">
+                        <input type="number" step="0.01" name="project_area_value" x-model="areaValue" value="{{ old('project_area_value', $project->project_area_value ?? '') }}" class="w-full rounded border-gray-300 p-2">
+                        <select name="project_area_unit" x-model="areaUnit" class="rounded border-gray-300 p-2">
+                            <option value="feddan">{{ __('admin.unit_feddan') }}</option>
+                            <option value="sqm">{{ __('admin.unit_sqm') }}</option>
+                        </select>
+                    </div>
+                    <p class="text-xs text-gray-500 mt-1" x-text="conversionText"></p>
+                </div>
+            </div>
+
+            <div class="bg-gray-50 p-4 rounded border border-gray-200">
+                <p class="font-bold text-gray-700 mb-2">{{ __('admin.part_of_master_project') ?? 'Is the project part of a larger project?' }}</p>
+                <div x-data="{ isMasterProject: '{{ old('is_part_of_master_project', $project->is_part_of_master_project ?? false) ? '1' : '0' }}' }">
+                    <div class="flex items-center space-x-4 mb-3">
+                        <label class="inline-flex items-center">
+                            <input type="radio" name="is_part_of_master_project" value="0" x-model="isMasterProject" class="text-blue-600">
+                            <span class="ml-2">{{ __('admin.no') }}</span>
+                        </label>
+                        <label class="inline-flex items-center">
+                            <input type="radio" name="is_part_of_master_project" value="1" x-model="isMasterProject" class="text-blue-600">
+                            <span class="ml-2">{{ __('admin.yes') }}</span>
+                        </label>
+                    </div>
+                    <div x-show="isMasterProject === '1'" class="transition-all">
+                        <label class="block text-gray-700 font-bold mb-2">{{ __('admin.master_project') ?? 'Select master project' }}</label>
+                        <select name="master_project_id" class="w-full rounded border-gray-300 p-2">
+                            <option value="">{{ __('admin.select_master_project') ?? 'Choose a master project' }}</option>
+                            @foreach($existingProjects as $existingProject)
+                                <option value="{{ $existingProject->id }}" {{ old('master_project_id', $project->master_project_id ?? '') == $existingProject->id ? 'selected' : '' }}>
+                                    {{ $existingProject->name_en ?? $existingProject->name_ar ?? $existingProject->name }}
+                                </option>
+                            @endforeach
+                        </select>
+                    </div>
                 </div>
             </div>
 
@@ -315,10 +354,34 @@
             <h3 class="text-lg font-bold text-gray-800 border-b pb-2">{{ __('admin.publish') }}</h3>
 
             <div class="bg-gray-50 p-6 rounded border border-gray-200 text-center">
-                <label class="flex items-center justify-center space-x-4 cursor-pointer mb-6">
-                    <input type="checkbox" name="is_active" value="1" {{ old('is_active', $project->is_active ?? true) ? 'checked' : '' }} class="form-checkbox h-6 w-6 text-green-600">
-                    <span class="mr-3 text-lg font-bold text-gray-700">{{ __('admin.activate_project') }}</span>
-                </label>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-left mb-4">
+                    <div>
+                        <label class="block text-gray-700 font-bold mb-2">{{ __('admin.status') }}</label>
+                        <select name="status" class="w-full rounded border-gray-300 p-2">
+                            @foreach(['draft' => __('admin.draft'), 'published' => __('admin.published')] as $value => $label)
+                                <option value="{{ $value }}" {{ old('status', $project->status ?? 'draft') === $value ? 'selected' : '' }}>{{ $label }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+                    <div class="space-y-2">
+                        <label class="inline-flex items-center">
+                            <input type="checkbox" name="include_in_sitemap" value="1" {{ old('include_in_sitemap', $project->include_in_sitemap ?? true) ? 'checked' : '' }} class="form-checkbox h-5 w-5 text-blue-600">
+                            <span class="ml-2">{{ __('admin.include_in_sitemap') ?? 'Include in sitemap' }}</span>
+                        </label>
+                        <label class="inline-flex items-center">
+                            <input type="checkbox" name="is_featured" value="1" {{ old('is_featured', $project->is_featured ?? false) ? 'checked' : '' }} class="form-checkbox h-5 w-5 text-blue-600">
+                            <span class="ml-2">{{ __('admin.featured_project') ?? 'Featured project' }}</span>
+                        </label>
+                        <label class="inline-flex items-center">
+                            <input type="checkbox" name="is_top_project" value="1" {{ old('is_top_project', $project->is_top_project ?? false) ? 'checked' : '' }} class="form-checkbox h-5 w-5 text-blue-600">
+                            <span class="ml-2">{{ __('admin.top_project') ?? 'Top / leading project' }}</span>
+                        </label>
+                        <label class="inline-flex items-center">
+                            <input type="checkbox" name="is_active" value="1" {{ old('is_active', $project->is_active ?? true) ? 'checked' : '' }} class="form-checkbox h-5 w-5 text-green-600">
+                            <span class="ml-2">{{ __('admin.activate_project') }}</span>
+                        </label>
+                    </div>
+                </div>
 
                 <p class="text-gray-500 mb-6">{{ __('admin.save_note') }}</p>
 
@@ -343,6 +406,29 @@
 
 @push('scripts')
 <script>
+    function areaConverter(initialValue, initialUnit) {
+        return {
+            areaValue: initialValue ?? '',
+            areaUnit: initialUnit || 'sqm',
+            get conversionText() {
+                if (this.areaValue === null || this.areaValue === '') {
+                    return '';
+                }
+
+                const value = parseFloat(this.areaValue);
+                if (isNaN(value)) return '';
+
+                if (this.areaUnit === 'feddan') {
+                    const sqm = value * 4200;
+                    return `${value} ${'{{ __('admin.unit_feddan') }}'} ≈ ${sqm.toLocaleString()} ${'{{ __('admin.unit_sqm') }}'}`;
+                }
+
+                const feddan = value / 4200;
+                return `${value} ${'{{ __('admin.unit_sqm') }}'} ≈ ${feddan.toFixed(2)} ${'{{ __('admin.unit_feddan') }}'}`;
+            }
+        };
+    }
+
     function projectForm(isEdit, projectId) {
         return {
             step: 1,

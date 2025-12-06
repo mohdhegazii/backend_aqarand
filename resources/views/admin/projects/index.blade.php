@@ -25,7 +25,7 @@
                             <option value="">كل المطورين</option>
                             @foreach($developers as $developer)
                                 <option value="{{ $developer->id }}" {{ request('developer_id') == $developer->id ? 'selected' : '' }}>
-                                    {{ $developer->name }}
+                                    {{ $developer->display_name }}
                                 </option>
                             @endforeach
                         </select>
@@ -63,21 +63,21 @@
                             <tr>
                                 <td class="px-6 py-4 whitespace-nowrap">
                                     <div class="text-sm font-medium text-gray-900">
-                                        {{ $project->name_ar ?? $project->name }}
+                                        {{ $project->name }}
                                     </div>
                                     <div class="text-sm text-gray-500">
-                                        {{ $project->name_en }}
+                                        {{ app()->getLocale() === 'ar' ? ($project->name_en ?? '') : ($project->name_ar ?? '') }}
                                     </div>
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap">
                                     <div class="text-sm text-gray-900">
-                                        {{ $project->developer->name ?? '-' }}
+                                        {{ $project->developer?->display_name ?? '-' }}
                                     </div>
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap">
                                     <div class="text-sm text-gray-500">
-                                        {{ $project->city->name_local ?? $project->city->name_en ?? '-' }} -
-                                        {{ $project->district->name_local ?? $project->district->name_en ?? '-' }}
+                                        {{ $project->city?->display_name ?? '-' }} -
+                                        {{ $project->district?->display_name ?? '-' }}
                                     </div>
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">

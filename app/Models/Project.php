@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Str;
 
 class Project extends Model
 {
@@ -23,6 +24,7 @@ class Project extends Model
         'name_ar',
         'name_en',
         'slug',
+        'construction_status',
         'project_area_value',
         'project_area_unit',
         'is_part_of_master_project',
@@ -31,8 +33,7 @@ class Project extends Model
         'is_featured',
         'is_top_project',
         'include_in_sitemap',
-        'publish_status',
-        'status', // construction status
+        'status', // publish status
         'delivery_year',
         'total_area',
         'built_up_ratio',
@@ -135,7 +136,7 @@ class Project extends Model
 
     public function scopePublished($query)
     {
-        return $query->where('publish_status', 'published');
+        return $query->where('status', 'published');
     }
 
     public function scopeActive($query)
@@ -160,5 +161,24 @@ class Project extends Model
     public function getDisplayNameAttribute()
     {
         return $this->name;
+    }
+
+    public static function generateSlug(string $base, ?int $ignoreId = null): string
+    {
+        $slug = Str::slug($base);
+
+        $original = $slug;
+        $counter = 1;
+
+        while (
+            static::where('slug', $slug)
+                ->when($ignoreId, fn ($query) => $query->where('id', '!=', $ignoreId))
+                ->exists()
+        ) {
+            $slug = $original.'-'.$counter;
+            $counter++;
+        }
+
+        return $slug;
     }
 }
