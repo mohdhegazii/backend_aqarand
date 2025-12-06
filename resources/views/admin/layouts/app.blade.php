@@ -47,6 +47,16 @@
     @stack('styles')
 </head>
 <body class="font-sans antialiased bg-gray-100">
+    @if (config('app.debug'))
+        <div style="background:#111;color:#0f0;padding:8px;font-size:11px;direction:ltr;z-index:9999;position:relative;">
+            <strong>Locale DEBUG</strong><br>
+            app()->getLocale(): {{ app()->getLocale() }}<br>
+            config('app.locale'): {{ config('app.locale') }}<br>
+            URL: {{ url()->current() }}<br>
+            Segment[1]: {{ request()->segment(1) ?? 'null' }}<br>
+            Session locale: {{ session('locale') ?? 'null' }}
+        </div>
+    @endif
     @php
         $locale = app()->getLocale();
         $isRtl = $locale === 'ar';
@@ -123,7 +133,18 @@
                         </h2>
                     </div>
                     <div class="flex items-center space-x-4 rtl:space-x-reverse">
-                        @include('partials.lang-switcher')
+                        <div class="px-2">
+                             @if(app()->getLocale() === 'ar')
+                                <a href="{{ url('en/' . (request()->path() === '/' ? '' : request()->path())) }}" class="text-sm font-medium text-gray-500 hover:text-gray-700">English</a>
+                             @else
+                                @php
+                                    $p = request()->path();
+                                    if(\Illuminate\Support\Str::startsWith($p, 'en/')) $p = substr($p, 3);
+                                    elseif($p === 'en') $p = '';
+                                @endphp
+                                <a href="{{ url($p) }}" class="text-sm font-medium text-gray-500 hover:text-gray-700">العربية</a>
+                             @endif
+                        </div>
 
                         <form method="POST" action="{{ route('logout') }}" class="inline">
                             @csrf

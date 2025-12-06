@@ -5,6 +5,7 @@ namespace App\Http\Middleware;
 use Closure;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\App;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\URL;
 use Symfony\Component\HttpFoundation\Response;
 
@@ -17,46 +18,48 @@ class SetLocaleFromUrl
      */
     public function handle(Request $request, Closure $next): Response
     {
-        $supportedLocales = config('app.supported_locales', []);
-        $defaultLocale = config('app.locale', 'ar');
-        $localeFromSegment = $request->segment(1);
+        $default = 'ar';
+        $supported = ['ar', 'en'];
 
-        // Redirect requests that try to use the default locale as a prefix back to the clean URL.
-        if ($localeFromSegment === $defaultLocale) {
-            $cleanedPath = ltrim($request->path(), '/');
-            $cleanedPath = ltrim(substr($cleanedPath, strlen($defaultLocale)), '/');
-            $targetPath = $cleanedPath === '' ? '/' : '/'.$cleanedPath;
+        $segment = $request->segment(1);
 
-            return redirect()->to($this->appendQueryString($targetPath, $request->getQueryString()));
+        // Debug logging as requested
+        Log::info('Locale debug', [
+            'url'            => $request->fullUrl(),
+            'segment_1'      => $segment,
+            'app_locale_before' => App::getLocale(),
+            'config_locale'  => config('app.locale'),
+            'session_locale' => session('locale'),
+        ]);
+
+        // If the first segment is 'ar', we redirect to remove it (enforce no-prefix for default)
+        if ($segment === $default) {
+            $segments = $request->segments();
+            array_shift($segments); // Remove 'ar'
+
+            $newPath = implode('/', $segments);
+            $query = $request->getQueryString();
+            $newUrl = $newPath . ($query ? '?'.$query : '');
+
+            // Redirect to root if path is empty, otherwise to the path without 'ar'
+            return redirect($newUrl ?: '/');
         }
 
-        // Set the locale from the first URL segment when it is supported and not the default locale.
-        if ($localeFromSegment && in_array($localeFromSegment, $supportedLocales, true) && $localeFromSegment !== $defaultLocale) {
-            // Normalize URLs like "/en" to have a trailing slash for consistency.
-            if ($request->path() === $localeFromSegment) {
-                $normalizedPath = '/'.$localeFromSegment.'/';
+        // If segment is supported (e.g. 'en') and NOT default
+        if (in_array($segment, $supported, true) && $segment !== $default) {
+            App::setLocale($segment);
+            $currentLocale = $segment;
 
-                return redirect()->to($this->appendQueryString($normalizedPath, $request->getQueryString()));
-            }
-
-            App::setLocale($localeFromSegment);
-            URL::defaults(['locale' => $localeFromSegment]);
-            session(['locale' => $localeFromSegment]);
+            // Help generate URLs for localized routes
+            URL::defaults(['locale' => $segment]);
         } else {
-            // Fallback to the default locale without forcing a redirect when the segment is unsupported or missing.
-            App::setLocale($defaultLocale);
-            session(['locale' => $defaultLocale]);
+            // Default case (Arabic) - segment is not a supported locale code (it's a route or empty)
+            App::setLocale($default);
+            $currentLocale = $default;
         }
+
+        $request->attributes->set('current_locale', $currentLocale);
 
         return $next($request);
-    }
-
-    private function appendQueryString(string $path, ?string $query): string
-    {
-        if ($query === null || $query === '') {
-            return $path;
-        }
-
-        return rtrim($path, '?').'?' . $query;
     }
 }
