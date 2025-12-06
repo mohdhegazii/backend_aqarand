@@ -47,6 +47,7 @@ class Project extends Model
         'address_ar',
         'brochure_url',
         'hero_image_url',
+        'video_url',
         'gallery',
         'meta_title',
         'meta_title_en',

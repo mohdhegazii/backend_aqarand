@@ -41,6 +41,8 @@ class LocationHelperController extends Controller
                 'id' => $r->id,
                 'name' => $name,
                 'type' => 'region',
+                'lat' => $r->lat,
+                'lng' => $r->lng,
                 'data' => [
                     'country_id' => $r->country_id,
                     'region_id' => $r->id,
@@ -66,6 +68,8 @@ class LocationHelperController extends Controller
                 'id' => $c->id,
                 'name' => $name,
                 'type' => 'city',
+                'lat' => $c->lat,
+                'lng' => $c->lng,
                 'data' => [
                     'country_id' => $c->region->country_id,
                     'region_id' => $c->region_id,
@@ -91,6 +95,8 @@ class LocationHelperController extends Controller
                 'id' => $d->id,
                 'name' => $name,
                 'type' => 'district',
+                'lat' => $d->lat,
+                'lng' => $d->lng,
                 'data' => [
                     'country_id' => $d->city->region->country_id,
                     'region_id' => $d->city->region_id,
