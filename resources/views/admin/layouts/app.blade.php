@@ -95,7 +95,7 @@
                     @lang('admin.real_estate')
                 </div>
                 <a href="{{ route('admin.projects.index') }}" class="block px-4 py-2 text-gray-700 hover:bg-gray-100 rounded">@lang('admin.projects')</a>
-                <a href="{{ route('admin.property-models.index') }}" class="block px-4 py-2 text-gray-700 hover:bg-gray-100 rounded">@lang('admin.property_models')</a>
+                <!-- Property Models now accessed via Projects -->
                 <a href="{{ route('admin.units.index') }}" class="block px-4 py-2 text-gray-700 hover:bg-gray-100 rounded">@lang('admin.units')</a>
                 <a href="{{ route('admin.listings.index') }}" class="block px-4 py-2 text-gray-700 hover:bg-gray-100 rounded">@lang('admin.listings')</a>
 

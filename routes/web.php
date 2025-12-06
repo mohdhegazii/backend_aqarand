@@ -94,6 +94,7 @@ Route::group([
         ->parameters(['amenity-categories' => 'amenityCategory']);
 
     // Phase 3 Resources
+    Route::get('project-location-search', [\App\Http\Controllers\Admin\LocationSearchController::class, 'search'])->name('location.search');
     Route::resource('projects', ProjectController::class);
     Route::resource('property-models', PropertyModelController::class)
         ->parameters(['property-models' => 'propertyModel']);

@@ -4,11 +4,12 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Support\Str;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Project extends Model
 {
     use HasFactory;
+    // use SoftDeletes; // Schema does not show deleted_at, assuming is_active usage instead or standard deletion
 
     protected $table = 'projects';
 
@@ -18,19 +19,20 @@ class Project extends Model
         'region_id',
         'city_id',
         'district_id',
-        'name',
-        'name_en',
+        'name', // Keep for backward compatibility/search if needed
         'name_ar',
+        'name_en',
         'slug',
-        'seo_slug_en',
-        'seo_slug_ar',
-        'tagline',
-        'tagline_en',
-        'tagline_ar',
-        'description_long',
-        'description_en',
-        'description_ar',
-        'status',
+        'project_area_value',
+        'project_area_unit',
+        'is_part_of_master_project',
+        'master_project_id',
+        'sales_launch_date',
+        'is_featured',
+        'is_top_project',
+        'include_in_sitemap',
+        'publish_status',
+        'status', // construction status
         'delivery_year',
         'total_area',
         'built_up_ratio',
@@ -41,45 +43,43 @@ class Project extends Model
         'max_bua',
         'lat',
         'lng',
-        'map_polygon',
         'address_text',
-        'address_en',
-        'address_ar',
         'brochure_url',
         'hero_image_url',
-        'video_url',
         'gallery',
+        'video_url',
+        'map_polygon',
         'meta_title',
-        'meta_title_en',
-        'meta_title_ar',
         'meta_description',
-        'meta_description_en',
-        'meta_description_ar',
+        'main_keyword',
+        'title_ar',
+        'title_en',
+        'description_ar',
+        'description_en',
         'is_active',
-        // SEO Keywords
-        'main_keyword_en',
-        'main_keyword_ar',
-        'secondary_keywords_en',
-        'secondary_keywords_ar',
+        // 'description_long', // Legacy
+        // 'tagline', // Legacy
     ];
 
     protected $casts = [
         'gallery' => 'array',
         'map_polygon' => 'array',
+        'sales_launch_date' => 'date',
+        'is_part_of_master_project' => 'boolean',
+        'is_featured' => 'boolean',
+        'is_top_project' => 'boolean',
+        'include_in_sitemap' => 'boolean',
         'is_active' => 'boolean',
-        'total_area' => 'decimal:2',
-        'built_up_ratio' => 'decimal:2',
+        'project_area_value' => 'decimal:2',
         'min_price' => 'decimal:2',
         'max_price' => 'decimal:2',
         'min_bua' => 'decimal:2',
         'max_bua' => 'decimal:2',
         'lat' => 'decimal:7',
         'lng' => 'decimal:7',
-        'delivery_year' => 'integer',
-        'total_units' => 'integer',
-        'secondary_keywords_en' => 'array',
-        'secondary_keywords_ar' => 'array',
     ];
+
+    // Relations
 
     public function developer()
     {
@@ -106,19 +106,19 @@ class Project extends Model
         return $this->belongsTo(District::class);
     }
 
-    public function propertyModels()
+    public function masterProject()
     {
-        return $this->hasMany(PropertyModel::class);
+        return $this->belongsTo(Project::class, 'master_project_id');
     }
 
-    public function units()
+    public function subProjects()
     {
-        return $this->hasMany(Unit::class);
+        return $this->hasMany(Project::class, 'master_project_id');
     }
 
-    public function listings()
+    public function faqs()
     {
-        return $this->hasManyThrough(Listing::class, Unit::class);
+        return $this->hasMany(ProjectFaq::class)->orderBy('sort_order');
     }
 
     public function amenities()
@@ -126,18 +126,16 @@ class Project extends Model
         return $this->belongsToMany(Amenity::class, 'project_amenity', 'project_id', 'amenity_id');
     }
 
-    public function mediaFiles()
+    public function propertyModels()
     {
-        return $this->hasMany(MediaFile::class, 'context_id')->where('context_type', 'project');
+        return $this->hasMany(PropertyModel::class);
     }
 
-    public function getDisplayNameAttribute()
+    // Scopes
+
+    public function scopePublished($query)
     {
-        $locale = app()->getLocale();
-        if ($locale === 'ar' && !empty($this->name_ar)) {
-            return $this->name_ar;
-        }
-        return $this->name_en ?? $this->name;
+        return $query->where('publish_status', 'published');
     }
 
     public function scopeActive($query)
@@ -145,20 +143,22 @@ class Project extends Model
         return $query->where('is_active', true);
     }
 
-    public function scopeInLocation($query, $cityId = null, $districtId = null)
+    // Accessors
+
+    public function getNameAttribute($value)
     {
-        if ($districtId) {
-            return $query->where('district_id', $districtId);
+        // Fallback or prefer localized
+        if (app()->getLocale() == 'ar' && !empty($this->name_ar)) {
+            return $this->name_ar;
         }
-        if ($cityId) {
-            return $query->where('city_id', $cityId);
+        if (app()->getLocale() == 'en' && !empty($this->name_en)) {
+            return $this->name_en;
         }
-        return $query;
+        return $value; // Fallback to legacy 'name' column
     }
 
-    public function getFrontendUrl(string $locale = 'en'): string
+    public function getDisplayNameAttribute()
     {
-        $slug = $locale === 'ar' ? ($this->seo_slug_ar ?? $this->seo_slug_en ?? $this->slug) : ($this->seo_slug_en ?? $this->slug);
-        return "/{$locale}/projects/{$slug}";
+        return $this->name;
     }
 }
