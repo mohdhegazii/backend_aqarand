@@ -102,6 +102,14 @@ class ProjectController extends Controller
         // Main slug fallback
         $validated['slug'] = $validated['seo_slug_en'];
 
+        // Ensure slug uniqueness
+        $originalSlug = $validated['slug'];
+        $count = 1;
+        while (Project::where('slug', $validated['slug'])->exists()) {
+            $validated['slug'] = $originalSlug . '-' . $count;
+            $count++;
+        }
+
         $project = Project::create($request->except('amenities', 'seo_slug_en', 'seo_slug_ar', 'hero_image', 'gallery', 'brochure') + [
             'name' => $validated['name'],
             'slug' => $validated['slug'],
