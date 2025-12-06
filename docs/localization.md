@@ -1,31 +1,60 @@
-# Localization and locale routing
+# Localization Documentation
 
-## Default locale
-- Arabic (`ar`) is the default and fallback locale.
-- Arabic URLs never include a locale prefix (home is `/`).
-- Other supported locales currently include English (`en`) with a required prefix (e.g., `/en/`).
+This project supports multi-language functionality with **Arabic (ar)** as the default locale and **English (en)** (plus potentially others) as secondary locales.
 
-## Locale detection
-- `App\Http\Middleware\SetLocaleFromUrl` inspects the first URL segment on every web request.
-- If the first segment matches a supported, non-default locale (e.g., `en`), that locale is applied and stored in the session. Requests to `/en` are normalized to `/en/`.
-- If the segment is the default locale (`/ar/...`), the middleware redirects to the same path without the `ar` prefix.
-- If the first segment is not a supported locale, the request continues in Arabic without forcing a redirect.
+## 1. URL Structure
 
-## Route structure
-- Arabic routes stay unprefixed under the standard `web` middleware.
-- Localized routes live under a `{locale}` prefix that excludes `ar`, using the same controllers and names prefixed with `localized.` (for example, `localized.home`, `localized.admin.dashboard`).
-- Admin routes are available for both default and localized URLs.
+- **Arabic (Default):** No prefix.
+  - Home: `http://domain.com/`
+  - Projects: `http://domain.com/projects`
 
-## Language switcher
-- A reusable Blade partial (`resources/views/partials/lang-switcher.blade.php`) shows Arabic and English links.
-- Links respect the current path: Arabic links drop any locale prefix, while English links add `/en/`.
+- **English (and other locales):** With prefix.
+  - Home: `http://domain.com/en/`
+  - Projects: `http://domain.com/en/projects`
 
-## Adding a new language
-1. Add the locale code to `supported_locales` in `config/app.php` and set translations in `resources/lang/<locale>/`.
-2. Create translation files (for example, `resources/lang/fr/messages.php`).
-3. The middleware and route groups will automatically honor the new locale at `/fr/…` without changing route definitions.
+## 2. Locale Detection & Middleware
 
-## Testing locally
-- Visit `http://127.0.0.1:8000/` to see the Arabic home page and confirm `app()->getLocale()` is `ar`.
-- Visit `http://127.0.0.1:8000/en/` to see English content and verify `app()->getLocale()` is `en`.
-- Check URLs like `/projects` (Arabic) and `/en/projects` (English) to ensure the locale-specific routes render.
+The system uses a custom middleware `App\Http\Middleware\SetLocaleFromUrl` to determine the locale:
+
+1.  **Check First URL Segment:** The middleware examines the first segment of the URL path (e.g., `en`, `fr`).
+2.  **Supported Locale:** If the segment matches a supported locale (defined in `config/app.supported_locales`) and is **not** the default locale (`ar`), the application locale is set to that language.
+    - Example: `/en/projects` sets locale to `en`.
+3.  **Default Locale:** If the segment is not a supported locale (or is empty), the application assumes the default locale (`ar`).
+    - Example: `/projects` (no prefix) -> locale is `ar`.
+4.  **Redirects:**
+    - If a user tries to access `/ar/projects`, they are redirected to `/projects` (canonical URL).
+    - If a user accesses `/en` (without trailing slash), they are redirected to `/en/` for consistency.
+
+## 3. Routes Configuration (`routes/web.php`)
+
+Routes are organized into two main groups:
+
+1.  **Default Group (Arabic):**
+    - Middleware: `['web', 'set.locale']`
+    - No prefix.
+    - Contains all routes for the default language.
+
+2.  **Localized Group:**
+    - Prefix: `{locale}`
+    - Middleware: `['web', 'set.locale']`
+    - Contains all routes for other languages.
+    - The `{locale}` parameter is constrained to match supported locales *excluding* the default one (regex: `^(?!ar$)[a-zA-Z_]{2,5}$`).
+
+## 4. Adding a New Language
+
+To add a new language (e.g., French `fr`):
+
+1.  **Update Config:** Add `'fr'` to `supported_locales` in `config/app.php` (if you added this custom config key) or ensure the middleware logic recognizes it.
+2.  **Add Translations:** Create a new directory `resources/lang/fr/` and add necessary files (e.g., `messages.php`).
+3.  **Update Switcher:** The language switcher automatically detects supported locales if configured dynamically, or you can add the link manually in `resources/views/partials/lang-switcher.blade.php`.
+
+## 5. Language Switcher
+
+A blade partial is available at `resources/views/partials/lang-switcher.blade.php`. It generates links to the current page in the alternate language, preserving the remaining path segments.
+
+## 6. Testing
+
+- Access `/` -> Should show Arabic content.
+- Access `/en/` -> Should show English content.
+- Access `/en/admin` -> Should show English Admin Dashboard.
+- Access `/admin` -> Should show Arabic Admin Dashboard.
