@@ -46,8 +46,6 @@ class SetLocaleFromUrl
             // Fallback to the default locale without forcing a redirect when the segment is unsupported or missing.
             App::setLocale($defaultLocale);
             session(['locale' => $defaultLocale]);
-            // Clear any previous URL default locale to avoid leaking non-default prefixes.
-            URL::defaults([]);
         }
 
         return $next($request);

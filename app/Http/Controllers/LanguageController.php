@@ -31,9 +31,9 @@ class LanguageController extends Controller
 
         $relativePath = implode('/', $segments);
 
-        $targetPath = $targetLocale === $defaultLocale
+        $targetPath = $locale === $defaultLocale
             ? ($relativePath === '' ? '/' : '/'.$relativePath)
-            : '/'.$targetLocale.'/'.($relativePath === '' ? '' : $relativePath);
+            : '/'.$locale.'/'.($relativePath === '' ? '' : $relativePath);
 
         if (Auth::check() && Auth::user()->is_admin) {
             if ($relativePath === '') {
