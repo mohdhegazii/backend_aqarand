@@ -57,48 +57,38 @@ class ProjectController extends Controller
 
     public function store(Request $request)
     {
-        try {
-            $validated = $request->validate([
-                'name_en' => 'required|string|max:200',
-                'name_ar' => 'nullable|string|max:200',
-                'developer_id' => 'nullable|exists:developers,id',
-                'country_id' => 'required|exists:countries,id',
-                'region_id' => 'required|exists:regions,id',
-                'city_id' => 'required|exists:cities,id',
-                'district_id' => 'nullable|exists:districts,id',
-                'status' => 'required',
-                'delivery_year' => 'nullable|integer|min:2000|max:2100',
-                'seo_slug_en' => 'nullable|string|unique:projects,seo_slug_en',
-                'seo_slug_ar' => 'nullable|string|unique:projects,seo_slug_ar',
-                'amenities' => 'array',
-                'amenities.*' => 'exists:amenities,id',
-                'main_keyword_en' => 'nullable|string|max:255',
-                'main_keyword_ar' => 'nullable|string|max:255',
-                'meta_title_en' => 'nullable|string|max:255',
-                'meta_title_ar' => 'nullable|string|max:255',
-                'meta_description_en' => 'nullable|string|max:255',
-                'meta_description_ar' => 'nullable|string|max:255',
-                'tagline_en' => 'nullable|string|max:255',
-                'tagline_ar' => 'nullable|string|max:255',
+        $validated = $request->validate([
+            'name_en' => 'required|string|max:200',
+            'name_ar' => 'nullable|string|max:200',
+            'developer_id' => 'nullable|exists:developers,id',
+            'country_id' => 'required|exists:countries,id',
+            'region_id' => 'required|exists:regions,id',
+            'city_id' => 'required|exists:cities,id',
+            'district_id' => 'nullable|exists:districts,id',
+            'status' => 'required',
+            'delivery_year' => 'nullable|integer|min:2000|max:2100',
+            'seo_slug_en' => 'nullable|string|unique:projects,seo_slug_en',
+            'seo_slug_ar' => 'nullable|string|unique:projects,seo_slug_ar',
+            'amenities' => 'array',
+            'amenities.*' => 'exists:amenities,id',
+            'main_keyword_en' => 'nullable|string|max:255',
+            'main_keyword_ar' => 'nullable|string|max:255',
+            'meta_title_en' => 'nullable|string|max:255',
+            'meta_title_ar' => 'nullable|string|max:255',
+            'meta_description_en' => 'nullable|string|max:255',
+            'meta_description_ar' => 'nullable|string|max:255',
+            'tagline_en' => 'nullable|string|max:255',
+            'tagline_ar' => 'nullable|string|max:255',
 
-                // Media Validation
-                // Hero image is selected from gallery, so not required as separate upload
-                'gallery' => 'nullable|array',
-                'gallery.*' => 'image|mimes:jpeg,png,jpg,webp|max:4096',
-                'brochure' => 'nullable|file|mimes:pdf|max:5120',
-            ]);
+            // Media Validation
+            // Hero image is selected from gallery, so not required as separate upload
+            'gallery' => 'nullable|array',
+            'gallery.*' => 'image|mimes:jpeg,png,jpg,webp|max:4096',
+            'brochure' => 'nullable|file|mimes:pdf|max:5120',
+        ]);
 
-            // Auto-generate slugs if missing
-            $validated['name'] = $validated['name_en']; // Fallback
-
-            // Logic: seo_slug_en defaults to slug(name_en), seo_slug_ar defaults to slug(name_ar)
-            $validated['seo_slug_en'] = !empty($validated['seo_slug_en']) ? $validated['seo_slug_en'] : Str::slug($validated['name_en']);
-
-            // Arabic Slug - user specifically asked: "seo slug Arabic is the Arabic Name"
-            $nameAr = $request->input('name_ar');
-            if (empty($validated['seo_slug_ar']) && !empty($nameAr)) {
-                $validated['seo_slug_ar'] = preg_replace('/\s+/u', '-', trim($nameAr));
-            }
+        // Auto-generate slugs if missing
+        $validated['name'] = $validated['name_en']; // Fallback
 
             // Main slug fallback
             $validated['slug'] = $validated['seo_slug_en'];
@@ -119,9 +109,21 @@ class ProjectController extends Controller
                 'is_active' => $request->has('is_active'),
             ]);
 
-            if ($request->has('amenities')) {
-                $project->amenities()->sync($request->amenities);
-            }
+        // Ensure slug uniqueness
+        $originalSlug = $validated['slug'];
+        $count = 1;
+        while (Project::where('slug', $validated['slug'])->exists()) {
+            $validated['slug'] = $originalSlug . '-' . $count;
+            $count++;
+        }
+
+        $project = Project::create($request->except('amenities', 'seo_slug_en', 'seo_slug_ar', 'hero_image', 'gallery', 'brochure') + [
+            'name' => $validated['name'],
+            'slug' => $validated['slug'],
+            'seo_slug_en' => $validated['seo_slug_en'],
+            'seo_slug_ar' => $validated['seo_slug_ar'],
+            'is_active' => $request->has('is_active'),
+        ]);
 
             // Media Handling
             $updates = [];
@@ -163,40 +165,39 @@ class ProjectController extends Controller
 
     public function update(Request $request, Project $project)
     {
-        try {
-            $validated = $request->validate([
-                'name_en' => 'required|string|max:200',
-                'name_ar' => 'nullable|string|max:200',
-                'developer_id' => 'nullable|exists:developers,id',
-                'country_id' => 'required|exists:countries,id',
-                'region_id' => 'required|exists:regions,id',
-                'city_id' => 'required|exists:cities,id',
-                'district_id' => 'nullable|exists:districts,id',
-                'status' => 'required',
-                'delivery_year' => 'nullable|integer|min:2000|max:2100',
-                'seo_slug_en' => 'nullable|string|unique:projects,seo_slug_en,' . $project->id,
-                'seo_slug_ar' => 'nullable|string|unique:projects,seo_slug_ar,' . $project->id,
-                'amenities' => 'array',
-                'amenities.*' => 'exists:amenities,id',
-                'main_keyword_en' => 'nullable|string|max:255',
-                'main_keyword_ar' => 'nullable|string|max:255',
-                'meta_title_en' => 'nullable|string|max:255',
-                'meta_title_ar' => 'nullable|string|max:255',
-                'meta_description_en' => 'nullable|string|max:255',
-                'meta_description_ar' => 'nullable|string|max:255',
-                'tagline_en' => 'nullable|string|max:255',
-                'tagline_ar' => 'nullable|string|max:255',
+        $validated = $request->validate([
+            'name_en' => 'required|string|max:200',
+            'name_ar' => 'nullable|string|max:200',
+            'developer_id' => 'nullable|exists:developers,id',
+            'country_id' => 'required|exists:countries,id',
+            'region_id' => 'required|exists:regions,id',
+            'city_id' => 'required|exists:cities,id',
+            'district_id' => 'nullable|exists:districts,id',
+            'status' => 'required',
+            'delivery_year' => 'nullable|integer|min:2000|max:2100',
+            'seo_slug_en' => 'nullable|string|unique:projects,seo_slug_en,' . $project->id,
+            'seo_slug_ar' => 'nullable|string|unique:projects,seo_slug_ar,' . $project->id,
+            'amenities' => 'array',
+            'amenities.*' => 'exists:amenities,id',
+            'main_keyword_en' => 'nullable|string|max:255',
+            'main_keyword_ar' => 'nullable|string|max:255',
+            'meta_title_en' => 'nullable|string|max:255',
+            'meta_title_ar' => 'nullable|string|max:255',
+            'meta_description_en' => 'nullable|string|max:255',
+            'meta_description_ar' => 'nullable|string|max:255',
+            'tagline_en' => 'nullable|string|max:255',
+            'tagline_ar' => 'nullable|string|max:255',
 
-                // Media Validation (Optional on update)
-                'gallery' => 'nullable|array',
-                'gallery.*' => 'image|mimes:jpeg,png,jpg,webp|max:4096',
-                'brochure' => 'nullable|file|mimes:pdf|max:5120',
-            ]);
+            // Media Validation (Optional on update)
+            'gallery' => 'nullable|array',
+            'gallery.*' => 'image|mimes:jpeg,png,jpg,webp|max:4096',
+            'brochure' => 'nullable|file|mimes:pdf|max:5120',
+        ]);
 
-            // Auto-generate slugs if missing
-            if (empty($validated['seo_slug_en'])) {
-                $validated['seo_slug_en'] = Str::slug($validated['name_en']);
-            }
+        // Auto-generate slugs if missing
+        if (empty($validated['seo_slug_en'])) {
+            $validated['seo_slug_en'] = Str::slug($validated['name_en']);
+        }
 
             if (empty($validated['seo_slug_ar']) && $request->filled('name_ar')) {
                 $validated['seo_slug_ar'] = preg_replace('/\s+/u', '-', trim($request->name_ar));
