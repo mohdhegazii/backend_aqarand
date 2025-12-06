@@ -4,10 +4,10 @@
 
 @section('content')
     <div class="mb-4 flex flex-col md:flex-row justify-between md:items-center gap-4">
-        <a href="{{ route('admin.property-types.create') }}" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded w-fit">
+        <a href="{{ route($adminRoutePrefix.'property-types.create') }}" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded w-fit">
             @lang('admin.create_new')
         </a>
-        <form action="{{ route('admin.property-types.index') }}" method="GET" class="flex flex-col md:flex-row gap-2">
+        <form action="{{ route($adminRoutePrefix.'property-types.index') }}" method="GET" class="flex flex-col md:flex-row gap-2">
             <select name="filter" class="border rounded px-4 py-2" onchange="this.form.submit()">
                 <option value="active" {{ request('filter') === 'active' || !request('filter') ? 'selected' : '' }}>@lang('admin.activate')</option>
                 <option value="inactive" {{ request('filter') === 'inactive' ? 'selected' : '' }}>@lang('admin.deactivate')</option>
@@ -23,7 +23,7 @@
     </div>
 
     <div class="bg-white shadow-md rounded my-6 overflow-x-auto">
-        <form action="{{ route('admin.property-types.bulk') }}" method="POST" id="bulk-form">
+        <form action="{{ route($adminRoutePrefix.'property-types.bulk') }}" method="POST" id="bulk-form">
             @csrf
             <div class="p-4 border-b flex items-center space-x-2">
                 <select name="action" class="border-gray-300 rounded text-sm">
@@ -82,10 +82,10 @@
                             </td>
                             <td class="py-3 px-6 text-center">
                                 <div class="flex item-center justify-center space-x-2 rtl:space-x-reverse">
-                                    <a href="{{ route('admin.property-types.edit', $type) }}" class="text-purple-600 hover:text-purple-900">
+                                    <a href="{{ route($adminRoutePrefix.'property-types.edit', $type) }}" class="text-purple-600 hover:text-purple-900">
                                         @lang('admin.edit')
                                     </a>
-                                    <form action="{{ route('admin.property-types.destroy', $type) }}" method="POST" onsubmit="return confirm('@lang('admin.confirm_delete')')" class="inline">
+                                    <form action="{{ route($adminRoutePrefix.'property-types.destroy', $type) }}" method="POST" onsubmit="return confirm('@lang('admin.confirm_delete')')" class="inline">
                                         @csrf
                                         @method('DELETE')
                                         <button type="submit" class="text-red-600 hover:text-red-900">

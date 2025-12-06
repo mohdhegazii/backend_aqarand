@@ -5,7 +5,7 @@
 @section('content')
 <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
     <div class="p-6 bg-white border-b border-gray-200">
-        <form method="POST" action="{{ route('admin.property-models.store') }}">
+        <form method="POST" action="{{ route($adminRoutePrefix.'property-models.store') }}">
             @csrf
             @if(!empty($redirectTo))
                 <input type="hidden" name="redirect" value="{{ $redirectTo }}">
@@ -111,7 +111,7 @@
             </div>
 
             <div class="flex justify-end">
-                <a href="{{ route('admin.property-models.index') }}" class="bg-gray-500 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded mr-2">Cancel</a>
+                <a href="{{ route($adminRoutePrefix.'property-models.index') }}" class="bg-gray-500 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded mr-2">Cancel</a>
                 <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">Save</button>
             </div>
         </form>

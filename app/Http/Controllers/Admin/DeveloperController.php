@@ -82,7 +82,7 @@ class DeveloperController extends Controller
             $developer->seoMeta()->create($request->input('seo_meta'));
         }
 
-        return redirect()->route('admin.developers.index')
+        return redirect()->route($this->adminRoutePrefix().'developers.index')
             ->with('success', __('admin.created_successfully'));
     }
 
@@ -141,7 +141,7 @@ class DeveloperController extends Controller
             );
         }
 
-        return redirect()->route('admin.developers.index')
+        return redirect()->route($this->adminRoutePrefix().'developers.index')
             ->with('success', __('admin.updated_successfully'));
     }
 
@@ -150,7 +150,7 @@ class DeveloperController extends Controller
         // Soft delete implementation
         $developer->update(['is_active' => false]);
 
-        return redirect()->route('admin.developers.index')
+        return redirect()->route($this->adminRoutePrefix().'developers.index')
             ->with('success', __('admin.deleted_successfully'));
     }
 

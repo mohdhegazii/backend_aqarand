@@ -70,7 +70,7 @@ class CityController extends Controller
             ]);
         }
 
-        return redirect()->route('admin.cities.index')
+        return redirect()->route($this->adminRoutePrefix().'cities.index')
             ->with('success', __('admin.created_successfully'));
     }
 
@@ -121,7 +121,7 @@ class CityController extends Controller
                 ->update(['boundary' => null]);
         }
 
-        return redirect()->route('admin.cities.index')
+        return redirect()->route($this->adminRoutePrefix().'cities.index')
             ->with('success', __('admin.updated_successfully'));
     }
 
@@ -129,7 +129,7 @@ class CityController extends Controller
     {
         $city->update(['is_active' => false]);
 
-        return redirect()->route('admin.cities.index')
+        return redirect()->route($this->adminRoutePrefix().'cities.index')
             ->with('success', __('admin.deleted_successfully'));
     }
 

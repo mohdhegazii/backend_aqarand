@@ -59,7 +59,7 @@ class AmenityCategoryController extends Controller
 
         AmenityCategory::create($validated);
 
-        return redirect()->route('admin.amenity-categories.index')
+        return redirect()->route($this->adminRoutePrefix().'amenity-categories.index')
             ->with('success', __('admin.created_successfully'));
     }
 
@@ -93,7 +93,7 @@ class AmenityCategoryController extends Controller
 
         $amenityCategory->update($validated);
 
-        return redirect()->route('admin.amenity-categories.index')
+        return redirect()->route($this->adminRoutePrefix().'amenity-categories.index')
             ->with('success', __('admin.updated_successfully'));
     }
 
@@ -107,7 +107,7 @@ class AmenityCategoryController extends Controller
 
         $amenityCategory->delete();
 
-        return redirect()->route('admin.amenity-categories.index')
+        return redirect()->route($this->adminRoutePrefix().'amenity-categories.index')
             ->with('success', __('admin.deleted_successfully'));
     }
 }

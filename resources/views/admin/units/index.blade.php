@@ -7,13 +7,13 @@
     <div class="p-6 bg-white border-b border-gray-200">
         <div class="flex justify-between items-center mb-6">
             <h3 class="text-lg font-medium text-gray-900">Units</h3>
-            <a href="{{ route('admin.units.create') }}" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
+            <a href="{{ route($adminRoutePrefix.'units.create') }}" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
                 @lang('admin.create_new')
             </a>
         </div>
 
         <div class="mb-4">
-             <form method="GET" action="{{ route('admin.units.index') }}" class="flex gap-4">
+             <form method="GET" action="{{ route($adminRoutePrefix.'units.index') }}" class="flex gap-4">
                 <select name="project_id" class="rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50">
                     <option value="">@lang('admin.all') @lang('admin.projects')</option>
                     @foreach($projects as $project)
@@ -65,8 +65,8 @@
                                 </span>
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                                <a href="{{ route('admin.units.edit', $unit) }}" class="text-indigo-600 hover:text-indigo-900 mx-2">@lang('admin.edit')</a>
-                                <form action="{{ route('admin.units.destroy', $unit) }}" method="POST" class="inline" onsubmit="return confirm('@lang('admin.confirm_delete')')">
+                                <a href="{{ route($adminRoutePrefix.'units.edit', $unit) }}" class="text-indigo-600 hover:text-indigo-900 mx-2">@lang('admin.edit')</a>
+                                <form action="{{ route($adminRoutePrefix.'units.destroy', $unit) }}" method="POST" class="inline" onsubmit="return confirm('@lang('admin.confirm_delete')')">
                                     @csrf @method('DELETE')
                                     <button type="submit" class="text-red-600 hover:text-red-900">@lang('admin.delete')</button>
                                 </form>

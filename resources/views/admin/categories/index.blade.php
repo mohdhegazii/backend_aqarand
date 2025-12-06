@@ -6,13 +6,13 @@
 
 @section('content')
 <div class="mb-4 flex justify-between">
-    <a href="{{ route('admin.categories.create') }}" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
+    <a href="{{ route($adminRoutePrefix.'categories.create') }}" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
         @lang('admin.create_new')
     </a>
 </div>
 
 <div class="bg-white shadow overflow-hidden sm:rounded-lg">
-    <form action="{{ route('admin.categories.bulk') }}" method="POST" id="bulk-form">
+    <form action="{{ route($adminRoutePrefix.'categories.bulk') }}" method="POST" id="bulk-form">
         @csrf
         <div class="p-4 border-b flex items-center space-x-2">
             <select name="action" class="border-gray-300 rounded text-sm">
@@ -48,7 +48,7 @@
                     </td>
                     <td class="px-6 py-4 whitespace-nowrap">{{ $category->display_name }}</td>
                     <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                        <a href="{{ route('admin.categories.edit', $category) }}" class="text-indigo-600 hover:text-indigo-900">@lang('admin.edit')</a>
+                        <a href="{{ route($adminRoutePrefix.'categories.edit', $category) }}" class="text-indigo-600 hover:text-indigo-900">@lang('admin.edit')</a>
                     </td>
                 </tr>
                 @endforeach

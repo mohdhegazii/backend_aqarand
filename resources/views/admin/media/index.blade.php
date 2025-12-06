@@ -13,7 +13,7 @@
                 <div class="p-6 bg-white border-b border-gray-200">
 
                     <!-- Filters -->
-                    <form method="GET" action="{{ route('admin.media.index') }}" class="mb-6 grid grid-cols-1 md:grid-cols-4 gap-4">
+                    <form method="GET" action="{{ route($adminRoutePrefix.'media.index') }}" class="mb-6 grid grid-cols-1 md:grid-cols-4 gap-4">
                         <div>
                             <label class="block text-sm font-medium text-gray-700">{{ __('admin.search') }}</label>
                             <input type="text" name="search" value="{{ request('search') }}" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50">
@@ -93,8 +93,8 @@
                                         <div class="text-sm text-gray-500 w-48 truncate rtl:text-right" dir="rtl">{{ $media->alt_ar }}</div>
                                     </td>
                                     <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                                        <a href="{{ route('admin.media.show', $media) }}" class="text-indigo-600 hover:text-indigo-900 mr-3">{{ __('admin.view') }}</a>
-                                        <form action="{{ route('admin.media.destroy', $media) }}" method="POST" class="inline-block" onsubmit="return confirm('{{ __('admin.are_you_sure') }}')">
+                                        <a href="{{ route($adminRoutePrefix.'media.show', $media) }}" class="text-indigo-600 hover:text-indigo-900 mr-3">{{ __('admin.view') }}</a>
+                                        <form action="{{ route($adminRoutePrefix.'media.destroy', $media) }}" method="POST" class="inline-block" onsubmit="return confirm('{{ __('admin.are_you_sure') }}')">
                                             @csrf
                                             @method('DELETE')
                                             <button type="submit" class="text-red-600 hover:text-red-900">{{ __('admin.delete') }}</button>

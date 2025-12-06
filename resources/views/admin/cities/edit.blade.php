@@ -5,7 +5,7 @@
 @section('content')
     <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
         <div class="p-6 bg-white border-b border-gray-200">
-            <form action="{{ route('admin.cities.update', $city) }}" method="POST">
+            <form action="{{ route($adminRoutePrefix.'cities.update', $city) }}" method="POST">
                 @csrf
                 @method('PUT')
 
@@ -46,7 +46,7 @@
                 ])
 
                 <div class="flex items-center justify-end space-x-4 rtl:space-x-reverse mt-4">
-                    <a href="{{ route('admin.cities.index') }}" class="text-gray-600 hover:text-gray-900">
+                    <a href="{{ route($adminRoutePrefix.'cities.index') }}" class="text-gray-600 hover:text-gray-900">
                         @lang('admin.cancel')
                     </a>
                     <button type="submit" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline">

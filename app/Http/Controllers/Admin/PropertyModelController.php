@@ -131,13 +131,13 @@ class PropertyModelController extends Controller
 
     private function resolveRedirect(Request $request, int $projectId): string
     {
-        $fallback = route('admin.property-models.index');
+        $fallback = route($this->adminRoutePrefix().'property-models.index');
         $redirectUrl = $request->input('redirect');
 
         if ($redirectUrl && Str::startsWith($redirectUrl, url('/'))) {
             return $redirectUrl;
         }
 
-        return route('admin.projects.edit', $projectId) ?? $fallback;
+        return route($this->adminRoutePrefix().'projects.edit', $projectId) ?? $fallback;
     }
 }

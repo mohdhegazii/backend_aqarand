@@ -10,10 +10,10 @@
                 <div class="card-header">
                     <h3 class="card-title">{{ __('admin.view_country') }}: {{ $country->getName() }}</h3>
                     <div class="card-tools">
-                        <a href="{{ route('admin.countries.index') }}" class="btn btn-secondary btn-sm">
+                        <a href="{{ route($adminRoutePrefix.'countries.index') }}" class="btn btn-secondary btn-sm">
                             <i class="fas fa-arrow-left"></i> {{ __('admin.back') }}
                         </a>
-                        <a href="{{ route('admin.countries.edit', $country) }}" class="btn btn-primary btn-sm">
+                        <a href="{{ route($adminRoutePrefix.'countries.edit', $country) }}" class="btn btn-primary btn-sm">
                             <i class="fas fa-edit"></i> {{ __('admin.edit') }}
                         </a>
                     </div>

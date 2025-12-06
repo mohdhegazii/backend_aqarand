@@ -7,7 +7,7 @@
     <div class="p-6 bg-white border-b border-gray-200">
         <div class="flex justify-between items-center mb-6">
             <h3 class="text-lg font-medium text-gray-900">Listings</h3>
-            <a href="{{ route('admin.listings.create') }}" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
+            <a href="{{ route($adminRoutePrefix.'listings.create') }}" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
                 @lang('admin.create_new')
             </a>
         </div>
@@ -47,8 +47,8 @@
                                 {{ $listing->published_at ? $listing->published_at->format('Y-m-d') : '-' }}
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                                <a href="{{ route('admin.listings.edit', $listing) }}" class="text-indigo-600 hover:text-indigo-900 mx-2">@lang('admin.edit')</a>
-                                <form action="{{ route('admin.listings.destroy', $listing) }}" method="POST" class="inline" onsubmit="return confirm('@lang('admin.confirm_delete')')">
+                                <a href="{{ route($adminRoutePrefix.'listings.edit', $listing) }}" class="text-indigo-600 hover:text-indigo-900 mx-2">@lang('admin.edit')</a>
+                                <form action="{{ route($adminRoutePrefix.'listings.destroy', $listing) }}" method="POST" class="inline" onsubmit="return confirm('@lang('admin.confirm_delete')')">
                                     @csrf @method('DELETE')
                                     <button type="submit" class="text-red-600 hover:text-red-900">@lang('admin.delete')</button>
                                 </form>
