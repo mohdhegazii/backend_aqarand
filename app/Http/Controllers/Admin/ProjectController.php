@@ -90,17 +90,24 @@ class ProjectController extends Controller
         // Auto-generate slugs if missing
         $validated['name'] = $validated['name_en']; // Fallback
 
-        // Logic: seo_slug_en defaults to slug(name_en), seo_slug_ar defaults to slug(name_ar)
-        $validated['seo_slug_en'] = !empty($validated['seo_slug_en']) ? $validated['seo_slug_en'] : Str::slug($validated['name_en']);
+            // Main slug fallback
+            $validated['slug'] = $validated['seo_slug_en'];
 
-        // Arabic Slug - user specifically asked: "seo slug Arabic is the Arabic Name"
-        $nameAr = $request->input('name_ar');
-        if (empty($validated['seo_slug_ar']) && !empty($nameAr)) {
-             $validated['seo_slug_ar'] = preg_replace('/\s+/u', '-', trim($nameAr));
-        }
+            // Ensure slug uniqueness
+            $originalSlug = $validated['slug'];
+            $count = 1;
+            while (Project::where('slug', $validated['slug'])->exists()) {
+                $validated['slug'] = $originalSlug . '-' . $count;
+                $count++;
+            }
 
-        // Main slug fallback
-        $validated['slug'] = $validated['seo_slug_en'];
+            $project = Project::create($request->except('amenities', 'seo_slug_en', 'seo_slug_ar', 'hero_image', 'gallery', 'brochure') + [
+                'name' => $validated['name'],
+                'slug' => $validated['slug'],
+                'seo_slug_en' => $validated['seo_slug_en'],
+                'seo_slug_ar' => $validated['seo_slug_ar'],
+                'is_active' => $request->has('is_active'),
+            ]);
 
         // Ensure slug uniqueness
         $originalSlug = $validated['slug'];
@@ -118,34 +125,33 @@ class ProjectController extends Controller
             'is_active' => $request->has('is_active'),
         ]);
 
-        if ($request->has('amenities')) {
-            $project->amenities()->sync($request->amenities);
-        }
+            // Media Handling
+            $updates = [];
+            $galleryPaths = [];
 
-        // Media Handling
-        $updates = [];
-        $galleryPaths = [];
+            if ($request->hasFile('gallery')) {
+                $galleryPaths = $this->projectMediaService->handleGalleryUpload($project, $request->file('gallery'));
+                $updates['gallery'] = $galleryPaths;
 
-        if ($request->hasFile('gallery')) {
-            $galleryPaths = $this->projectMediaService->handleGalleryUpload($project, $request->file('gallery'));
-            $updates['gallery'] = $galleryPaths;
-
-            // Set first gallery image as hero by default on create
-            if (!empty($galleryPaths) && isset($galleryPaths[0])) {
-                $updates['hero_image_url'] = $galleryPaths[0];
+                // Set first gallery image as hero by default on create
+                if (!empty($galleryPaths) && isset($galleryPaths[0])) {
+                    $updates['hero_image_url'] = $galleryPaths[0];
+                }
             }
-        }
 
-        if ($request->hasFile('brochure')) {
-            $updates['brochure_url'] = $this->projectMediaService->handleBrochureUpload($project, $request->file('brochure'));
-        }
+            if ($request->hasFile('brochure')) {
+                $updates['brochure_url'] = $this->projectMediaService->handleBrochureUpload($project, $request->file('brochure'));
+            }
 
-        if (!empty($updates)) {
-            $project->update($updates);
-        }
+            if (!empty($updates)) {
+                $project->update($updates);
+            }
 
-        return redirect()->route('admin.projects.index')
-            ->with('success', __('admin.created_successfully'));
+            return redirect()->route('admin.projects.index')
+                ->with('success', __('admin.created_successfully'));
+        } catch (\Throwable $e) {
+            dd($e);
+        }
     }
 
     public function edit(Project $project)
@@ -193,54 +199,57 @@ class ProjectController extends Controller
             $validated['seo_slug_en'] = Str::slug($validated['name_en']);
         }
 
-        if (empty($validated['seo_slug_ar']) && $request->filled('name_ar')) {
-             $validated['seo_slug_ar'] = preg_replace('/\s+/u', '-', trim($request->name_ar));
-        }
-
-        $data = $request->except('amenities', 'seo_slug_en', 'seo_slug_ar', 'hero_image', 'gallery', 'brochure');
-        $data['seo_slug_en'] = $validated['seo_slug_en'];
-        $data['seo_slug_ar'] = $validated['seo_slug_ar'] ?? null;
-        $data['is_active'] = $request->has('is_active');
-
-        // Handle secondary keywords as JSON array if passed as CSV or array
-        if ($request->has('secondary_keywords_en_str')) {
-             $data['secondary_keywords_en'] = array_map('trim', explode(',', $request->secondary_keywords_en_str));
-        }
-        if ($request->has('secondary_keywords_ar_str')) {
-             $data['secondary_keywords_ar'] = array_map('trim', explode(',', $request->secondary_keywords_ar_str));
-        }
-
-        $project->update($data);
-
-        if ($request->has('amenities')) {
-            $project->amenities()->sync($request->amenities);
-        }
-
-        // Media Handling
-        // Update Hero Image from selection
-        if ($request->filled('selected_hero')) {
-            $project->hero_image_url = $request->selected_hero;
-        }
-
-        // Gallery: Append new images
-        if ($request->hasFile('gallery')) {
-            $newGallery = $this->projectMediaService->handleGalleryUpload($project, $request->file('gallery'));
-            $currentGallery = $project->gallery ?? [];
-            $project->gallery = array_merge($currentGallery, $newGallery);
-        }
-
-        // Brochure: Delete old if new is uploaded
-        if ($request->hasFile('brochure')) {
-            if ($project->brochure_url && Storage::disk('public')->exists($project->brochure_url)) {
-                Storage::disk('public')->delete($project->brochure_url);
+            if (empty($validated['seo_slug_ar']) && $request->filled('name_ar')) {
+                $validated['seo_slug_ar'] = preg_replace('/\s+/u', '-', trim($request->name_ar));
             }
-            $project->brochure_url = $this->projectMediaService->handleBrochureUpload($project, $request->file('brochure'));
+
+            $data = $request->except('amenities', 'seo_slug_en', 'seo_slug_ar', 'hero_image', 'gallery', 'brochure');
+            $data['seo_slug_en'] = $validated['seo_slug_en'];
+            $data['seo_slug_ar'] = $validated['seo_slug_ar'] ?? null;
+            $data['is_active'] = $request->has('is_active');
+
+            // Handle secondary keywords as JSON array if passed as CSV or array
+            if ($request->has('secondary_keywords_en_str')) {
+                $data['secondary_keywords_en'] = array_map('trim', explode(',', $request->secondary_keywords_en_str));
+            }
+            if ($request->has('secondary_keywords_ar_str')) {
+                $data['secondary_keywords_ar'] = array_map('trim', explode(',', $request->secondary_keywords_ar_str));
+            }
+
+            $project->update($data);
+
+            if ($request->has('amenities')) {
+                $project->amenities()->sync($request->amenities);
+            }
+
+            // Media Handling
+            // Update Hero Image from selection
+            if ($request->filled('selected_hero')) {
+                $project->hero_image_url = $request->selected_hero;
+            }
+
+            // Gallery: Append new images
+            if ($request->hasFile('gallery')) {
+                $newGallery = $this->projectMediaService->handleGalleryUpload($project, $request->file('gallery'));
+                $currentGallery = $project->gallery ?? [];
+                $project->gallery = array_merge($currentGallery, $newGallery);
+            }
+
+            // Brochure: Delete old if new is uploaded
+            if ($request->hasFile('brochure')) {
+                if ($project->brochure_url && Storage::disk('public')->exists($project->brochure_url)) {
+                    Storage::disk('public')->delete($project->brochure_url);
+                }
+                $project->brochure_url = $this->projectMediaService->handleBrochureUpload($project, $request->file('brochure'));
+            }
+
+            $project->save();
+
+            return redirect()->route('admin.projects.index')
+                ->with('success', __('admin.updated_successfully'));
+        } catch (\Throwable $e) {
+            dd($e);
         }
-
-        $project->save();
-
-        return redirect()->route('admin.projects.index')
-            ->with('success', __('admin.updated_successfully'));
     }
 
     public function destroy(Project $project)
