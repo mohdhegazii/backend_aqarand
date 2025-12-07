@@ -74,9 +74,7 @@
                                             <span class="hidden text-[10px] text-gray-400">N/A</span>
                                         @else
                                             @if(config('app.debug'))
-                                                <span class="text-[10px] text-red-500 text-center px-1 leading-tight">
-                                                    LOGO DEBUG: raw="{{ $rawLogo }}" id={{ $developer->id }}
-                                                </span>
+                                                <span class="text-[10px] text-red-500 text-center px-1 leading-tight">LOGO DEBUG: raw="{{ $rawLogo }}" {{ $logoDebug ? 'notes='.e(implode(' | ', $logoDebug)) : '' }} id={{ $developer->id }}</span>
                                             @else
                                                 <span class="text-[10px] text-gray-400">N/A</span>
                                             @endif
@@ -86,13 +84,7 @@
                                         <div class="mt-1 text-[10px] text-gray-500 leading-tight break-words">
                                             URL: {{ $developer->logo_url ?? 'null' }}
                                             @if(!empty($logoDebug))
-                                                <br>
-                                                <span class="font-semibold text-gray-600">Diagnostics:</span>
-                                                <ul class="list-disc ml-4">
-                                                    @foreach($logoDebug as $note)
-                                                        <li>{{ $note }}</li>
-                                                    @endforeach
-                                                </ul>
+                                                <br>notes={{ e(implode(' | ', $logoDebug)) }}
                                             @endif
                                         </div>
                                     @endif

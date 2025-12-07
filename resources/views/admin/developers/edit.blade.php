@@ -26,7 +26,7 @@
                             @else
                                 <img id="logo-preview" src="" alt="{{ $previewName }}" class="hidden h-full w-full object-contain" onerror="this.classList.add('hidden'); document.getElementById('logo-placeholder')?.classList.remove('hidden');">
                                 @if(config('app.debug'))
-                                    <span id="logo-placeholder" class="text-[11px] text-red-500 text-center px-2 leading-tight">LOGO DEBUG (CRUD): raw="{{ $developer->logo_path ?? $developer->logo }}" id={{ $developer->id }}</span>
+                                    <span id="logo-placeholder" class="text-[11px] text-red-500 text-center px-2 leading-tight">LOGO DEBUG (CRUD): raw="{{ $developer->logo_path ?? $developer->logo }}" {{ $logoDebug ? 'notes='.e(implode(' | ', $logoDebug)) : '' }} id={{ $developer->id }}</span>
                                 @else
                                     <span id="logo-placeholder" class="text-[11px] text-gray-400 text-center px-2">@lang('admin.logo')</span>
                                 @endif
