@@ -1,3 +1,9 @@
+@php
+    $isAr = app()->getLocale() === 'ar';
+    $rawPartOfMaster = old('is_part_of_master_project', $project->is_part_of_master_project);
+    $normalizedPartOfMaster = isset($rawPartOfMaster) && $rawPartOfMaster !== '' ? (string) $rawPartOfMaster : '';
+@endphp
+
 <div class="space-y-6">
     <h3 class="text-lg font-bold text-gray-800">{{ __('admin.projects.steps.basic') }} / {{ __('admin.projects.steps.location') }}</h3>
 
@@ -9,26 +15,28 @@
 
     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
-            <label class="block text-sm font-semibold text-gray-700">اسم المشروع (عربي)
-                <span class="text-xs text-gray-500 block">Project Name (Arabic)</span>
-            </label>
-            <input type="text" name="name_ar" value="{{ old('name_ar', $project->name_ar ?? '') }}" required class="w-full rounded border-gray-300" />
-            <p class="text-xs text-gray-500 mt-1">يُستخدم في الـ SEO العربي والعنوان التعريفي.</p>
+            <label class="block text-sm font-semibold text-gray-700">{{ $isAr ? 'اسم المشروع (عربي)' : 'Project Name (Arabic)' }}</label>
+            <input type="text" name="name_ar" value="{{ old('name_ar', $project->name_ar ?? '') }}" required class="form-control form-control-lg w-full rounded border-gray-300" placeholder="{{ $isAr ? 'مثال: كمبوند المقصد العاصمة الإدارية' : 'Example: Al Maqsad New Capital (Arabic name)' }}" />
+            @if($isAr)
+                <p class="text-xs text-gray-500 mt-1">يُستخدم في الـ SEO العربي والعنوان التعريفي.</p>
+            @else
+                <p class="text-xs text-gray-500 mt-1">Used for SEO (Arabic version) and page title in Arabic.</p>
+            @endif
         </div>
         <div>
-            <label class="block text-sm font-semibold text-gray-700">اسم المشروع (إنجليزي)
-                <span class="text-xs text-gray-500 block">Project Name (English)</span>
-            </label>
-            <input type="text" name="name_en" value="{{ old('name_en', $project->name_en ?? '') }}" required class="w-full rounded border-gray-300" />
-            <p class="text-xs text-gray-500 mt-1">Used for English meta title and slug.</p>
+            <label class="block text-sm font-semibold text-gray-700">{{ $isAr ? 'اسم المشروع (إنجليزي)' : 'Project Name (English)' }}</label>
+            <input type="text" name="name_en" value="{{ old('name_en', $project->name_en ?? '') }}" required class="form-control form-control-lg w-full rounded border-gray-300" placeholder="{{ $isAr ? 'مثال: Al Maqsad New Capital' : 'Example: Al Maqsad New Capital' }}" />
+            @if($isAr)
+                <p class="text-xs text-gray-500 mt-1">يُستخدم في الـ SEO الإنجليزي والعنوان التعريفي الإنجليزي.</p>
+            @else
+                <p class="text-xs text-gray-500 mt-1">Used for English SEO and slug/title.</p>
+            @endif
         </div>
     </div>
 
     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
-            <label class="block text-sm font-semibold text-gray-700">المطوّر
-                <span class="text-xs text-gray-500 block">Developer</span>
-            </label>
+            <label class="block text-sm font-semibold text-gray-700">{{ $isAr ? 'المطوّر' : 'Developer' }}</label>
             <select name="developer_id" class="w-full rounded border-gray-300" required>
                 <option value="">-- {{ __('admin.select_developer') }} --</option>
                 @foreach($developers as $dev)
@@ -37,35 +45,37 @@
             </select>
         </div>
         <div>
-            <label class="block text-sm font-semibold text-gray-700">تاريخ الإطلاق
-                <span class="text-xs text-gray-500 block">Launch Date</span>
-            </label>
+            <label class="block text-sm font-semibold text-gray-700">{{ $isAr ? 'تاريخ الإطلاق' : 'Launch Date' }}</label>
             <input type="date" name="launch_date" value="{{ old('launch_date', optional($project->launch_date ?? $project->sales_launch_date ?? null)->format('Y-m-d')) }}" class="w-full rounded border-gray-300" />
-            <p class="text-xs text-gray-500 mt-1">تاريخ إطلاق المشروع أو أول مرحلة.</p>
+            @if($isAr)
+                <p class="text-xs text-gray-500 mt-1">تاريخ إطلاق المشروع أو أول مرحلة.</p>
+            @else
+                <p class="text-xs text-gray-500 mt-1">Project launch date or first phase start.</p>
+            @endif
         </div>
     </div>
 
     <div>
-        <label class="block text-sm font-semibold text-gray-700">مرحلة في مشروع رئيسي آكبر؟
-            <span class="text-xs text-gray-500 block">Phase of main Master Project?</span>
-        </label>
+        <label class="block text-sm font-semibold text-gray-700">{{ $isAr ? 'مرحلة في مشروع رئيسي آكبر؟' : 'Phase of main Master Project?' }}</label>
         <div class="flex items-center space-x-4 mt-1">
             <label class="inline-flex items-center space-x-2">
-                <input type="radio" name="is_part_of_master_project" value="0" x-model="partOfMaster">
+                <input type="radio" name="is_part_of_master_project" value="0" x-model="partOfMaster" {{ $normalizedPartOfMaster === '0' ? 'checked' : '' }}>
                 <span>{{ __('admin.no') }}</span>
             </label>
             <label class="inline-flex items-center space-x-2">
-                <input type="radio" name="is_part_of_master_project" value="1" x-model="partOfMaster">
+                <input type="radio" name="is_part_of_master_project" value="1" x-model="partOfMaster" {{ $normalizedPartOfMaster === '1' ? 'checked' : '' }}>
                 <span>{{ __('admin.yes') }}</span>
             </label>
         </div>
-        <p class="text-xs text-gray-500 mt-1">{{ __('admin.projects.part_of_master_project') }}</p>
+        @if($isAr)
+            <p class="text-xs text-gray-500 mt-1">{{ __('admin.projects.part_of_master_project') }}</p>
+        @else
+            <p class="text-xs text-gray-500 mt-1">Choose whether this project is a phase of an existing master project.</p>
+        @endif
     </div>
 
     <div x-show="partOfMaster === '1'" class="space-y-2" x-cloak>
-        <label class="block text-sm font-semibold text-gray-700">مشروع رئيسي (اختياري)
-            <span class="text-xs text-gray-500 block">Master Project (Optional)</span>
-        </label>
+        <label class="block text-sm font-semibold text-gray-700">{{ $isAr ? 'مشروع رئيسي (اختياري)' : 'Master Project (Optional)' }}</label>
         <select name="master_project_id" id="master_project_id" class="w-full rounded border-gray-300" x-bind:required="partOfMaster === '1'">
             <option value="">-- {{ __('admin.projects.master_project_placeholder') }} --</option>
             @foreach($existingProjects as $existingProject)
@@ -82,14 +92,17 @@
                 </option>
             @endforeach
         </select>
-        <p class="text-xs text-gray-500">{{ __('admin.projects.master_project_note') }}</p>
+        @if($isAr)
+            <p class="text-xs text-gray-500">{{ __('admin.projects.master_project_note') }}</p>
+        @else
+            <p class="text-xs text-gray-500">Location will be inherited from the selected master project.</p>
+        @endif
     </div>
 
-    <div class="space-y-2">
+    <div id="project-location-block" class="space-y-2" style="display:none;">
         <div class="flex items-center justify-between">
             <div>
-                <p class="text-sm font-semibold text-gray-700">البلد / المنطقة / المدينة / الحي</p>
-                <p class="text-xs text-gray-500">Country / Region / City / District</p>
+                <p class="text-sm font-semibold text-gray-700">{{ $isAr ? 'البلد / المنطقة / المدينة / الحي' : 'Country / Region / City / District' }}</p>
             </div>
             <div class="text-xs text-gray-500" id="location_inherit_badge" hidden>
                 {{ __('admin.projects.inherited_from_master') }}
@@ -148,9 +161,7 @@
 
     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
-            <label class="block text-sm font-semibold text-gray-700">مساحة المشروع (م² / فدان…)
-                <span class="text-xs text-gray-500 block">Project Area (m² / Acre…)</span>
-            </label>
+            <label class="block text-sm font-semibold text-gray-700">{{ $isAr ? 'مساحة المشروع (م² / فدان…)' : 'Project Area (m² / Acre…)' }}</label>
             <div class="flex space-x-2">
                 <input type="number" step="0.01" name="project_area" value="{{ old('project_area', $project->project_area_value ?? '') }}" class="w-full rounded border-gray-300" />
                 <select name="project_area_unit" class="rounded border-gray-300">
@@ -158,7 +169,7 @@
                     <option value="feddan" {{ old('project_area_unit', $project->project_area_unit ?? '') === 'feddan' ? 'selected' : '' }}>{{ __('admin.unit_feddan') }}</option>
                 </select>
             </div>
-            <p class="text-xs text-gray-500 mt-1">الأساس بالفدان.</p>
+            <p class="text-xs text-gray-500 mt-1">{{ $isAr ? 'الأساس بالفدان.' : 'Default unit is Feddan.' }}</p>
         </div>
     </div>
 </div>
