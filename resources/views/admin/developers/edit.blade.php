@@ -32,6 +32,16 @@
                                 @endif
                             @endif
                         </div>
+                        @if(config('app.debug') && !empty($logoDebug))
+                            <div class="text-[11px] text-left text-gray-600 bg-gray-100 border rounded p-2 w-full">
+                                <div class="font-semibold text-gray-700 mb-1">Logo diagnostics</div>
+                                <ul class="list-disc ml-4 space-y-1">
+                                    @foreach($logoDebug as $note)
+                                        <li>{{ $note }}</li>
+                                    @endforeach
+                                </ul>
+                            </div>
+                        @endif
                         <div class="space-y-1">
                             <h3 id="preview-name" class="text-lg font-semibold text-gray-800">{{ $previewName }}</h3>
                             <div id="preview-alt-en" class="text-sm text-gray-600">EN: {{ $previewAltEn ?? __('admin.name_en') }}</div>
