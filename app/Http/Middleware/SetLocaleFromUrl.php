@@ -60,6 +60,11 @@ class SetLocaleFromUrl
 
         $request->attributes->set('current_locale', $currentLocale);
 
+        // Remove the locale parameter so resource controllers receive the expected arguments
+        if ($request->route()) {
+            $request->route()->forgetParameter('locale');
+        }
+
         return $next($request);
     }
 }
