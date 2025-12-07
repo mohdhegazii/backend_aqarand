@@ -13,7 +13,8 @@
     };
 
     $sections = [
-        'files' => [
+        [
+            'key' => 'files',
             'label' => $isRtl ? 'إدارة الملفات' : 'File Manager',
             'items' => [
                 [
@@ -24,7 +25,8 @@
                 ],
             ],
         ],
-        'real-estate' => [
+        [
+            'key' => 'real-estate',
             'label' => $isRtl ? 'العقارات' : 'Real Estate',
             'items' => [
                 [
@@ -53,7 +55,8 @@
                 ],
             ],
         ],
-        'settings' => [
+        [
+            'key' => 'settings',
             'label' => $isRtl ? 'الإعدادات' : 'Settings',
             'items' => [
                 ['heading' => $isRtl ? 'المواقع' : 'Locations'],
@@ -119,14 +122,16 @@
 
     $defaultOpenSection = null;
 
-    foreach ($sections as $key => &$section) {
+    foreach ($sections as &$section) {
         foreach ($section['items'] as $item) {
             if (($item['active'] ?? false) && ! $defaultOpenSection) {
-                $defaultOpenSection = $key;
+                $defaultOpenSection = $section['key'];
                 break;
             }
         }
     }
+
+    unset($section);
 @endphp
 
 <nav x-data="sidebarAccordion('{{ $defaultOpenSection ?? '' }}')" class="mt-4 px-2 space-y-3 overflow-y-auto max-h-[calc(100vh-4rem)]">
@@ -137,13 +142,13 @@
         </a>
     </div>
 
-    @foreach ($sections as $sectionKey => $section)
+    @foreach ($sections as $section)
         <div class="rounded-xl border border-gray-200 bg-white shadow-sm">
-            <button type="button" @click="toggle('{{ $sectionKey }}')" class="w-full flex items-center justify-between gap-3 px-4 py-3 text-sm font-semibold text-gray-800 hover:bg-gray-50" :aria-expanded="isOpen('{{ $sectionKey }}')">
+            <button type="button" @click="toggle('{{ $section['key'] }}')" class="w-full flex items-center justify-between gap-3 px-4 py-3 text-sm font-semibold text-gray-800 hover:bg-gray-50" :aria-expanded="isOpen('{{ $section['key'] }}')">
                 <span>{{ $section['label'] }}</span>
-                <i class="bi bi-chevron-down transition-transform duration-200" :class="isOpen('{{ $sectionKey }}') ? 'rotate-180' : ''"></i>
+                <i class="bi bi-chevron-down transition-transform duration-200" :class="isOpen('{{ $section['key'] }}') ? 'rotate-180' : ''"></i>
             </button>
-            <div x-show="isOpen('{{ $sectionKey }}')" x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0 -translate-y-2" x-transition:enter-end="opacity-100 translate-y-0" x-transition:leave="transition ease-in duration-150" x-transition:leave-start="opacity-100 translate-y-0" x-transition:leave-end="opacity-0 -translate-y-2" class="border-t border-gray-100 bg-gray-50">
+            <div x-show="isOpen('{{ $section['key'] }}')" x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0 -translate-y-2" x-transition:enter-end="opacity-100 translate-y-0" x-transition:leave="transition ease-in duration-150" x-transition:leave-start="opacity-100 translate-y-0" x-transition:leave-end="opacity-0 -translate-y-2" class="border-t border-gray-100 bg-gray-50">
                 <ul class="py-2 space-y-1">
                     @foreach ($section['items'] as $item)
                         @if(isset($item['heading']))
