@@ -127,7 +127,6 @@
             }
         }
     }
-    unset($section);
 @endphp
 
 <nav x-data="sidebarAccordion('{{ $defaultOpenSection ?? '' }}')" class="mt-4 px-2 space-y-3 overflow-y-auto max-h-[calc(100vh-4rem)]">
