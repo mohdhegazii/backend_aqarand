@@ -15,6 +15,7 @@ use App\Http\Controllers\Admin\PropertyTypeController;
 use App\Http\Controllers\Admin\RegionController;
 use App\Http\Controllers\Admin\UnitController;
 use App\Http\Controllers\Admin\UnitTypeController;
+use App\Models\Developer;
 use Illuminate\Routing\Middleware\SubstituteBindings;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
@@ -150,3 +151,26 @@ Route::group([
         require __DIR__.'/auth.php';
     }
 });
+
+if (config('app.debug')) {
+    Route::middleware(['web', 'auth'])->get('/debug/developer-logo/{id}', function ($id) {
+        $developer = Developer::findOrFail($id);
+
+        $raw = $developer->logo_path ?? $developer->logo ?? $developer->logo_url ?? null;
+
+        $info = [
+            'developer_id' => $developer->id,
+            'raw_value' => $raw,
+            'public_path' => public_path(),
+            'storage_public_root' => config('filesystems.disks.public.root'),
+            'exists_on_storage' => $raw ? \Storage::disk('public')->exists($raw) : null,
+            'storage_url_if_any' => $raw && \Storage::disk('public')->exists($raw)
+                ? \Storage::disk('public')->url($raw)
+                : null,
+            'public_storage_path' => $raw ? public_path('storage/' . ltrim($raw, '/')) : null,
+            'exists_on_public_storage' => $raw ? file_exists(public_path('storage/' . ltrim($raw, '/'))) : null,
+        ];
+
+        return response()->json($info);
+    });
+}

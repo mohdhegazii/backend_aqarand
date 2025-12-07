@@ -65,29 +65,20 @@
                                 </td>
                                 <td class="px-5 py-5 border-b border-gray-200 text-sm">
                                     @php
-                                        $rawLogo = $developer->logo_path ?? $developer->logo ?? null;
-                                        $logoDebug = $developer->logo_debug ?? [];
+                                        $logoUrl = $developer->logo_url ?? null;
                                     @endphp
                                     <div class="logo-thumb h-10 w-10 rounded border bg-white flex items-center justify-center overflow-hidden">
-                                        @if($developer->logo_url)
-                                            <img src="{{ $developer->logo_url }}" alt="{{ $developer->display_name }}" class="h-full w-full object-contain" onerror="this.classList.add('hidden'); this.nextElementSibling?.classList.remove('hidden');">
+                                        @if($logoUrl)
+                                            <img src="{{ $logoUrl }}" alt="{{ $developer->name }}" style="height:40px; width:auto; object-fit:contain;" onerror="this.classList.add('hidden'); this.nextElementSibling?.classList.remove('hidden');">
                                             <span class="hidden text-[10px] text-gray-400">N/A</span>
                                         @else
                                             @if(config('app.debug'))
-                                                <span class="text-[10px] text-red-500 text-center px-1 leading-tight">LOGO DEBUG: raw="{{ $rawLogo }}" {{ $logoDebug ? 'notes='.e(implode(' | ', $logoDebug)) : '' }} id={{ $developer->id }}</span>
+                                                <span style="color:red; font-size:11px;">LOGO DEBUG: no URL resolved for developer #{{ $developer->id }} (check storage logs)</span>
                                             @else
                                                 <span class="text-[10px] text-gray-400">N/A</span>
                                             @endif
                                         @endif
                                     </div>
-                                    @if(config('app.debug'))
-                                        <div class="mt-1 text-[10px] text-gray-500 leading-tight break-words">
-                                            URL: {{ $developer->logo_url ?? 'null' }}
-                                            @if(!empty($logoDebug))
-                                                <br>notes={{ e(implode(' | ', $logoDebug)) }}
-                                            @endif
-                                        </div>
-                                    @endif
                                 </td>
                                 <td class="px-5 py-5 border-b border-gray-200 text-sm">
                                     <span class="relative inline-block px-3 py-1 font-semibold text-{{ $developer->is_active ? 'green' : 'red' }}-900 leading-tight">
