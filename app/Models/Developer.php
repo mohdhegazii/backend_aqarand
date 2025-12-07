@@ -100,13 +100,15 @@ class Developer extends Model
             'exists_on_disk' => null,
             'exists_in_public_storage' => null,
             'candidate_public_url' => null,
+            'public_storage_path' => null,
+            'fallback_url' => null,
         ];
 
         if (!$raw) {
             // No logo set
-             if (config('app.debug')) {
-                 \Log::debug('Developer logo: empty raw value', $debug);
-             }
+            if (config('app.debug')) {
+                \Log::debug('Developer logo: empty raw value', $debug);
+            }
             return $this->logoResolutionCache = [
                 'url' => null,
                 'debug' => $debug,
@@ -125,25 +127,8 @@ class Developer extends Model
             ];
         }
 
-        // Check on storage disk "public"
         // Ensure we don't double slash if raw starts with /
         $storagePath = ltrim($raw, '/');
-        $existsOnDisk = Storage::disk('public')->exists($storagePath);
-        $debug['exists_on_disk'] = $existsOnDisk;
-
-        if ($existsOnDisk) {
-            // Force relative URL for local storage to avoid port mismatch issues
-            $url = '/storage/' . $storagePath;
-
-            $debug['candidate_public_url'] = $url;
-             if (config('app.debug')) {
-                \Log::debug('Developer logo: resolved via Storage::disk(public) with relative path', $debug);
-             }
-            return $this->logoResolutionCache = [
-                'url' => $url,
-                'debug' => $debug,
-            ];
-        }
 
         // Check under public/storage (physical file check)
         // This handles cases where symlink might be involved or direct file placement
@@ -153,13 +138,32 @@ class Developer extends Model
         $debug['public_storage_path'] = $publicStoragePath;
 
         if ($existsPublic) {
-             // Force relative URL
+            // Force relative URL
             $url = '/storage/' . $storagePath;
 
             $debug['candidate_public_url'] = $url;
-             if (config('app.debug')) {
+            if (config('app.debug')) {
                 \Log::debug('Developer logo: resolved via public/storage path', $debug);
-             }
+            }
+            return $this->logoResolutionCache = [
+                'url' => $url,
+                'debug' => $debug,
+            ];
+        }
+
+        // Check on storage disk "public" and use fallback route when needed
+        $existsOnDisk = Storage::disk('public')->exists($storagePath);
+        $debug['exists_on_disk'] = $existsOnDisk;
+
+        if ($existsOnDisk) {
+            // Force relative URL for local storage via controller to avoid server path conflicts
+            $url = route('media.fallback', ['path' => $storagePath], false);
+
+            $debug['candidate_public_url'] = $url;
+            $debug['fallback_url'] = $url;
+            if (config('app.debug')) {
+                \Log::debug('Developer logo: resolved via media fallback route', $debug);
+            }
             return $this->logoResolutionCache = [
                 'url' => $url,
                 'debug' => $debug,
