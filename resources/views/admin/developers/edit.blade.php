@@ -13,8 +13,8 @@
                     $previewName = $developer->name ?? $developer->name_en ?? $developer->name_ar ?? __('admin.developers');
                     $previewAltEn = $developer->name_en;
                     $previewAltAr = $developer->name_ar;
-                    $logoUrl = $developer->logo_url ?? null;
-                    $logoDebug = $developer->logo_debug ?? [];
+                    $logoUrl = $developer->logo_url;
+                    $logoDebug = $developer->logo_debug;
                 @endphp
 
                 <div class="mb-6 p-4 bg-gray-50 border rounded">

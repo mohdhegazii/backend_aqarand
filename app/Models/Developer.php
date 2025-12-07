@@ -25,6 +25,7 @@ class Developer extends Model
         'description_ar',
         'logo_path',
         'logo',
+        'logo_url', // Added just in case, based on schema.sql
         'website',
         'is_active',
     ];
@@ -79,76 +80,93 @@ class Developer extends Model
         return $this->website;
     }
 
+    /**
+     * Resolve the logo URL with debug information.
+     * Checks multiple columns and storage locations.
+     */
     protected function resolveLogo(): array
     {
         if (!empty($this->logoResolutionCache)) {
             return $this->logoResolutionCache;
         }
 
-        $raw = $this->logo_path ?? $this->logo ?? null;
+        // Check all possible columns
+        $raw = $this->logo_path ?? $this->logo ?? $this->logo_url ?? null;
 
         $debug = [
             'developer_id' => $this->id ?? null,
             'raw' => $raw,
-            'storage_disk_root' => config('filesystems.disks.public.root') ?? null,
+            'disk_root' => config('filesystems.disks.public.root') ?? null,
             'public_path' => public_path(),
-            'candidate_urls' => [],
-            'exists_storage' => null,
-            'exists_public' => null,
+            'exists_on_disk' => null,
+            'exists_in_public_storage' => null,
+            'candidate_public_url' => null,
         ];
 
         if (!$raw) {
-            \Log::warning('Developer logo missing raw value', $debug);
+            // No logo set
+             if (config('app.debug')) {
+                 \Log::debug('Developer logo: empty raw value', $debug);
+             }
             return $this->logoResolutionCache = [
                 'url' => null,
                 'debug' => $debug,
             ];
         }
 
+        // If full URL
         if (Str::startsWith($raw, ['http://', 'https://'])) {
-            $debug['candidate_urls'][] = $raw;
-            \Log::debug('Developer logo using full URL', $debug);
-
+            $debug['candidate_public_url'] = $raw;
+            if (config('app.debug')) {
+                \Log::debug('Developer logo: using full URL', $debug);
+            }
             return $this->logoResolutionCache = [
                 'url' => $raw,
                 'debug' => $debug,
             ];
         }
 
+        // Check on storage disk "public"
+        // Ensure we don't double slash if raw starts with /
         $storagePath = ltrim($raw, '/');
-        $debug['candidate_urls'][] = 'storage://' . $storagePath;
+        $existsOnDisk = Storage::disk('public')->exists($storagePath);
+        $debug['exists_on_disk'] = $existsOnDisk;
 
-        $existsOnStorage = Storage::disk('public')->exists($storagePath);
-        $debug['exists_storage'] = $existsOnStorage;
-
-        if ($existsOnStorage) {
+        if ($existsOnDisk) {
             $url = Storage::disk('public')->url($storagePath);
-            $debug['candidate_urls'][] = $url;
-            \Log::debug('Developer logo resolved via Storage::disk(public)', $debug);
-
+            $debug['candidate_public_url'] = $url;
+             if (config('app.debug')) {
+                \Log::debug('Developer logo: resolved via Storage::disk(public)', $debug);
+             }
             return $this->logoResolutionCache = [
                 'url' => $url,
                 'debug' => $debug,
             ];
         }
 
-        $publicStoragePath = public_path('storage/' . ltrim($raw, '/'));
-        $debug['candidate_urls'][] = $publicStoragePath;
-        $existsOnPublic = file_exists($publicStoragePath);
-        $debug['exists_public'] = $existsOnPublic;
+        // Check under public/storage (physical file check)
+        // This handles cases where symlink might be involved or direct file placement
+        $publicStoragePath = public_path('storage/' . $storagePath);
+        $existsPublic = file_exists($publicStoragePath);
+        $debug['exists_in_public_storage'] = $existsPublic;
+        $debug['public_storage_path'] = $publicStoragePath;
 
-        if ($existsOnPublic) {
-            $url = asset('storage/' . ltrim($raw, '/'));
-            $debug['candidate_urls'][] = $url;
-            \Log::debug('Developer logo resolved via public/storage', $debug);
-
+        if ($existsPublic) {
+            $url = asset('storage/' . $storagePath);
+            $debug['candidate_public_url'] = $url;
+             if (config('app.debug')) {
+                \Log::debug('Developer logo: resolved via public/storage path', $debug);
+             }
             return $this->logoResolutionCache = [
                 'url' => $url,
                 'debug' => $debug,
             ];
         }
 
-        \Log::error('Developer logo could NOT be resolved', $debug);
+        // Could not resolve
+        if (config('app.debug')) {
+            \Log::error('Developer logo: could NOT resolve path', $debug);
+        }
 
         return $this->logoResolutionCache = [
             'url' => null,

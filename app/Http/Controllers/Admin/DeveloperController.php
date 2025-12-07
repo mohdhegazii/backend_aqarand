@@ -67,9 +67,16 @@ class DeveloperController extends Controller
         }
 
         if ($request->hasFile('logo')) {
+            // Store in 'developers' folder on 'public' disk
+            // resulting path will be like 'developers/filename.png'
             $path = $request->file('logo')->store('developers', 'public');
+
+            // Save to both possible columns to ensure compatibility
             $validated['logo_path'] = $path;
             $validated['logo'] = $path;
+
+            // If the model has logo_url in fillable, maybe clear it or set it?
+            // Better to rely on the robust accessor.
         } else {
             unset($validated['logo']);
         }
@@ -123,9 +130,16 @@ class DeveloperController extends Controller
         }
 
         if ($request->hasFile('logo')) {
-            if ($developer->logo_path) {
-                Storage::disk('public')->delete($developer->logo_path);
+            // Delete old logo if it exists
+            $oldLogo = $developer->logo_path ?? $developer->logo;
+            if ($oldLogo) {
+                // Check if it's a file on disk (not a URL)
+                if (!Str::startsWith($oldLogo, ['http://', 'https://'])) {
+                    Storage::disk('public')->delete($oldLogo);
+                }
             }
+
+            // Store new logo
             $path = $request->file('logo')->store('developers', 'public');
             $validated['logo_path'] = $path;
             $validated['logo'] = $path;
