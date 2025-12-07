@@ -9,6 +9,28 @@
                 @csrf
                 @method('PUT')
 
+                @php
+                    $previewName = $developer->name ?? $developer->name_en ?? $developer->name_ar ?? __('admin.developers');
+                    $previewAltEn = $developer->name_en;
+                    $previewAltAr = $developer->name_ar;
+                    $logoUrl = $developer->logo_url;
+                @endphp
+
+                <div class="mb-6 p-4 bg-gray-50 border rounded flex items-center gap-4">
+                    <div class="h-24 w-24 rounded border bg-white flex items-center justify-center overflow-hidden">
+                        @if($logoUrl)
+                            <img src="{{ $logoUrl }}" alt="{{ $previewName }}" class="h-full w-full object-contain">
+                        @else
+                            <span class="text-[11px] text-gray-400 text-center px-2">@lang('admin.logo')</span>
+                        @endif
+                    </div>
+                    <div class="flex-1 space-y-1">
+                        <h3 class="text-lg font-semibold text-gray-800">{{ $previewName }}</h3>
+                        <div class="text-sm text-gray-600">{{ $previewAltEn ?? __('admin.name_en') }}</div>
+                        <div class="text-sm text-gray-600">{{ $previewAltAr ?? __('admin.name_ar') }}</div>
+                    </div>
+                </div>
+
                 <!-- Tabs Navigation -->
                 <div class="mb-4 border-b border-gray-200">
                     <ul class="flex flex-wrap -mb-px text-sm font-medium text-center" id="myTab" data-tabs-toggle="#myTabContent" role="tablist">
@@ -57,11 +79,6 @@
                 <div class="mt-6 border-t pt-6">
                     <div class="mb-4">
                         <label class="block text-gray-700 text-sm font-bold mb-2">@lang('admin.logo')</label>
-                        @if($developer->logo_path)
-                            <div class="mb-2">
-                                <img src="{{ asset('storage/' . $developer->logo_path) }}" alt="Logo" class="h-16 object-contain">
-                            </div>
-                        @endif
                         <input type="file" name="logo" class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100">
                     </div>
 

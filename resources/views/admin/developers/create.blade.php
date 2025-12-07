@@ -8,6 +8,23 @@
             <form action="{{ route($adminRoutePrefix.'developers.store') }}" method="POST" enctype="multipart/form-data">
                 @csrf
 
+                @php
+                    $previewName = old('name_en') ?? old('name_ar') ?? __('admin.developers');
+                    $previewAltEn = old('name_en');
+                    $previewAltAr = old('name_ar');
+                @endphp
+
+                <div class="mb-6 p-4 bg-gray-50 border rounded flex items-center gap-4">
+                    <div class="h-24 w-24 rounded border bg-white flex items-center justify-center overflow-hidden">
+                        <span class="text-[11px] text-gray-400 text-center px-2">@lang('admin.logo')</span>
+                    </div>
+                    <div class="flex-1 space-y-1">
+                        <h3 class="text-lg font-semibold text-gray-800">{{ $previewName }}</h3>
+                        <div class="text-sm text-gray-600">{{ $previewAltEn ?? __('admin.name_en') }}</div>
+                        <div class="text-sm text-gray-600">{{ $previewAltAr ?? __('admin.name_ar') }}</div>
+                    </div>
+                </div>
+
                 <!-- Tabs Navigation -->
                 <div class="mb-4 border-b border-gray-200">
                     <ul class="flex flex-wrap -mb-px text-sm font-medium text-center" id="myTab" data-tabs-toggle="#myTabContent" role="tablist">
