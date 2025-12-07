@@ -83,6 +83,8 @@ $registerAdminRoutes = function (string $namePrefix = 'admin.'): void {
             ->only(['index', 'show', 'update', 'destroy'])
             ->parameters(['media' => 'mediaFile']);
 
+        Route::get('file-manager', [\App\Http\Controllers\Admin\MediaController::class, 'index'])->name('file_manager');
+
         // Project Media Upload (Test Route)
         Route::post('projects/{project}/media', [\App\Http\Controllers\Admin\ProjectController::class, 'uploadMedia'])->name('projects.media.store');
 
