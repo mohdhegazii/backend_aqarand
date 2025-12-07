@@ -42,6 +42,7 @@ class ProjectController extends Controller
 
     public function create()
     {
+        $project = new Project();
         $developers = Developer::where('is_active', true)->orderBy('name')->get();
         $countries = Country::all();
         $amenities = Amenity::whereIn('amenity_type', ['project', 'both'])
@@ -53,7 +54,7 @@ class ProjectController extends Controller
         // For Master Project Dropdown
         $existingProjects = Project::select('id', 'name_en', 'name_ar', 'name')->get();
 
-        return view('admin.projects.create', compact('developers', 'countries', 'amenities', 'existingProjects'));
+        return view('admin.projects.create', compact('project', 'developers', 'countries', 'amenities', 'existingProjects'));
     }
 
     public function store(StoreProjectRequest $request)
