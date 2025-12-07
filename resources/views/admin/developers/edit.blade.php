@@ -9,6 +9,29 @@
                 @csrf
                 @method('PUT')
 
+                @php
+                    $previewName = $developer->name ?? $developer->name_en ?? $developer->name_ar ?? __('admin.developers');
+                    $previewAltEn = $developer->name_en;
+                    $previewAltAr = $developer->name_ar;
+                    $logoUrl = $developer->logo_url;
+                @endphp
+
+                <div class="mb-6 p-4 bg-gray-50 border rounded flex items-center gap-4">
+                    <div class="h-24 w-24 rounded border bg-white flex items-center justify-center overflow-hidden">
+                        @if($logoUrl)
+                            <img id="logo-preview" src="{{ $logoUrl }}" alt="{{ $previewName }}" class="h-full w-full object-contain" onerror="this.classList.add('hidden'); document.getElementById('logo-placeholder').classList.remove('hidden');">
+                        @else
+                            <img id="logo-preview" src="" alt="{{ $previewName }}" class="hidden h-full w-full object-contain">
+                        @endif
+                        <span id="logo-placeholder" class="{{ $logoUrl ? 'hidden' : '' }} text-[11px] text-gray-400 text-center px-2">@lang('admin.logo')</span>
+                    </div>
+                    <div class="flex-1 space-y-1">
+                        <h3 id="preview-name" class="text-lg font-semibold text-gray-800">{{ $previewName }}</h3>
+                        <div id="preview-name-en" class="text-sm text-gray-600">{{ $previewAltEn ?? __('admin.name_en') }}</div>
+                        <div id="preview-name-ar" class="text-sm text-gray-600">{{ $previewAltAr ?? __('admin.name_ar') }}</div>
+                    </div>
+                </div>
+
                 <!-- Tabs Navigation -->
                 <div class="mb-4 border-b border-gray-200">
                     <ul class="flex flex-wrap -mb-px text-sm font-medium text-center" id="myTab" data-tabs-toggle="#myTabContent" role="tablist">
@@ -57,11 +80,6 @@
                 <div class="mt-6 border-t pt-6">
                     <div class="mb-4">
                         <label class="block text-gray-700 text-sm font-bold mb-2">@lang('admin.logo')</label>
-                        @if($developer->logo_path)
-                            <div class="mb-2">
-                                <img src="{{ asset('storage/' . $developer->logo_path) }}" alt="Logo" class="h-16 object-contain">
-                            </div>
-                        @endif
                         <input type="file" name="logo" class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100">
                     </div>
 
@@ -117,6 +135,57 @@
 
             // Activate first tab by default
             document.getElementById('en-tab').click();
+
+            const logoInput = document.querySelector('input[name="logo"]');
+            const logoPreview = document.getElementById('logo-preview');
+            const logoPlaceholder = document.getElementById('logo-placeholder');
+            const namePreview = document.getElementById('preview-name');
+            const nameEnPreview = document.getElementById('preview-name-en');
+            const nameArPreview = document.getElementById('preview-name-ar');
+            const nameEnInput = document.querySelector('input[name="name_en"]');
+            const nameArInput = document.querySelector('input[name="name_ar"]');
+
+            function updateLogoPreview(file) {
+                if (!file) {
+                    if (!logoPreview.getAttribute('src')) {
+                        logoPreview.classList.add('hidden');
+                        logoPlaceholder.classList.remove('hidden');
+                    }
+                    return;
+                }
+
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    logoPreview.src = e.target.result;
+                    logoPreview.classList.remove('hidden');
+                    logoPlaceholder.classList.add('hidden');
+                };
+                reader.readAsDataURL(file);
+            }
+
+            logoInput?.addEventListener('change', (event) => {
+                const file = event.target.files?.[0];
+                updateLogoPreview(file);
+            });
+
+            function updateNamePreviews() {
+                namePreview.textContent = nameEnInput?.value || nameArInput?.value || namePreview.dataset.fallback || '';
+                nameEnPreview.textContent = nameEnInput?.value || nameEnPreview.dataset.fallback || '';
+                nameArPreview.textContent = nameArInput?.value || nameArPreview.dataset.fallback || '';
+            }
+
+            if (namePreview && !namePreview.dataset.fallback) {
+                namePreview.dataset.fallback = namePreview.textContent;
+            }
+            if (nameEnPreview && !nameEnPreview.dataset.fallback) {
+                nameEnPreview.dataset.fallback = nameEnPreview.textContent;
+            }
+            if (nameArPreview && !nameArPreview.dataset.fallback) {
+                nameArPreview.dataset.fallback = nameArPreview.textContent;
+            }
+
+            nameEnInput?.addEventListener('input', updateNamePreviews);
+            nameArInput?.addEventListener('input', updateNamePreviews);
         });
     </script>
 @endsection

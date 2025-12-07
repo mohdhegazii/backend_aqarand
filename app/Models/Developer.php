@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 
 class Developer extends Model
 {
@@ -62,7 +63,27 @@ class Developer extends Model
 
     public function getLogoUrlAttribute()
     {
-        return $this->logo_path ? Storage::url($this->logo_path) : null;
+        $path = $this->logo_path ?? $this->logo ?? null;
+
+        if (!$path) {
+            return null;
+        }
+
+        if (Str::startsWith($path, ['http://', 'https://'])) {
+            return $path;
+        }
+
+        $normalizedPath = ltrim($path, '/');
+
+        if (Str::startsWith($normalizedPath, ['storage/', 'uploads/'])) {
+            return asset($normalizedPath);
+        }
+
+        if (Storage::disk('public')->exists($normalizedPath)) {
+            return Storage::disk('public')->url($normalizedPath);
+        }
+
+        return asset($normalizedPath);
     }
 
     public function getWebsiteUrlAttribute()

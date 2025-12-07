@@ -64,9 +64,14 @@
                                     {{ $developer->display_name }}
                                 </td>
                                 <td class="px-5 py-5 border-b border-gray-200 text-sm">
-                                    @if($developer->logo_path)
-                                        <img src="{{ asset('storage/' . $developer->logo_path) }}" alt="Logo" class="h-8 object-contain">
-                                    @endif
+                                    <div class="h-10 w-10 rounded border bg-white flex items-center justify-center overflow-hidden">
+                                        @if($developer->logo_url)
+                                            <img src="{{ $developer->logo_url }}" alt="{{ $developer->display_name }}" class="h-full w-full object-contain" onerror="this.classList.add('hidden'); this.nextElementSibling.classList.remove('hidden');">
+                                            <span class="hidden text-[10px] text-gray-400" data-placeholder>Logo</span>
+                                        @else
+                                            <span class="text-[10px] text-gray-400" data-placeholder>N/A</span>
+                                        @endif
+                                    </div>
                                 </td>
                                 <td class="px-5 py-5 border-b border-gray-200 text-sm">
                                     <span class="relative inline-block px-3 py-1 font-semibold text-{{ $developer->is_active ? 'green' : 'red' }}-900 leading-tight">
