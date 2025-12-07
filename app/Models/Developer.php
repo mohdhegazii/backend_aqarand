@@ -97,7 +97,6 @@ class Developer extends Model
             }
 
             $normalizedPath = ltrim($path, '/');
-            $debug[] = "Evaluating raw logo path: {$path}";
 
             if (filter_var($normalizedPath, FILTER_VALIDATE_URL)) {
                 return $this->logoResolutionCache = [
@@ -107,61 +106,37 @@ class Developer extends Model
                 ];
             }
 
-            $publicDiskPath = $normalizedPath;
-            $publicStoragePrefixed = str_starts_with($normalizedPath, 'storage/')
-                ? substr($normalizedPath, strlen('storage/'))
-                : $normalizedPath;
+            if (str_starts_with($normalizedPath, 'storage/')) {
+                if (file_exists(public_path($normalizedPath))) {
+                    return $this->logoResolutionCache = [
+                        'url' => asset($normalizedPath),
+                        'debug' => $debug,
+                        'raw' => $path,
+                    ];
+                }
 
-            if (Storage::disk('public')->exists($publicDiskPath)) {
-                $debug[] = "Found on public disk as {$publicDiskPath}";
+                $debug[] = "Path under public storage missing: {$normalizedPath}";
+            }
+
+            if (Storage::disk('public')->exists($normalizedPath)) {
                 return $this->logoResolutionCache = [
-                    'url' => Storage::disk('public')->url($publicDiskPath),
+                    'url' => Storage::disk('public')->url($normalizedPath),
                     'debug' => $debug,
                     'raw' => $path,
                 ];
             }
-            $debug[] = "File not found on public disk: {$publicDiskPath}";
 
-            if ($publicStoragePrefixed !== $publicDiskPath && Storage::disk('public')->exists($publicStoragePrefixed)) {
-                $debug[] = "Found on public disk after stripping storage/ prefix: {$publicStoragePrefixed}";
-                return $this->logoResolutionCache = [
-                    'url' => Storage::disk('public')->url($publicStoragePrefixed),
-                    'debug' => $debug,
-                    'raw' => $path,
-                ];
-            }
+            $debug[] = "File not found on public disk: {$normalizedPath}";
 
-            $publicPathCandidate = public_path($normalizedPath);
-            if (file_exists($publicPathCandidate)) {
-                $debug[] = "Found in public path: {$publicPathCandidate}";
+            if (file_exists(public_path($normalizedPath))) {
                 return $this->logoResolutionCache = [
                     'url' => asset($normalizedPath),
                     'debug' => $debug,
                     'raw' => $path,
                 ];
             }
-            $debug[] = "File not found in public path: {$publicPathCandidate}";
 
-            $publicPathWithStorage = public_path('storage/' . $publicStoragePrefixed);
-            if (file_exists($publicPathWithStorage)) {
-                $debug[] = "Found in public/storage: {$publicPathWithStorage}";
-                return $this->logoResolutionCache = [
-                    'url' => asset('storage/' . $publicStoragePrefixed),
-                    'debug' => $debug,
-                    'raw' => $path,
-                ];
-            }
-
-            $debug[] = "File not found in public/storage: {$publicPathWithStorage}";
-
-            $fallbackUrl = asset(str_starts_with($normalizedPath, 'storage/') ? $normalizedPath : 'storage/' . $publicStoragePrefixed);
-            $debug[] = "Using fallback URL guess: {$fallbackUrl}";
-
-            return $this->logoResolutionCache = [
-                'url' => $fallbackUrl,
-                'debug' => $debug,
-                'raw' => $path,
-            ];
+            $debug[] = "File not found in public path: {$normalizedPath}";
         }
 
         $this->logoResolutionCache = [
