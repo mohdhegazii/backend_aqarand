@@ -22,174 +22,45 @@
 
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.css"/>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.js"></script>
+<script src="/js/admin/location-map.js"></script>
 
 <script>
     document.addEventListener('DOMContentLoaded', function() {
         var mapId = "{{ $mapId }}";
-        var initialLat = {{ $lat ?? 30.0444 }}; // Default to Cairo
-        var initialLng = {{ $lng ?? 31.2357 }};
-        var zoomLevel = {{ $lat ? 13 : 6 }};
         var readOnly = {{ isset($readOnly) && $readOnly ? 'true' : 'false' }};
+        var entityLevel = ''; // We need to determine entity level or pass it
+        var entityId = null;
 
-        var map = L.map(mapId).setView([initialLat, initialLng], zoomLevel);
-        window['map_' + mapId] = map;
+        // Try to infer entity level/ID from context or usage.
+        // This partial is used in Country, Region, City, District views.
+        // We can pass 'entityLevel' and 'entityId' to this partial.
 
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-        }).addTo(map);
+        // However, existing usages don't pass these.
+        // We can modify the usages or try to be smart.
+        // It's safer to rely on passed variables, but we must handle fallback.
 
-        // Marker Handling
-        var marker;
-        if ({{ $lat ? 'true' : 'false' }}) {
-            marker = L.marker([initialLat, initialLng], {draggable: !readOnly}).addTo(map);
-            if (!readOnly) {
-                marker.on('dragend', function(event) {
-                    var position = marker.getLatLng();
-                    updateInputs(position.lat, position.lng);
-                });
-            }
+        entityLevel = "{{ $entityLevel ?? '' }}";
+        entityId = {{ $entityId ?? 'null' }};
+
+        // Fallback logic if variables not passed (though we should update views)
+        if (!entityLevel) {
+            // Check URL?
+            if (window.location.href.includes('countries')) entityLevel = 'country';
+            else if (window.location.href.includes('regions')) entityLevel = 'region';
+            else if (window.location.href.includes('cities')) entityLevel = 'city';
+            else if (window.location.href.includes('districts')) entityLevel = 'district';
         }
 
-        function updateMarker(lat, lng) {
-            if (marker) {
-                marker.setLatLng([lat, lng]);
-            } else {
-                marker = L.marker([lat, lng], {draggable: !readOnly}).addTo(map);
-                if (!readOnly) {
-                    marker.on('dragend', function(event) {
-                        var position = marker.getLatLng();
-                        updateInputs(position.lat, position.lng);
-                    });
-                }
-            }
-            updateInputs(lat, lng);
-        }
-
-        function updateInputs(lat, lng) {
-            if (readOnly) return;
-            document.getElementById('lat-' + mapId).value = lat.toFixed(7);
-            document.getElementById('lng-' + mapId).value = lng.toFixed(7);
-            document.getElementById('display-lat-' + mapId).innerText = lat.toFixed(7);
-            document.getElementById('display-lng-' + mapId).innerText = lng.toFixed(7);
-        }
-
-        if (!readOnly) {
-            map.on('click', function(e) {
-                updateMarker(e.latlng.lat, e.latlng.lng);
-            });
-        }
-
-        // Polygon / Draw Handling
-        var drawnItems = new L.FeatureGroup();
-        map.addLayer(drawnItems);
-
-        // Load existing boundary if any
-        var existingBoundary = document.getElementById('boundary-' + mapId).value;
-        if (existingBoundary) {
-            try {
-                // Check if it's already a GeoJSON string (from old input) or needs parsing
-                // Usually comes as JSON string.
-                // NOTE: ST_AsGeoJSON from MySQL returns a string representation of JSON.
-                // If it's pure JSON object, L.geoJSON handles it.
-                var geoJsonData = JSON.parse(existingBoundary);
-                var geoJsonLayer = L.geoJSON(geoJsonData, {
-                    onEachFeature: function (feature, layer) {
-                        drawnItems.addLayer(layer);
-                    }
-                });
-                if (drawnItems.getBounds().isValid()) {
-                    map.fitBounds(drawnItems.getBounds());
-                }
-            } catch (e) {
-                console.error("Error parsing boundary GeoJSON", e);
-            }
-        }
-
-        if (!readOnly) {
-            var drawControl = new L.Control.Draw({
-                draw: {
-                    polygon: {
-                        allowIntersection: false,
-                        showArea: true
-                    },
-                    polyline: false,
-                    rectangle: false,
-                    circle: false,
-                    marker: false,
-                    circlemarker: false
-                },
-                edit: {
-                    featureGroup: drawnItems,
-                    remove: true
-                }
-            });
-            map.addControl(drawControl);
-
-            map.on(L.Draw.Event.CREATED, function (e) {
-                var layer = e.layer;
-                drawnItems.clearLayers(); // Only allow one polygon
-                drawnItems.addLayer(layer);
-                updateBoundaryInput();
-            });
-
-            map.on(L.Draw.Event.EDITED, function (e) {
-                updateBoundaryInput();
-            });
-
-            map.on(L.Draw.Event.DELETED, function (e) {
-                updateBoundaryInput();
-            });
-        } else {
-             // If read only, just show the polygon (already added to drawnItems)
-             // No controls.
-        }
-
-        function updateBoundaryInput() {
-            var data = drawnItems.toGeoJSON();
-            // We want the geometry of the first feature if available, or null
-            if (data.features.length > 0) {
-                document.getElementById('boundary-' + mapId).value = JSON.stringify(data.features[0].geometry);
-            } else {
-                document.getElementById('boundary-' + mapId).value = '';
-            }
-        }
-
-        // Search functionality
-        var searchBtn = document.getElementById('map-search-btn-' + mapId);
-        if (searchBtn) {
-            searchBtn.addEventListener('click', function() {
-                var query = document.getElementById('map-search-' + mapId).value;
-                if (query) {
-                    // Request polygon_geojson=1 to get boundaries
-                    fetch('https://nominatim.openstreetmap.org/search?format=json&polygon_geojson=1&q=' + encodeURIComponent(query))
-                        .then(response => response.json())
-                        .then(data => {
-                            if (data && data.length > 0) {
-                                var result = data[0];
-                                var lat = parseFloat(result.lat);
-                                var lon = parseFloat(result.lon);
-
-                                map.flyTo([lat, lon], 13);
-                                updateMarker(lat, lon);
-
-                                // Auto-draw polygon if available and not read-only
-                                if (!readOnly && result.geojson && (result.geojson.type === 'Polygon' || result.geojson.type === 'MultiPolygon')) {
-                                    if (confirm('Boundary found. Do you want to use it?')) {
-                                        drawnItems.clearLayers();
-                                        var geoJsonLayer = L.geoJSON(result.geojson);
-                                        geoJsonLayer.eachLayer(function(l) {
-                                            drawnItems.addLayer(l);
-                                        });
-                                        updateBoundaryInput();
-                                        map.fitBounds(drawnItems.getBounds());
-                                    }
-                                }
-                            } else {
-                                alert('Location not found');
-                            }
-                        });
-                }
-            });
-        }
+        initLocationMap({
+            elementId: mapId,
+            entityLevel: entityLevel,
+            entityId: entityId,
+            polygonFieldSelector: '#boundary-' + mapId,
+            latFieldSelector: '#lat-' + mapId,
+            lngFieldSelector: '#lng-' + mapId,
+            lat: {{ $lat ?? 30.0444 }},
+            lng: {{ $lng ?? 31.2357 }},
+            readOnly: readOnly
+        });
     });
 </script>

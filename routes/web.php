@@ -34,6 +34,9 @@ $registerAdminRoutes = function (string $namePrefix = 'admin.'): void {
         Route::get('locations/regions/{id}', [LocationHelperController::class, 'getCities']);
         Route::get('locations/cities/{id}', [LocationHelperController::class, 'getDistricts']);
 
+        // Location Polygons (Map)
+        Route::get('location-polygons', [\App\Http\Controllers\Admin\LocationPolygonController::class, 'index'])->name('location-polygons');
+
         Route::post('countries/bulk', [CountryController::class, 'bulk'])->name('countries.bulk');
         Route::resource('countries', CountryController::class);
 
