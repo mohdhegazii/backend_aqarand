@@ -69,6 +69,9 @@ class DeveloperController extends Controller
         if ($request->hasFile('logo')) {
             $path = $request->file('logo')->store('developers', 'public');
             $validated['logo_path'] = $path;
+            $validated['logo'] = $path;
+        } else {
+            unset($validated['logo']);
         }
 
         if (isset($validated['website_url'])) {
@@ -125,6 +128,9 @@ class DeveloperController extends Controller
             }
             $path = $request->file('logo')->store('developers', 'public');
             $validated['logo_path'] = $path;
+            $validated['logo'] = $path;
+        } else {
+            unset($validated['logo']);
         }
 
         if (isset($validated['website_url'])) {
