@@ -45,6 +45,12 @@
                     'mapId' => 'region-map'
                 ])
 
+                @include('admin.partials.boundary-map', [
+                    'mapId' => 'region-boundary-map',
+                    'fieldName' => 'boundary_polygon',
+                    'existingPolygon' => old('boundary_polygon', $region->boundary_polygon)
+                ])
+
                 <div class="flex items-center justify-end space-x-4 rtl:space-x-reverse mt-4">
                     <a href="{{ route($adminRoutePrefix.'regions.index') }}" class="text-gray-600 hover:text-gray-900">
                         @lang('admin.cancel')
