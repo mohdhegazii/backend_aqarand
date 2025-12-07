@@ -40,8 +40,18 @@
                             <div class="text-[11px] text-left text-gray-600 bg-gray-100 border rounded p-2 w-full">
                                 <div class="font-semibold text-gray-700 mb-1">Logo diagnostics</div>
                                 <ul class="list-disc ml-4 space-y-1">
-                                    @foreach($logoDebug as $note)
-                                        <li>{{ $note }}</li>
+                                    @foreach($logoDebug as $key => $note)
+                                        @php
+                                            $renderedNote = is_bool($note)
+                                                ? ($note ? 'true' : 'false')
+                                                : (is_array($note) ? json_encode($note) : $note);
+                                        @endphp
+                                        <li>
+                                            @if(is_string($key))
+                                                <strong>{{ $key }}:</strong>
+                                            @endif
+                                            {{ $renderedNote }}
+                                        </li>
                                     @endforeach
                                 </ul>
                             </div>
