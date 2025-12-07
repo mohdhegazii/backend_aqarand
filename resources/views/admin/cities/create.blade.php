@@ -43,6 +43,12 @@
                     'mapId' => 'city-map'
                 ])
 
+                @include('admin.partials.boundary-map', [
+                    'mapId' => 'city-boundary-map',
+                    'fieldName' => 'boundary_polygon',
+                    'existingPolygon' => old('boundary_polygon')
+                ])
+
                 <div class="flex items-center justify-end space-x-4 rtl:space-x-reverse mt-4">
                     <a href="{{ route($adminRoutePrefix.'cities.index') }}" class="text-gray-600 hover:text-gray-900">
                         @lang('admin.cancel')

@@ -46,8 +46,13 @@ class CountryController extends Controller
             'name_local' => 'required|string|max:100',
             'lat' => 'nullable|numeric|between:-90,90',
             'lng' => 'nullable|numeric|between:-180,180',
+            'boundary_polygon' => 'nullable|json',
             'is_active' => 'boolean',
         ]);
+
+        if ($request->filled('boundary_polygon')) {
+            $validated['boundary_polygon'] = json_decode($request->boundary_polygon, true);
+        }
 
         $validated['is_active'] = $request->has('is_active');
 
@@ -75,8 +80,13 @@ class CountryController extends Controller
             'name_local' => 'required|string|max:100',
             'lat' => 'nullable|numeric|between:-90,90',
             'lng' => 'nullable|numeric|between:-180,180',
+            'boundary_polygon' => 'nullable|json',
             'is_active' => 'boolean',
         ]);
+
+        if ($request->filled('boundary_polygon')) {
+            $validated['boundary_polygon'] = json_decode($request->boundary_polygon, true);
+        }
 
         $validated['is_active'] = $request->has('is_active');
 

@@ -39,6 +39,7 @@ class StoreProjectRequest extends FormRequest
             'district_id' => 'required|exists:districts,id',
             'lat' => 'nullable|numeric',
             'lng' => 'nullable|numeric',
+            'boundary_polygon' => 'nullable|json',
             'address_text' => 'nullable|string|max:255',
 
             // Description
