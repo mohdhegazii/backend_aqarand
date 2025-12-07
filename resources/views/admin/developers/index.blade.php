@@ -80,6 +80,14 @@
                                             @endif
                                         @endif
                                     </div>
+                                    @if(config('app.debug'))
+                                        <div class="mt-1 text-[10px] text-gray-500 leading-tight break-words">
+                                            URL: {{ $developer->logo_url ?? 'null' }}
+                                            @if(!empty($logoDebug))
+                                                <br>notes={{ e(implode(' | ', $logoDebug)) }}
+                                            @endif
+                                        </div>
+                                    @endif
                                 </td>
                                 <td class="px-5 py-5 border-b border-gray-200 text-sm">
                                     <span class="relative inline-block px-3 py-1 font-semibold text-{{ $developer->is_active ? 'green' : 'red' }}-900 leading-tight">
