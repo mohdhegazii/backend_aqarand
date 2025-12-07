@@ -64,9 +64,10 @@
                                     {{ $developer->display_name }}
                                 </td>
                                 <td class="px-5 py-5 border-b border-gray-200 text-sm">
-                                    <div class="h-10 w-10 rounded border bg-white flex items-center justify-center overflow-hidden">
+                                    <div class="logo-thumb h-10 w-10 rounded border bg-white flex items-center justify-center overflow-hidden">
                                         @if($developer->logo_url)
-                                            <img src="{{ $developer->logo_url }}" alt="{{ $developer->display_name }}" class="h-full w-full object-contain">
+                                            <img src="{{ $developer->logo_url }}" alt="{{ $developer->display_name }}" class="h-full w-full object-contain" onerror="this.classList.add('hidden'); this.nextElementSibling?.classList.remove('hidden');">
+                                            <span class="hidden text-[10px] text-gray-400">N/A</span>
                                         @else
                                             <span class="text-[10px] text-gray-400">N/A</span>
                                         @endif

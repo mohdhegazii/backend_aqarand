@@ -16,18 +16,22 @@
                     $logoUrl = $developer->logo_url;
                 @endphp
 
-                <div class="mb-6 p-4 bg-gray-50 border rounded flex items-center gap-4">
-                    <div class="h-24 w-24 rounded border bg-white flex items-center justify-center overflow-hidden">
-                        @if($logoUrl)
-                            <img src="{{ $logoUrl }}" alt="{{ $previewName }}" class="h-full w-full object-contain">
-                        @else
-                            <span class="text-[11px] text-gray-400 text-center px-2">@lang('admin.logo')</span>
-                        @endif
-                    </div>
-                    <div class="flex-1 space-y-1">
-                        <h3 class="text-lg font-semibold text-gray-800">{{ $previewName }}</h3>
-                        <div class="text-sm text-gray-600">{{ $previewAltEn ?? __('admin.name_en') }}</div>
-                        <div class="text-sm text-gray-600">{{ $previewAltAr ?? __('admin.name_ar') }}</div>
+                <div class="mb-6 p-4 bg-gray-50 border rounded">
+                    <div class="flex flex-col items-center text-center gap-3">
+                        <div class="h-28 w-28 rounded border bg-white flex items-center justify-center overflow-hidden">
+                            @if($logoUrl)
+                                <img id="logo-preview" src="{{ $logoUrl }}" alt="{{ $previewName }}" class="h-full w-full object-contain" onerror="this.classList.add('hidden'); document.getElementById('logo-placeholder')?.classList.remove('hidden');">
+                                <span id="logo-placeholder" class="hidden text-[11px] text-gray-400 text-center px-2">@lang('admin.logo')</span>
+                            @else
+                                <img id="logo-preview" src="" alt="{{ $previewName }}" class="hidden h-full w-full object-contain" onerror="this.classList.add('hidden'); document.getElementById('logo-placeholder')?.classList.remove('hidden');">
+                                <span id="logo-placeholder" class="text-[11px] text-gray-400 text-center px-2">@lang('admin.logo')</span>
+                            @endif
+                        </div>
+                        <div class="space-y-1">
+                            <h3 id="preview-name" class="text-lg font-semibold text-gray-800">{{ $previewName }}</h3>
+                            <div id="preview-alt-en" class="text-sm text-gray-600">{{ $previewAltEn ?? __('admin.name_en') }}</div>
+                            <div id="preview-alt-ar" class="text-sm text-gray-600">{{ $previewAltAr ?? __('admin.name_ar') }}</div>
+                        </div>
                     </div>
                 </div>
 
@@ -49,7 +53,7 @@
                     <div class="hidden p-4 rounded-lg bg-gray-50" id="en" role="tabpanel" aria-labelledby="en-tab">
                         <div class="mb-4">
                             <label class="block text-gray-700 text-sm font-bold mb-2">@lang('admin.name_en')</label>
-                            <input type="text" name="name_en" value="{{ old('name_en', $developer->name_en) }}" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" required>
+                            <input id="name-en" type="text" name="name_en" value="{{ old('name_en', $developer->name_en) }}" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" required>
                         </div>
 
                         <div class="mb-4">
@@ -64,7 +68,7 @@
                     <div class="hidden p-4 rounded-lg bg-gray-50" id="ar" role="tabpanel" aria-labelledby="ar-tab">
                         <div class="mb-4">
                             <label class="block text-gray-700 text-sm font-bold mb-2">@lang('admin.name_ar')</label>
-                            <input type="text" name="name_ar" value="{{ old('name_ar', $developer->name_ar) }}" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" required>
+                            <input id="name-ar" type="text" name="name_ar" value="{{ old('name_ar', $developer->name_ar) }}" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" required>
                         </div>
 
                         <div class="mb-4">
@@ -79,7 +83,7 @@
                 <div class="mt-6 border-t pt-6">
                     <div class="mb-4">
                         <label class="block text-gray-700 text-sm font-bold mb-2">@lang('admin.logo')</label>
-                        <input type="file" name="logo" class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100">
+                        <input id="logo-input" type="file" name="logo" accept="image/*" class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100">
                     </div>
 
                     <div class="mb-4">
@@ -132,6 +136,57 @@
                 });
             });
 
+            const nameEnInput = document.getElementById('name-en');
+            const nameArInput = document.getElementById('name-ar');
+            const previewName = document.getElementById('preview-name');
+            const previewAltEn = document.getElementById('preview-alt-en');
+            const previewAltAr = document.getElementById('preview-alt-ar');
+            const logoInput = document.getElementById('logo-input');
+            const logoPreview = document.getElementById('logo-preview');
+            const logoPlaceholder = document.getElementById('logo-placeholder');
+            const initialLogoUrl = @json($logoUrl);
+
+            const updateTextPreview = () => {
+                const mainName = nameEnInput?.value?.trim() || nameArInput?.value?.trim() || @json(__('admin.developers'));
+                const altEn = nameEnInput?.value?.trim() || @json(__('admin.name_en'));
+                const altAr = nameArInput?.value?.trim() || @json(__('admin.name_ar'));
+
+                if (previewName) previewName.textContent = mainName;
+                if (previewAltEn) previewAltEn.textContent = altEn;
+                if (previewAltAr) previewAltAr.textContent = altAr;
+            };
+
+            const resetLogoPreview = () => {
+                if (!logoPreview || !logoPlaceholder) return;
+                logoPreview.classList.add('hidden');
+                logoPlaceholder.classList.remove('hidden');
+                logoPreview.removeAttribute('src');
+            };
+
+            const handleLogoChange = (event) => {
+                const file = event.target.files?.[0];
+                if (!file) {
+                    resetLogoPreview();
+                    return;
+                }
+
+                const objectUrl = URL.createObjectURL(file);
+                logoPreview.src = objectUrl;
+                logoPreview.classList.remove('hidden');
+                logoPlaceholder.classList.add('hidden');
+            };
+
+            if (initialLogoUrl && logoPreview) {
+                logoPreview.src = initialLogoUrl;
+                logoPreview.classList.remove('hidden');
+                logoPlaceholder?.classList.add('hidden');
+            }
+
+            nameEnInput?.addEventListener('input', updateTextPreview);
+            nameArInput?.addEventListener('input', updateTextPreview);
+            logoInput?.addEventListener('change', handleLogoChange);
+
+            updateTextPreview();
             // Activate first tab by default
             document.getElementById('en-tab').click();
         });

@@ -62,7 +62,36 @@ class Developer extends Model
 
     public function getLogoUrlAttribute()
     {
-        return $this->logo_path ? Storage::url($this->logo_path) : null;
+        $candidates = [
+            $this->logo_path,
+            $this->logo ?? null,
+        ];
+
+        foreach ($candidates as $path) {
+            if (!$path) {
+                continue;
+            }
+
+            if (filter_var($path, FILTER_VALIDATE_URL)) {
+                return $path;
+            }
+
+            $normalizedPath = ltrim($path, '/');
+
+            if (str_starts_with($normalizedPath, 'storage/')) {
+                return asset($normalizedPath);
+            }
+
+            if (Storage::disk('public')->exists($normalizedPath)) {
+                return Storage::disk('public')->url($normalizedPath);
+            }
+
+            if (file_exists(public_path($normalizedPath))) {
+                return asset($normalizedPath);
+            }
+        }
+
+        return null;
     }
 
     public function getWebsiteUrlAttribute()
