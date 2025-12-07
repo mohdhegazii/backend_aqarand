@@ -1,5 +1,6 @@
 @php
-    $isEdit = isset($project);
+    $project = $project ?? new \App\Models\Project();
+    $isEdit = $project->exists;
     $adminRoutePrefix = $adminRoutePrefix ?? 'admin.';
     $existingGalleryImages = old('existing_gallery_images', $isEdit ? ($project->gallery_images ?? []) : []);
     $videoUrls = old('video_urls', $isEdit ? ($project->video_urls ?? []) : []);
