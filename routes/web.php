@@ -122,6 +122,11 @@ $registerPublicRoutes = function (string $namePrefix = ''): void {
 Route::group([
     'middleware' => ['web', 'set.locale'],
 ], function () use ($registerPublicRoutes, $registerAdminRoutes) {
+    // Fallback for missing storage symlink
+    Route::get('storage/{path}', [\App\Http\Controllers\StorageController::class, 'serve'])
+        ->where('path', '.*')
+        ->name('storage.fallback');
+
     $registerPublicRoutes();
 
     // Removed the problematic lang/{targetLocale} route
