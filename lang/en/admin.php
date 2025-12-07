@@ -219,6 +219,7 @@ return [
     'projects' => [
         'steps' => [
             'basic' => 'Step 1 — Basic Info & Location',
+            'location' => 'Location',
             'marketing' => 'Step 2 — Marketing Content',
             'media' => 'Step 3 — Media & Gallery',
             'financials' => 'Step 4 — Financials & Payment Profiles',
@@ -233,10 +234,13 @@ return [
         'part_of_master_project' => 'Part of a master project?',
         'master_project' => 'Master Project',
         'master_project_placeholder' => 'Select master project',
+        'master_project_note' => 'Select the master project to inherit its location.',
         'country' => 'Country',
         'region' => 'Region',
         'city' => 'City',
         'district' => 'District',
+        'city_district_project_search' => 'Search by city, district, or project',
+        'inherited_from_master' => 'Inherited from master project',
         'project_title_ar' => 'Marketing Title (Arabic)',
         'project_title_en' => 'Marketing Title (English)',
         'description_short_ar' => 'Short Description (AR)',

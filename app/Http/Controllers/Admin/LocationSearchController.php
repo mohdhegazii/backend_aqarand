@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\City;
 use App\Models\District;
+use App\Models\Project;
 use Illuminate\Http\Request;
 
 class LocationSearchController extends Controller
@@ -72,6 +73,36 @@ class LocationSearchController extends Controller
                 ];
             });
 
-        return response()->json($cities->merge($districts)->values());
+        $projects = Project::with(['city.region.country', 'district', 'developer'])
+            ->where(function ($builder) use ($query) {
+                $builder->where('name_en', 'like', "%{$query}%")
+                    ->orWhere('name_ar', 'like', "%{$query}%")
+                    ->orWhere('name', 'like', "%{$query}%");
+            })
+            ->limit(8)
+            ->get()
+            ->map(function (Project $project) {
+                $region = $project->region;
+                $city = $project->city;
+
+                $labelParts = array_filter([
+                    $project->name_en ?? $project->name_ar ?? $project->name,
+                    $city?->name_en,
+                ]);
+
+                return [
+                    'type' => 'project',
+                    'label' => implode(' - ', $labelParts),
+                    'path' => $region?->country?->name_en,
+                    'country_id' => $project->country_id,
+                    'region_id' => $project->region_id,
+                    'city_id' => $project->city_id,
+                    'district_id' => $project->district_id,
+                    'lat' => $project->map_lat ?? $project->lat,
+                    'lng' => $project->map_lng ?? $project->lng,
+                ];
+            });
+
+        return response()->json($cities->merge($districts)->merge($projects)->values());
     }
 }

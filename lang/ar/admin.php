@@ -218,6 +218,7 @@ return [
     'projects' => [
         'steps' => [
             'basic' => '١- البيانات الأساسية والموقع',
+            'location' => 'الموقع',
             'marketing' => '٢- المحتوى التسويقي',
             'media' => '٣- الوسائط والمعرض',
             'financials' => '٤- المالية وأنظمة السداد',
@@ -232,10 +233,13 @@ return [
         'part_of_master_project' => 'جزء من مشروع رئيسي؟',
         'master_project' => 'المشروع الرئيسي',
         'master_project_placeholder' => 'اختر المشروع الرئيسي',
+        'master_project_note' => 'اختر المشروع الرئيسي لوراثة بيانات الموقع.',
         'country' => 'الدولة',
         'region' => 'المحافظة / الإقليم',
         'city' => 'المدينة',
         'district' => 'المنطقة',
+        'city_district_project_search' => 'ابحث بالمدينة أو الحي أو مشروع قائم',
+        'inherited_from_master' => 'موروث من المشروع الرئيسي',
         'project_title_ar' => 'عنوان تسويقي (عربي)',
         'project_title_en' => 'Marketing Title (English)',
         'description_short_ar' => 'وصف مختصر (عربي)',

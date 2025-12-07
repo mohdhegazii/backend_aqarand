@@ -52,7 +52,11 @@ class ProjectController extends Controller
                             ->groupBy(fn ($amenity) => $amenity->amenity_type ?? 'other');
 
         // For Master Project Dropdown
-        $existingProjects = Project::select('id', 'name_en', 'name_ar', 'name')->get();
+        $existingProjects = Project::select(
+            'id', 'name_en', 'name_ar', 'name',
+            'country_id', 'region_id', 'city_id', 'district_id',
+            'map_lat', 'map_lng', 'lat', 'lng'
+        )->get();
 
         return view('admin.projects.create', compact('project', 'developers', 'countries', 'amenities', 'existingProjects'));
     }
@@ -141,7 +145,9 @@ class ProjectController extends Controller
                             ->get()
                             ->groupBy(fn ($amenity) => $amenity->amenity_type ?? 'other');
 
-        $existingProjects = Project::where('id', '!=', $project->id)->select('id', 'name_en', 'name_ar', 'name')->get();
+        $existingProjects = Project::where('id', '!=', $project->id)
+            ->select('id', 'name_en', 'name_ar', 'name', 'country_id', 'region_id', 'city_id', 'district_id', 'map_lat', 'map_lng', 'lat', 'lng')
+            ->get();
 
         return view('admin.projects.edit', compact('project', 'developers', 'countries', 'amenities', 'existingProjects'));
     }
