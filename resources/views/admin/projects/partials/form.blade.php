@@ -13,6 +13,8 @@
     ])->toArray() : []);
     $paymentProfiles = old('payment_profiles', $isEdit ? ($project->payment_profiles ?? []) : []);
     $phases = old('phases', $isEdit ? ($project->phases ?? []) : []);
+    $partSelection = old('is_part_of_master_project', $isEdit ? $project->is_part_of_master_project : null);
+    $partOfMasterValue = is_null($partSelection) ? '' : ($partSelection ? '1' : '0');
 @endphp
 
 <div x-data="projectWizard({
@@ -54,86 +56,7 @@
 
         {{-- Step 1: Basic Info & Location --}}
         <div x-show="currentStep === 1" x-cloak class="space-y-6">
-            <h3 class="text-lg font-bold text-gray-800">{{ __('admin.projects.steps.basic') }}</h3>
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                    <label class="block text-sm font-semibold text-gray-700">{{ __('admin.projects.name_ar') }} *</label>
-                    <input type="text" name="name_ar" value="{{ old('name_ar', $project->name_ar ?? '') }}" required class="w-full rounded border-gray-300" />
-                </div>
-                <div>
-                    <label class="block text-sm font-semibold text-gray-700">{{ __('admin.projects.name_en') }} *</label>
-                    <input type="text" name="name_en" value="{{ old('name_en', $project->name_en ?? '') }}" required class="w-full rounded border-gray-300" />
-                </div>
-                <div>
-                    <label class="block text-sm font-semibold text-gray-700">{{ __('admin.projects.developer') }}</label>
-                    <select name="developer_id" class="w-full rounded border-gray-300">
-                        <option value="">{{ __('admin.select_developer') }}</option>
-                        @foreach($developers as $dev)
-                            <option value="{{ $dev->id }}" {{ old('developer_id', $project->developer_id ?? '') == $dev->id ? 'selected' : '' }}>{{ $dev->name }}</option>
-                        @endforeach
-                    </select>
-                </div>
-                <div>
-                    <label class="block text-sm font-semibold text-gray-700">{{ __('admin.projects.launch_date') }}</label>
-                    <input type="date" name="launch_date" value="{{ old('launch_date', optional($project->launch_date ?? $project->sales_launch_date ?? null)->format('Y-m-d')) }}" class="w-full rounded border-gray-300" />
-                </div>
-                <div>
-                    <label class="block text-sm font-semibold text-gray-700">{{ __('admin.projects.project_area') }}</label>
-                    <div class="flex space-x-2">
-                        <input type="number" step="0.01" name="project_area" value="{{ old('project_area', $project->project_area_value ?? '') }}" class="w-full rounded border-gray-300" />
-                        <select name="project_area_unit" class="rounded border-gray-300">
-                            <option value="sqm" {{ old('project_area_unit', $project->project_area_unit ?? 'sqm') === 'sqm' ? 'selected' : '' }}>m²</option>
-                            <option value="feddan" {{ old('project_area_unit', $project->project_area_unit ?? '') === 'feddan' ? 'selected' : '' }}>{{ __('admin.unit_feddan') }}</option>
-                        </select>
-                    </div>
-                </div>
-                <div class="flex flex-col space-y-2" x-data="{ showMaster: '{{ old('is_part_of_master_project', $project->is_part_of_master_project ?? false) ? '1' : '0' }}' }">
-                    <label class="block text-sm font-semibold text-gray-700">{{ __('admin.projects.part_of_master_project') }}</label>
-                    <div class="flex items-center space-x-4">
-                        <label class="inline-flex items-center">
-                            <input type="radio" name="is_part_of_master_project" value="0" x-model="showMaster" />
-                            <span class="ml-2">{{ __('admin.no') }}</span>
-                        </label>
-                        <label class="inline-flex items-center">
-                            <input type="radio" name="is_part_of_master_project" value="1" x-model="showMaster" />
-                            <span class="ml-2">{{ __('admin.yes') }}</span>
-                        </label>
-                    </div>
-                    <div x-show="showMaster === '1'" class="mt-2">
-                        <label class="block text-sm font-semibold text-gray-700">{{ __('admin.projects.master_project') }}</label>
-                        <select name="master_project_id" class="w-full rounded border-gray-300">
-                            <option value="">{{ __('admin.projects.master_project_placeholder') }}</option>
-                            @foreach($existingProjects as $existingProject)
-                                <option value="{{ $existingProject->id }}" {{ old('master_project_id', $project->master_project_id ?? '') == $existingProject->id ? 'selected' : '' }}>{{ $existingProject->name_en ?? $existingProject->name_ar ?? $existingProject->name }}</option>
-                            @endforeach
-                        </select>
-                    </div>
-                </div>
-            </div>
-
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                    <label class="block text-sm font-semibold text-gray-700">{{ __('admin.projects.country') }}</label>
-                    <select name="country_id" id="country_id" class="w-full rounded border-gray-300">
-                        <option value="">{{ __('admin.select_country') }}</option>
-                        @foreach($countries as $country)
-                            <option value="{{ $country->id }}" {{ old('country_id', $project->country_id ?? '') == $country->id ? 'selected' : '' }}>{{ $country->name_en ?? $country->name }}</option>
-                        @endforeach
-                    </select>
-                </div>
-                <div>
-                    <label class="block text-sm font-semibold text-gray-700">{{ __('admin.projects.region') }}</label>
-                    <select name="region_id" id="region_id" class="w-full rounded border-gray-300"></select>
-                </div>
-                <div>
-                    <label class="block text-sm font-semibold text-gray-700">{{ __('admin.projects.city') }}</label>
-                    <select name="city_id" id="city_id" class="w-full rounded border-gray-300"></select>
-                </div>
-                <div>
-                    <label class="block text-sm font-semibold text-gray-700">{{ __('admin.projects.district') }}</label>
-                    <select name="district_id" id="district_id" class="w-full rounded border-gray-300"></select>
-                </div>
-            </div>
+            @include('admin.projects.steps.step1_basic_location')
         </div>
 
         {{-- Step 2: Marketing Content --}}
@@ -270,25 +193,6 @@
                 </template>
             </div>
 
-            <div class="space-y-2">
-                <h4 class="font-semibold text-gray-800">{{ __('admin.projects.map_location') }}</h4>
-                <div class="hidden">
-                    <input type="hidden" name="map_lat" id="map_lat" value="{{ old('map_lat', $project->map_lat ?? $project->lat ?? '') }}">
-                    <input type="hidden" name="map_lng" id="map_lng" value="{{ old('map_lng', $project->map_lng ?? $project->lng ?? '') }}">
-                    <input type="hidden" name="map_zoom" id="map_zoom" value="{{ old('map_zoom', $project->map_zoom ?? 10) }}">
-                    <input type="hidden" name="map_polygon" id="map_polygon" value="{{ old('map_polygon', json_encode($project->map_polygon ?? null)) }}">
-                </div>
-                <x-admin.location-map
-                    mapId="project-map"
-                    :lat="old('map_lat', $project->map_lat ?? $project->lat ?? 30.0444)"
-                    :lng="old('map_lng', $project->map_lng ?? $project->lng ?? 31.2357)"
-                    :zoom="old('map_zoom', $project->map_zoom ?? 10)"
-                    entityLevel="project"
-                    :entityId="$project->id ?? null"
-                    polygonFieldSelector="#map_polygon"
-                    latFieldSelector="#map_lat"
-                    lngFieldSelector="#map_lng" />
-            </div>
         </div>
 
         {{-- Step 4: Financials --}}
@@ -478,15 +382,21 @@
                 { id: 5, label: @json(__('admin.projects.steps.models_phases')) },
                 { id: 6, label: @json(__('admin.projects.steps.settings')) },
             ],
+            step1Errors: [],
+            partOfMaster: '{{ $partOfMasterValue }}',
             videoUrls: config.videoUrls && config.videoUrls.length ? config.videoUrls : [''],
             faqs: config.faqs && config.faqs.length ? config.faqs : [{question_ar:'',answer_ar:'',question_en:'',answer_en:''}],
             paymentProfiles: config.paymentProfiles && config.paymentProfiles.length ? config.paymentProfiles : [{name:'',down_payment_percent:'',years:'',installment_frequency:'',notes:''}],
             phases: config.phases && config.phases.length ? config.phases : [{name:'',delivery_year:'',status:'',notes:''}],
             goToStep(step) {
+                if (step > this.currentStep && this.currentStep === 1 && !this.validateStep1()) {
+                    return;
+                }
                 this.currentStep = step;
                 this.refreshMap();
             },
             nextStep() {
+                if (this.currentStep === 1 && !this.validateStep1()) return;
                 if (this.currentStep < this.steps.length) {
                     this.currentStep++;
                     this.refreshMap();
@@ -498,9 +408,37 @@
                     this.refreshMap();
                 }
             },
+            validateStep1() {
+                this.step1Errors = [];
+                const nameAr = document.querySelector('input[name="name_ar"]')?.value.trim();
+                const nameEn = document.querySelector('input[name="name_en"]')?.value.trim();
+                const developer = document.querySelector('select[name="developer_id"]')?.value;
+                const partOfMaster = document.querySelector('input[name="is_part_of_master_project"]:checked')?.value;
+                const masterProject = document.querySelector('select[name="master_project_id"]')?.value;
+                const country = document.getElementById('country_id')?.value;
+                const region = document.getElementById('region_id')?.value;
+                const city = document.getElementById('city_id')?.value;
+
+                if (!nameAr) this.step1Errors.push(@json(__('admin.projects.name_ar')).concat(' ', 'is required'));
+                if (!nameEn) this.step1Errors.push(@json(__('admin.projects.name_en')).concat(' ', 'is required'));
+                if (!developer) this.step1Errors.push(@json(__('admin.projects.developer')).concat(' ', 'is required'));
+                if (partOfMaster === undefined) this.step1Errors.push(@json(__('admin.projects.part_of_master_project')).concat(' ', 'is required'));
+
+                if (partOfMaster === '1') {
+                    if (!masterProject) {
+                        this.step1Errors.push(@json(__('admin.projects.master_project')).concat(' ', 'is required when project is a phase.'));
+                    }
+                } else {
+                    if (!country) this.step1Errors.push(@json(__('admin.projects.country')).concat(' ', 'is required'));
+                    if (!region) this.step1Errors.push(@json(__('admin.projects.region')).concat(' ', 'is required'));
+                    if (!city) this.step1Errors.push(@json(__('admin.projects.city')).concat(' ', 'is required'));
+                }
+
+                return this.step1Errors.length === 0;
+            },
             refreshMap() {
                 this.$nextTick(() => {
-                    if (this.currentStep === 3 && window['map_project-map']) {
+                    if (this.currentStep === 1 && window['map_project-map']) {
                         window['map_project-map'].invalidateSize();
                         const zoomInput = document.getElementById('map_zoom');
                         if (zoomInput) {
@@ -519,6 +457,12 @@
         const regionSelect = document.getElementById('region_id');
         const citySelect = document.getElementById('city_id');
         const districtSelect = document.getElementById('district_id');
+        const masterProjectSelect = document.getElementById('master_project_id');
+        const partOfMasterRadios = document.querySelectorAll('input[name="is_part_of_master_project"]');
+        const locationSearchInput = document.getElementById('location_search');
+        const locationSearchResults = document.getElementById('location_search_results');
+        const locationInheritBadge = document.getElementById('location_inherit_badge');
+        const locationInputs = document.querySelectorAll('[data-location-select]');
 
         const presetRegion = '{{ old('region_id', $project->region_id ?? '') }}';
         const presetCity = '{{ old('city_id', $project->city_id ?? '') }}';
@@ -567,9 +511,159 @@
             populateSelect(districtSelect, data, selected, '{{ __('admin.select_district') }}');
         }
 
+        function toggleLocationLock(lock, showBadge = lock) {
+            locationInputs.forEach(select => {
+                if (lock) {
+                    select.classList.add('bg-gray-100', 'cursor-not-allowed');
+                    select.style.pointerEvents = 'none';
+                    select.tabIndex = -1;
+                } else {
+                    select.classList.remove('bg-gray-100', 'cursor-not-allowed');
+                    select.style.pointerEvents = '';
+                    select.tabIndex = 0;
+                }
+            });
+            if (locationSearchInput) {
+                locationSearchInput.readOnly = lock;
+                locationSearchInput.classList.toggle('bg-gray-100', lock);
+            }
+            if (locationInheritBadge) {
+                locationInheritBadge.hidden = !showBadge;
+            }
+        }
+
+        function flyMapTo(lat, lng) {
+            if (!lat || !lng) return;
+            const map = window['map_project-map'];
+            if (map) {
+                if (window.projectMapMarker) {
+                    map.removeLayer(window.projectMapMarker);
+                }
+                window.projectMapMarker = L.marker([lat, lng]).addTo(map);
+                map.flyTo([lat, lng], 12);
+            }
+            const latInput = document.getElementById('map_lat');
+            const lngInput = document.getElementById('map_lng');
+            if (latInput) latInput.value = lat;
+            if (lngInput) lngInput.value = lng;
+        }
+
+        async function applyLocationFromMaster(option) {
+            if (!option || !option.value) {
+                toggleLocationLock(true, false);
+                clearSelect(regionSelect, '{{ __('admin.select_region') }}');
+                clearSelect(citySelect, '{{ __('admin.select_city') }}');
+                clearSelect(districtSelect, '{{ __('admin.select_district') }}');
+                return;
+            }
+            const countryId = option.dataset.country;
+            const regionId = option.dataset.region;
+            const cityId = option.dataset.city;
+            const districtId = option.dataset.district;
+
+            if (countryId) {
+                countrySelect.value = countryId;
+                await loadRegions(countryId, regionId);
+                if (regionId) {
+                    await loadCities(regionId, cityId);
+                    if (cityId) {
+                        await loadDistricts(cityId, districtId);
+                    }
+                }
+            }
+
+            toggleLocationLock(true, true);
+            const lat = option.dataset.lat;
+            const lng = option.dataset.lng;
+            if (lat && lng) {
+                flyMapTo(parseFloat(lat), parseFloat(lng));
+            }
+        }
+
+        async function applyLocationFromSearch(item) {
+            if (!item) return;
+            if (item.country_id) {
+                countrySelect.value = item.country_id;
+                await loadRegions(item.country_id, item.region_id);
+                if (item.region_id) {
+                    await loadCities(item.region_id, item.city_id);
+                    if (item.city_id) {
+                        await loadDistricts(item.city_id, item.district_id);
+                    }
+                }
+            }
+            toggleLocationLock(false);
+            flyMapTo(item.lat, item.lng);
+        }
+
         countrySelect.addEventListener('change', () => loadRegions(countrySelect.value));
         regionSelect.addEventListener('change', () => loadCities(regionSelect.value));
         citySelect.addEventListener('change', () => loadDistricts(citySelect.value));
+
+        partOfMasterRadios.forEach(radio => {
+            radio.addEventListener('change', async (event) => {
+                if (event.target.value === '1') {
+                    await applyLocationFromMaster(masterProjectSelect.selectedOptions[0]);
+                } else {
+                    toggleLocationLock(false);
+                }
+                locationSearchResults?.classList.add('hidden');
+            });
+        });
+
+        masterProjectSelect?.addEventListener('change', async (event) => {
+            const option = event.target.selectedOptions[0];
+            const isPart = Array.from(partOfMasterRadios).find(r => r.checked)?.value === '1';
+            if (isPart && option?.value) {
+                await applyLocationFromMaster(option);
+            }
+        });
+
+        function debounce(fn, delay) {
+            let timer;
+            return function(...args) {
+                clearTimeout(timer);
+                timer = setTimeout(() => fn.apply(this, args), delay);
+            };
+        }
+
+        const searchHandler = debounce(async (term) => {
+            if (!locationSearchResults) return;
+            const selectedMode = Array.from(partOfMasterRadios).find(r => r.checked)?.value;
+            if (selectedMode !== '0') {
+                locationSearchResults.classList.add('hidden');
+                return;
+            }
+            if (!term || term.length < 2) {
+                locationSearchResults.classList.add('hidden');
+                return;
+            }
+            const response = await fetch(`/admin/location-search?q=${encodeURIComponent(term)}`);
+            if (!response.ok) return;
+            const results = await response.json();
+            locationSearchResults.innerHTML = results.map(item => {
+                const payload = encodeURIComponent(JSON.stringify(item));
+                return `
+                <button type="button" class="w-full text-left px-3 py-2 hover:bg-gray-100" data-item="${payload}">
+                    <span class="font-semibold">${item.label}</span>
+                    <span class="block text-xs text-gray-500">${item.path ?? ''}</span>
+                </button>`;
+            }).join('');
+            locationSearchResults.classList.toggle('hidden', results.length === 0);
+        }, 250);
+
+        locationSearchInput?.addEventListener('input', (e) => searchHandler(e.target.value));
+
+        locationSearchResults?.addEventListener('click', async (event) => {
+            const button = event.target.closest('button[data-item]');
+            if (!button) return;
+            const payload = JSON.parse(decodeURIComponent(button.dataset.item));
+            await applyLocationFromSearch(payload);
+            if (locationSearchInput) {
+                locationSearchInput.value = payload.label || '';
+            }
+            locationSearchResults.classList.add('hidden');
+        });
 
         // initial load
         if (countrySelect.value) {
@@ -586,6 +680,14 @@
             clearSelect(regionSelect, '{{ __('admin.select_region') }}');
             clearSelect(citySelect, '{{ __('admin.select_city') }}');
             clearSelect(districtSelect, '{{ __('admin.select_district') }}');
+        }
+
+        const selectedMasterOption = masterProjectSelect?.selectedOptions[0];
+        const isPartOfMaster = Array.from(partOfMasterRadios).find(r => r.checked)?.value === '1';
+        if (isPartOfMaster && selectedMasterOption?.value) {
+            applyLocationFromMaster(selectedMasterOption);
+        } else if (isPartOfMaster) {
+            toggleLocationLock(true, false);
         }
     });
 </script>

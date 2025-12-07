@@ -25,7 +25,7 @@ class UpdateProjectRequest extends FormRequest
             'construction_status' => 'nullable|in:planned,under_construction,delivered',
 
             // Master Project
-            'is_part_of_master_project' => 'boolean',
+            'is_part_of_master_project' => 'required|boolean',
             'master_project_id' => [
                 'nullable',
                 'required_if:is_part_of_master_project,1',
@@ -40,10 +40,10 @@ class UpdateProjectRequest extends FormRequest
             'is_active' => 'boolean',
 
             // Location
-            'country_id' => 'required|exists:countries,id',
-            'region_id' => 'required|exists:regions,id',
-            'city_id' => 'required|exists:cities,id',
-            'district_id' => 'required|exists:districts,id',
+            'country_id' => 'required_unless:is_part_of_master_project,1|exists:countries,id',
+            'region_id' => 'required_unless:is_part_of_master_project,1|exists:regions,id',
+            'city_id' => 'required_unless:is_part_of_master_project,1|exists:cities,id',
+            'district_id' => 'nullable|exists:districts,id',
             'map_lat' => 'nullable|numeric',
             'map_lng' => 'nullable|numeric',
             'map_zoom' => 'nullable|integer',
