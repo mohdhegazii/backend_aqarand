@@ -64,14 +64,38 @@
                                     {{ $developer->display_name }}
                                 </td>
                                 <td class="px-5 py-5 border-b border-gray-200 text-sm">
+                                    @php
+                                        $rawLogo = $developer->logo_path ?? $developer->logo ?? null;
+                                        $logoDebug = $developer->logo_debug ?? [];
+                                    @endphp
                                     <div class="logo-thumb h-10 w-10 rounded border bg-white flex items-center justify-center overflow-hidden">
                                         @if($developer->logo_url)
                                             <img src="{{ $developer->logo_url }}" alt="{{ $developer->display_name }}" class="h-full w-full object-contain" onerror="this.classList.add('hidden'); this.nextElementSibling?.classList.remove('hidden');">
                                             <span class="hidden text-[10px] text-gray-400">N/A</span>
                                         @else
-                                            <span class="text-[10px] text-gray-400">N/A</span>
+                                            @if(config('app.debug'))
+                                                <span class="text-[10px] text-red-500 text-center px-1 leading-tight">
+                                                    LOGO DEBUG: raw="{{ $rawLogo }}" id={{ $developer->id }}
+                                                </span>
+                                            @else
+                                                <span class="text-[10px] text-gray-400">N/A</span>
+                                            @endif
                                         @endif
                                     </div>
+                                    @if(config('app.debug'))
+                                        <div class="mt-1 text-[10px] text-gray-500 leading-tight break-words">
+                                            URL: {{ $developer->logo_url ?? 'null' }}
+                                            @if(!empty($logoDebug))
+                                                <br>
+                                                <span class="font-semibold text-gray-600">Diagnostics:</span>
+                                                <ul class="list-disc ml-4">
+                                                    @foreach($logoDebug as $note)
+                                                        <li>{{ $note }}</li>
+                                                    @endforeach
+                                                </ul>
+                                            @endif
+                                        </div>
+                                    @endif
                                 </td>
                                 <td class="px-5 py-5 border-b border-gray-200 text-sm">
                                     <span class="relative inline-block px-3 py-1 font-semibold text-{{ $developer->is_active ? 'green' : 'red' }}-900 leading-tight">
