@@ -119,11 +119,11 @@
 
     $defaultOpenSection = null;
 
-    foreach ($sections as $key => $sectionData) {
-        foreach ($sectionData['items'] as $item) {
-            if (! empty($item['active'])) {
+    foreach ($sections as $key => &$section) {
+        foreach ($section['items'] as $item) {
+            if (($item['active'] ?? false) && ! $defaultOpenSection) {
                 $defaultOpenSection = $key;
-                break 2;
+                break;
             }
         }
     }
