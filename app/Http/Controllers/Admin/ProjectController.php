@@ -61,10 +61,6 @@ class ProjectController extends Controller
         try {
             $data = $request->validated();
 
-            if (!empty($data['boundary_polygon'])) {
-                $data['boundary_polygon'] = json_decode($data['boundary_polygon'], true);
-            }
-
             // Slug Generation
             $slugBase = $data['name_en'] ?? $data['name_ar'];
             $data['slug'] = Project::generateSlug($slugBase);
@@ -131,11 +127,6 @@ class ProjectController extends Controller
         DB::beginTransaction();
         try {
             $data = $request->validated();
-
-            if (!empty($data['boundary_polygon'])) {
-                $data['boundary_polygon'] = json_decode($data['boundary_polygon'], true);
-            }
-
             $slugBase = $data['name_en'] ?? $data['name_ar'];
             if (empty($project->slug)) {
                 $data['slug'] = Project::generateSlug($slugBase, $project->id);

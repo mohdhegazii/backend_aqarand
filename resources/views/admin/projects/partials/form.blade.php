@@ -12,7 +12,7 @@
             'title_ar', 'description_ar', 'title_en', 'description_en', 'meta_title_ar', 'meta_description_ar'
         ],
         2 => ['min_price', 'max_price', 'min_bua', 'max_bua', 'delivery_year', 'total_units'],
-        3 => ['country_id', 'region_id', 'city_id', 'district_id', 'lat', 'lng', 'boundary_polygon'],
+        3 => ['country_id', 'region_id', 'city_id', 'district_id', 'lat', 'lng', 'map_polygon'],
         4 => ['amenities'],
         5 => [], // Models
         6 => ['faqs', 'faqs.*'],
@@ -336,7 +336,7 @@
                 <h3 class="text-lg font-bold text-gray-800 mb-2">{{ __('admin.project_map') }}</h3>
                 <div id="project_map" style="height: 400px; width: 100%; border-radius: 0.5rem; z-index: 1;" class="border border-gray-300"></div>
 
-                <input type="hidden" name="boundary_polygon" id="boundary_polygon" value="{{ old('boundary_polygon', json_encode($project->boundary_polygon ?? null)) }}">
+                <input type="hidden" name="map_polygon" id="map_polygon" value="{{ old('map_polygon', json_encode($project->map_polygon ?? null)) }}">
                 <input type="hidden" name="lat" id="lat" value="{{ old('lat', $project->lat ?? '') }}">
                 <input type="hidden" name="lng" id="lng" value="{{ old('lng', $project->lng ?? '') }}">
                 <p class="text-xs text-gray-500 mt-1">{{ __('admin.map_instruction') }}</p>
@@ -835,22 +835,16 @@
         map.on(L.Draw.Event.CREATED, function (e) {
             drawnItems.clearLayers();
             drawnItems.addLayer(e.layer);
-            document.getElementById('boundary_polygon').value = JSON.stringify(drawnItems.toGeoJSON());
+            document.getElementById('map_polygon').value = JSON.stringify(e.layer.toGeoJSON());
         });
 
         map.on(L.Draw.Event.EDITED, function (e) {
-            document.getElementById('boundary_polygon').value = JSON.stringify(drawnItems.toGeoJSON());
+            e.layers.eachLayer(function (layer) {
+                document.getElementById('map_polygon').value = JSON.stringify(layer.toGeoJSON());
+            });
         });
 
-        map.on(L.Draw.Event.DELETED, function (e) {
-            if (drawnItems.getLayers().length === 0) {
-                 document.getElementById('boundary_polygon').value = '';
-            } else {
-                 document.getElementById('boundary_polygon').value = JSON.stringify(drawnItems.toGeoJSON());
-            }
-        });
-
-        var polygonData = document.getElementById('boundary_polygon').value;
+        var polygonData = document.getElementById('map_polygon').value;
         if (polygonData) {
             try {
                 var geojson = JSON.parse(polygonData);

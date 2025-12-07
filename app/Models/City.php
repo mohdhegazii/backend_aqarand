@@ -19,14 +19,12 @@ class City extends Model
         'lat',
         'lng',
         'is_active',
-        'boundary_polygon',
     ];
 
     protected $casts = [
         'is_active' => 'boolean',
         'lat' => 'decimal:7',
         'lng' => 'decimal:7',
-        'boundary_polygon' => 'array',
     ];
 
     public function region()

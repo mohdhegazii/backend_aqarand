@@ -14,7 +14,6 @@ CREATE TABLE countries (
     code VARCHAR(3) NOT NULL UNIQUE, -- ISO alpha-2 or alpha-3
     name_en VARCHAR(100) NOT NULL,
     name_local VARCHAR(100) NOT NULL,
-    boundary_polygon JSON NULL,
     created_at TIMESTAMP NULL DEFAULT NULL,
     updated_at TIMESTAMP NULL DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
@@ -26,7 +25,6 @@ CREATE TABLE regions (
     name_local VARCHAR(100) NOT NULL,
     slug VARCHAR(120) NOT NULL,
     is_active TINYINT(1) NOT NULL DEFAULT 1,
-    boundary_polygon JSON NULL,
     created_at TIMESTAMP NULL DEFAULT NULL,
     updated_at TIMESTAMP NULL DEFAULT NULL,
     CONSTRAINT fk_regions_country FOREIGN KEY (country_id) REFERENCES countries(id) ON DELETE CASCADE,
@@ -40,7 +38,6 @@ CREATE TABLE cities (
     name_local VARCHAR(100) NOT NULL,
     slug VARCHAR(120) NOT NULL,
     is_active TINYINT(1) NOT NULL DEFAULT 1,
-    boundary_polygon JSON NULL,
     created_at TIMESTAMP NULL DEFAULT NULL,
     updated_at TIMESTAMP NULL DEFAULT NULL,
     CONSTRAINT fk_cities_region FOREIGN KEY (region_id) REFERENCES regions(id) ON DELETE CASCADE,
@@ -54,7 +51,6 @@ CREATE TABLE districts (
     name_local VARCHAR(100) NOT NULL,
     slug VARCHAR(120) NOT NULL,
     is_active TINYINT(1) NOT NULL DEFAULT 1,
-    boundary_polygon JSON NULL,
     created_at TIMESTAMP NULL DEFAULT NULL,
     updated_at TIMESTAMP NULL DEFAULT NULL,
     CONSTRAINT fk_districts_city FOREIGN KEY (city_id) REFERENCES cities(id) ON DELETE CASCADE,
@@ -174,7 +170,6 @@ CREATE TABLE projects (
     meta_title VARCHAR(255) NULL,
     meta_description VARCHAR(255) NULL,
     is_active TINYINT(1) NOT NULL DEFAULT 1,
-    boundary_polygon JSON NULL,
     created_at TIMESTAMP NULL DEFAULT NULL,
     updated_at TIMESTAMP NULL DEFAULT NULL,
     CONSTRAINT fk_projects_developer FOREIGN KEY (developer_id) REFERENCES developers(id) ON DELETE SET NULL,
