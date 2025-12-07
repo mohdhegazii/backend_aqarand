@@ -18,14 +18,12 @@ class Country extends Model
         'lat',
         'lng',
         'is_active',
-        'boundary_polygon',
     ];
 
     protected $casts = [
         'lat' => 'decimal:7',
         'lng' => 'decimal:7',
         'is_active' => 'boolean',
-        'boundary_polygon' => 'array',
     ];
 
     public function regions()

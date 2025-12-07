@@ -55,12 +55,7 @@ class RegionController extends Controller
             'lng' => 'nullable|numeric|between:-180,180',
             'is_active' => 'boolean',
             'boundary_geojson' => 'nullable|json',
-            'boundary_polygon' => 'nullable|json',
         ]);
-
-        if ($request->filled('boundary_polygon')) {
-            $validated['boundary_polygon'] = json_decode($request->boundary_polygon, true);
-        }
 
         $validated['slug'] = Str::slug($validated['name_en']);
         $validated['is_active'] = $request->has('is_active');
@@ -109,12 +104,7 @@ class RegionController extends Controller
             'lng' => 'nullable|numeric|between:-180,180',
             'is_active' => 'boolean',
             'boundary_geojson' => 'nullable|json',
-            'boundary_polygon' => 'nullable|json',
         ]);
-
-        if ($request->filled('boundary_polygon')) {
-            $validated['boundary_polygon'] = json_decode($request->boundary_polygon, true);
-        }
 
         $slug = Str::slug($validated['name_en']);
         $validated['is_active'] = $request->has('is_active');

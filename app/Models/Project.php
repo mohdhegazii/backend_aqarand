@@ -58,7 +58,6 @@ class Project extends Model
         'description_ar',
         'description_en',
         'is_active',
-        'boundary_polygon',
         // 'description_long', // Legacy
         // 'tagline', // Legacy
     ];
@@ -66,7 +65,6 @@ class Project extends Model
     protected $casts = [
         'gallery' => 'array',
         'map_polygon' => 'array',
-        'boundary_polygon' => 'array',
         'sales_launch_date' => 'date',
         'is_part_of_master_project' => 'boolean',
         'is_featured' => 'boolean',
