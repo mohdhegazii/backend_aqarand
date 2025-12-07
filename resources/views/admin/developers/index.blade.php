@@ -65,7 +65,7 @@
                                 </td>
                                 <td class="px-5 py-5 border-b border-gray-200 text-sm">
                                     @php
-                                        $logoUrl = $developer->logo_url ?? null;
+                                        $logoUrl = $developer->logo_url;
                                     @endphp
                                     <div class="logo-thumb h-10 w-10 rounded border bg-white flex items-center justify-center overflow-hidden">
                                         @if($logoUrl)
@@ -75,7 +75,7 @@
                                             @if(config('app.debug'))
                                                 <span style="color:red; font-size:11px;">LOGO DEBUG: no URL resolved for developer #{{ $developer->id }} (check storage logs)</span>
                                             @else
-                                                <span class="text-[10px] text-gray-400">N/A</span>
+                                                <span class="text-[10px] text-gray-400">No logo</span>
                                             @endif
                                         @endif
                                     </div>
