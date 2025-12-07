@@ -13,6 +13,10 @@
     ])->toArray() : []);
     $paymentProfiles = old('payment_profiles', $isEdit ? ($project->payment_profiles ?? []) : []);
     $phases = old('phases', $isEdit ? ($project->phases ?? []) : []);
+    $rawPartOfMaster = old('is_part_of_master_project', $project->is_part_of_master_project);
+    $normalizedPartOfMaster = isset($rawPartOfMaster) && $rawPartOfMaster !== ''
+        ? ((string) $rawPartOfMaster === '1' ? '1' : '0')
+        : '';
 @endphp
 
 <div x-data="projectWizard({
@@ -381,7 +385,7 @@
                 { id: 6, label: @json(__('admin.projects.steps.settings')) },
             ],
             step1Errors: [],
-            partOfMaster: '{{ old('is_part_of_master_project', $project->is_part_of_master_project ?? false) ? '1' : '0' }}',
+            partOfMaster: '{{ $normalizedPartOfMaster }}',
             videoUrls: config.videoUrls && config.videoUrls.length ? config.videoUrls : [''],
             faqs: config.faqs && config.faqs.length ? config.faqs : [{question_ar:'',answer_ar:'',question_en:'',answer_en:''}],
             paymentProfiles: config.paymentProfiles && config.paymentProfiles.length ? config.paymentProfiles : [{name:'',down_payment_percent:'',years:'',installment_frequency:'',notes:''}],
@@ -420,7 +424,7 @@
                 if (!nameAr) this.step1Errors.push(@json(__('admin.projects.name_ar')).concat(' ', 'is required'));
                 if (!nameEn) this.step1Errors.push(@json(__('admin.projects.name_en')).concat(' ', 'is required'));
                 if (!developer) this.step1Errors.push(@json(__('admin.projects.developer')).concat(' ', 'is required'));
-                if (partOfMaster === undefined) this.step1Errors.push(@json(__('admin.projects.part_of_master_project')).concat(' ', 'is required'));
+                if (partOfMaster === undefined || partOfMaster === '') this.step1Errors.push(@json(__('admin.projects.part_of_master_project')).concat(' ', 'is required'));
 
                 if (partOfMaster === '1') {
                     if (!masterProject) {
@@ -461,6 +465,7 @@
         const locationSearchResults = document.getElementById('location_search_results');
         const locationInheritBadge = document.getElementById('location_inherit_badge');
         const locationInputs = document.querySelectorAll('[data-location-select]');
+        const locationBlock = document.getElementById('project-location-block');
 
         const presetRegion = '{{ old('region_id', $project->region_id ?? '') }}';
         const presetCity = '{{ old('city_id', $project->city_id ?? '') }}';
@@ -530,15 +535,47 @@
             }
         }
 
-        function flyMapTo(lat, lng) {
+        function refreshMapSize() {
+            if (window['map_project-map']) {
+                window['map_project-map'].invalidateSize();
+            }
+        }
+
+        function showLocationBlock() {
+            if (locationBlock) {
+                locationBlock.style.display = 'block';
+                setTimeout(refreshMapSize, 150);
+            }
+        }
+
+        function hideLocationBlock() {
+            if (locationBlock) {
+                locationBlock.style.display = 'none';
+            }
+        }
+
+        function syncLocationVisibility() {
+            const selected = Array.from(partOfMasterRadios).find(r => r.checked)?.value;
+            if (selected === '0' || selected === '1') {
+                showLocationBlock();
+            } else {
+                hideLocationBlock();
+            }
+        }
+
+        function flyMapTo(lat, lng, zoom = 14) {
             if (!lat || !lng) return;
             const map = window['map_project-map'];
+            showLocationBlock();
             if (map) {
                 if (window.projectMapMarker) {
                     map.removeLayer(window.projectMapMarker);
                 }
                 window.projectMapMarker = L.marker([lat, lng]).addTo(map);
-                map.flyTo([lat, lng], 12);
+                map.flyTo([lat, lng], zoom);
+            }
+            if (window.unifiedMap && typeof window.unifiedMap.flyToLocation === 'function') {
+                window.unifiedMap.flyToLocation({ lat, lng, zoom });
             }
             const latInput = document.getElementById('map_lat');
             const lngInput = document.getElementById('map_lng');
@@ -570,22 +607,33 @@
             if (lat && lng) {
                 flyMapTo(parseFloat(lat), parseFloat(lng));
             }
+            showLocationBlock();
         }
 
         async function applyLocationFromSearch(item) {
             if (!item) return;
-            if (item.country_id) {
-                countrySelect.value = item.country_id;
-                await loadRegions(item.country_id, item.region_id);
-                if (item.region_id) {
-                    await loadCities(item.region_id, item.city_id);
-                    if (item.city_id) {
-                        await loadDistricts(item.city_id, item.district_id);
+            const countryId = item.country_id ?? null;
+            const regionId = item.region_id ?? null;
+            const cityId = item.city_id ?? null;
+            const districtId = item.type === 'district' ? (item.district_id ?? null) : null;
+
+            if (countryId) {
+                countrySelect.value = countryId;
+                await loadRegions(countryId, regionId);
+                if (regionId) {
+                    await loadCities(regionId, cityId);
+                    if (cityId) {
+                        await loadDistricts(cityId, districtId);
+                    } else {
+                        clearSelect(districtSelect, '{{ __('admin.select_district') }}');
                     }
                 }
             }
             toggleLocationLock(false);
             flyMapTo(item.lat, item.lng);
+            if (locationSearchInput && item.label) {
+                locationSearchInput.value = item.label;
+            }
         }
 
         countrySelect.addEventListener('change', () => loadRegions(countrySelect.value));
@@ -594,10 +642,12 @@
 
         partOfMasterRadios.forEach(radio => {
             radio.addEventListener('change', async (event) => {
+                syncLocationVisibility();
                 if (event.target.value === '1') {
                     await applyLocationFromMaster(masterProjectSelect.selectedOptions[0]);
                 } else {
                     toggleLocationLock(false);
+                    showLocationBlock();
                 }
             });
         });
@@ -670,5 +720,7 @@
         if (isPartOfMaster && selectedMasterOption?.value) {
             applyLocationFromMaster(selectedMasterOption);
         }
+
+        syncLocationVisibility();
     });
 </script>
