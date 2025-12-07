@@ -13,20 +13,24 @@
                     $previewName = $developer->name ?? $developer->name_en ?? $developer->name_ar ?? __('admin.developers');
                     $previewAltEn = $developer->name_en;
                     $previewAltAr = $developer->name_ar;
-                    $logoUrl = $developer->logo_url;
+                    $logoUrl = $developer->logo_url ?? null;
                     $logoDebug = $developer->logo_debug ?? [];
                 @endphp
 
                 <div class="mb-6 p-4 bg-gray-50 border rounded">
                     <div class="flex flex-col items-center text-center gap-3">
                         <div class="h-32 w-32 rounded border bg-white flex items-center justify-center overflow-hidden">
-                            @if($logoUrl)
-                                <img id="logo-preview" src="{{ $logoUrl }}" alt="{{ $previewName }}" class="h-full w-full object-contain" onerror="this.classList.add('hidden'); document.getElementById('logo-placeholder')?.classList.remove('hidden');">
+                            @php
+                                $logoPreviewUrl = $logoUrl;
+                            @endphp
+
+                            @if($logoPreviewUrl)
+                                <img id="logo-preview" src="{{ $logoPreviewUrl }}" alt="{{ $previewName }}" style="height:100px; width:auto; object-fit:contain;" onerror="this.classList.add('hidden'); document.getElementById('logo-placeholder')?.classList.remove('hidden');">
                                 <span id="logo-placeholder" class="hidden text-[11px] text-gray-400 text-center px-2">@lang('admin.logo')</span>
                             @else
                                 <img id="logo-preview" src="" alt="{{ $previewName }}" class="hidden h-full w-full object-contain" onerror="this.classList.add('hidden'); document.getElementById('logo-placeholder')?.classList.remove('hidden');">
                                 @if(config('app.debug'))
-                                    <span id="logo-placeholder" class="text-[11px] text-red-500 text-center px-2 leading-tight">LOGO DEBUG (CRUD): raw="{{ $developer->logo_path ?? $developer->logo }}" {{ $logoDebug ? 'notes='.e(implode(' | ', $logoDebug)) : '' }} id={{ $developer->id }}</span>
+                                    <span id="logo-placeholder" class="text-[11px] text-red-500 text-center px-2 leading-tight">LOGO DEBUG: no URL resolved for developer #{{ $developer->id }} (check storage logs)</span>
                                 @else
                                     <span id="logo-placeholder" class="text-[11px] text-gray-400 text-center px-2">@lang('admin.logo')</span>
                                 @endif
