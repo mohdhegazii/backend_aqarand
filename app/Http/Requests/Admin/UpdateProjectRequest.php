@@ -25,7 +25,7 @@ class UpdateProjectRequest extends FormRequest
             'construction_status' => 'nullable|in:planned,under_construction,delivered',
 
             // Master Project
-            'is_part_of_master_project' => 'required|boolean',
+            'is_part_of_master_project' => 'required|in:0,1',
             'master_project_id' => [
                 'nullable',
                 'required_if:is_part_of_master_project,1',
@@ -116,10 +116,19 @@ class UpdateProjectRequest extends FormRequest
         ];
     }
 
+    public function messages()
+    {
+        return [
+            'is_part_of_master_project.required' => __('admin.projects.project_type_required'),
+        ];
+    }
+
     public function prepareForValidation()
     {
+        $partOfMasterRaw = $this->input('is_part_of_master_project', null);
+
         $this->merge([
-            'is_part_of_master_project' => (bool) $this->input('is_part_of_master_project', false),
+            'is_part_of_master_project' => $this->normalizeNullableBoolean($partOfMasterRaw),
             'is_featured' => (bool) $this->input('is_featured', false),
             'is_top_project' => (bool) $this->input('is_top_project', false),
             'include_in_sitemap' => (bool) $this->input('include_in_sitemap', false),
@@ -132,5 +141,14 @@ class UpdateProjectRequest extends FormRequest
             'title_ar' => $this->input('project_title_ar'),
             'title_en' => $this->input('project_title_en'),
         ]);
+    }
+
+    private function normalizeNullableBoolean($value): ?int
+    {
+        if ($value === '' || $value === null) {
+            return null;
+        }
+
+        return in_array($value, ['1', 1, true, 'true', 'on'], true) ? 1 : 0;
     }
 }

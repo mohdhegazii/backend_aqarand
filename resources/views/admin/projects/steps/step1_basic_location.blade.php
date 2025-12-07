@@ -56,26 +56,17 @@
     </div>
 
     <div>
-        <label class="block text-sm font-semibold text-gray-700">{{ $isAr ? 'مرحلة في مشروع رئيسي آكبر؟' : 'Phase of main Master Project?' }}</label>
-        <div class="flex items-center space-x-4 mt-1">
-            <label class="inline-flex items-center space-x-2">
-                <input type="radio" name="is_part_of_master_project" value="0" x-model="partOfMaster" {{ $normalizedPartOfMaster === '0' ? 'checked' : '' }}>
-                <span>{{ __('admin.no') }}</span>
-            </label>
-            <label class="inline-flex items-center space-x-2">
-                <input type="radio" name="is_part_of_master_project" value="1" x-model="partOfMaster" {{ $normalizedPartOfMaster === '1' ? 'checked' : '' }}>
-                <span>{{ __('admin.yes') }}</span>
-            </label>
-        </div>
-        @if($isAr)
-            <p class="text-xs text-gray-500 mt-1">{{ __('admin.projects.part_of_master_project') }}</p>
-        @else
-            <p class="text-xs text-gray-500 mt-1">Choose whether this project is a phase of an existing master project.</p>
-        @endif
+        <label class="block text-sm font-semibold text-gray-700">{{ __('admin.projects.part_of_master_project_question') }}</label>
+        <select name="is_part_of_master_project" id="is_part_of_master_project" class="w-full rounded border-gray-300 mt-1" x-model="partOfMaster">
+            <option value="">{{ __('admin.projects.select_project_type') }}</option>
+            <option value="0" {{ $normalizedPartOfMaster === '0' ? 'selected' : '' }}>{{ __('admin.projects.project_type_standalone') }}</option>
+            <option value="1" {{ $normalizedPartOfMaster === '1' ? 'selected' : '' }}>{{ __('admin.projects.project_type_phase') }}</option>
+        </select>
+        <p class="text-xs text-gray-500 mt-1">{{ __('admin.projects.part_of_master_project_hint') }}</p>
     </div>
 
     <div x-show="partOfMaster === '1'" class="space-y-2" x-cloak>
-        <label class="block text-sm font-semibold text-gray-700">{{ $isAr ? 'مشروع رئيسي (اختياري)' : 'Master Project (Optional)' }}</label>
+        <label class="block text-sm font-semibold text-gray-700">{{ __('admin.projects.master_project') }}</label>
         <select name="master_project_id" id="master_project_id" class="w-full rounded border-gray-300" x-bind:required="partOfMaster === '1'">
             <option value="">-- {{ __('admin.projects.master_project_placeholder') }} --</option>
             @foreach($existingProjects as $existingProject)
@@ -92,14 +83,10 @@
                 </option>
             @endforeach
         </select>
-        @if($isAr)
-            <p class="text-xs text-gray-500">{{ __('admin.projects.master_project_note') }}</p>
-        @else
-            <p class="text-xs text-gray-500">Location will be inherited from the selected master project.</p>
-        @endif
+        <p class="text-xs text-gray-500">{{ __('admin.projects.master_project_note') }}</p>
     </div>
 
-    <div id="project-location-block" class="space-y-2" style="display:none;">
+    <div id="project-location-block" class="space-y-2" style="display:none;" x-cloak>
         <div class="flex items-center justify-between">
             <div>
                 <p class="text-sm font-semibold text-gray-700">{{ $isAr ? 'البلد / المنطقة / المدينة / الحي' : 'Country / Region / City / District' }}</p>
@@ -112,7 +99,7 @@
         <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
             <div class="md:col-span-2">
                 <label class="block text-sm font-semibold text-gray-700">{{ __('admin.search') }}: {{ __('admin.projects.city_district_project_search') }}</label>
-                <input type="text" id="location_search" class="w-full rounded border-gray-300" placeholder="Search city / district / project" autocomplete="off">
+                <input type="text" id="location_search" class="w-full rounded border-gray-300" placeholder="{{ __('admin.projects.city_district_project_search') }}" autocomplete="off">
                 <div id="location_search_results" class="bg-white border border-gray-200 rounded mt-1 shadow-sm hidden"></div>
             </div>
 
