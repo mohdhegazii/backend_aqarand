@@ -61,50 +61,7 @@
                     <i class="bi bi-x-lg"></i>
                 </button>
             </div>
-            <nav class="mt-4 px-2 space-y-1 overflow-y-auto max-h-[calc(100vh-4rem)]">
-                <a href="{{ localized_route('admin.dashboard') }}" class="block px-4 py-2 text-gray-700 hover:bg-gray-100 rounded">
-                    @lang('admin.dashboard')
-                </a>
-
-                <div class="mt-4 px-4 text-xs font-semibold text-gray-500 uppercase">
-                    @lang('admin.countries') / @lang('admin.regions')
-                </div>
-                <a href="{{ localized_route('admin.countries.index') }}" class="block px-4 py-2 text-gray-700 hover:bg-gray-100 rounded">@lang('admin.countries')</a>
-                <a href="{{ localized_route('admin.regions.index') }}" class="block px-4 py-2 text-gray-700 hover:bg-gray-100 rounded">@lang('admin.regions')</a>
-                <a href="{{ localized_route('admin.cities.index') }}" class="block px-4 py-2 text-gray-700 hover:bg-gray-100 rounded">@lang('admin.cities')</a>
-                <a href="{{ localized_route('admin.districts.index') }}" class="block px-4 py-2 text-gray-700 hover:bg-gray-100 rounded">@lang('admin.districts')</a>
-
-                <div class="mt-4 px-4 text-xs font-semibold text-gray-500 uppercase">
-                    @lang('admin.property_types') / @lang('admin.unit_types')
-                </div>
-                <a href="{{ localized_route('admin.property-types.index') }}" class="block px-4 py-2 text-gray-700 hover:bg-gray-100 rounded">@lang('admin.property_types')</a>
-                <a href="{{ localized_route('admin.unit-types.index') }}" class="block px-4 py-2 text-gray-700 hover:bg-gray-100 rounded">@lang('admin.unit_types')</a>
-                <a href="{{ localized_route('admin.amenities.index') }}" class="block px-4 py-2 text-gray-700 hover:bg-gray-100 rounded">@lang('admin.amenities')</a>
-                <a href="{{ localized_route('admin.developers.index') }}" class="block px-4 py-2 text-gray-700 hover:bg-gray-100 rounded">@lang('admin.developers')</a>
-
-                <div class="mt-4 px-4 text-xs font-semibold text-gray-500 uppercase">
-                    @lang('admin.taxonomies')
-                </div>
-                <a href="{{ localized_route('admin.categories.index') }}" class="block px-4 py-2 text-gray-700 hover:bg-gray-100 rounded">@lang('admin.categories')</a>
-
-                <div class="mt-4 px-4 text-xs font-semibold text-gray-500 uppercase">
-                    @lang('admin.amenity_categories')
-                </div>
-                <a href="{{ localized_route('admin.amenity-categories.index') }}" class="block px-4 py-2 text-gray-700 hover:bg-gray-100 rounded">@lang('admin.amenity_categories')</a>
-
-                <div class="mt-4 px-4 text-xs font-semibold text-gray-500 uppercase">
-                    @lang('admin.real_estate')
-                </div>
-                <a href="{{ localized_route('admin.projects.index') }}" class="block px-4 py-2 text-gray-700 hover:bg-gray-100 rounded">@lang('admin.projects')</a>
-                <!-- Property Models now accessed via Projects -->
-                <a href="{{ localized_route('admin.units.index') }}" class="block px-4 py-2 text-gray-700 hover:bg-gray-100 rounded">@lang('admin.units')</a>
-                <a href="{{ localized_route('admin.listings.index') }}" class="block px-4 py-2 text-gray-700 hover:bg-gray-100 rounded">@lang('admin.listings')</a>
-
-                <div class="mt-4 px-4 text-xs font-semibold text-gray-500 uppercase">
-                    @lang('admin.media_manager')
-                </div>
-                <a href="{{ localized_route('admin.media.index') }}" class="block px-4 py-2 text-gray-700 hover:bg-gray-100 rounded">@lang('admin.file_manager')</a>
-            </nav>
+            @include('admin.partials.sidebar')
         </aside>
 
         <div id="sidebar-backdrop" class="fixed inset-0 bg-black/40 hidden md:hidden z-20" onclick="toggleSidebar()"></div>
