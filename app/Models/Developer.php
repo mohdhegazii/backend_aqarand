@@ -4,11 +4,14 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 
 class Developer extends Model
 {
     use HasFactory;
+
+    protected array $logoResolutionCache = [];
 
     protected $table = 'developers';
 
@@ -62,6 +65,26 @@ class Developer extends Model
 
     public function getLogoUrlAttribute()
     {
+        return $this->resolveLogo()['url'] ?? null;
+    }
+
+    public function getLogoDebugAttribute(): array
+    {
+        return $this->resolveLogo()['debug'] ?? [];
+    }
+
+    public function getWebsiteUrlAttribute()
+    {
+        return $this->website;
+    }
+
+    protected function resolveLogo(): array
+    {
+        if (!empty($this->logoResolutionCache)) {
+            return $this->logoResolutionCache;
+        }
+
+        $debug = [];
         $candidates = [
             $this->logo_path,
             $this->logo ?? null,
@@ -69,33 +92,68 @@ class Developer extends Model
 
         foreach ($candidates as $path) {
             if (!$path) {
+                $debug[] = 'Empty path candidate skipped';
                 continue;
-            }
-
-            if (filter_var($path, FILTER_VALIDATE_URL)) {
-                return $path;
             }
 
             $normalizedPath = ltrim($path, '/');
 
+            if (filter_var($normalizedPath, FILTER_VALIDATE_URL)) {
+                return $this->logoResolutionCache = [
+                    'url' => $normalizedPath,
+                    'debug' => $debug,
+                    'raw' => $path,
+                ];
+            }
+
             if (str_starts_with($normalizedPath, 'storage/')) {
-                return asset($normalizedPath);
+                if (file_exists(public_path($normalizedPath))) {
+                    return $this->logoResolutionCache = [
+                        'url' => asset($normalizedPath),
+                        'debug' => $debug,
+                        'raw' => $path,
+                    ];
+                }
+
+                $debug[] = "Path under public storage missing: {$normalizedPath}";
             }
 
             if (Storage::disk('public')->exists($normalizedPath)) {
-                return Storage::disk('public')->url($normalizedPath);
+                return $this->logoResolutionCache = [
+                    'url' => Storage::disk('public')->url($normalizedPath),
+                    'debug' => $debug,
+                    'raw' => $path,
+                ];
             }
+
+            $debug[] = "File not found on public disk: {$normalizedPath}";
 
             if (file_exists(public_path($normalizedPath))) {
-                return asset($normalizedPath);
+                return $this->logoResolutionCache = [
+                    'url' => asset($normalizedPath),
+                    'debug' => $debug,
+                    'raw' => $path,
+                ];
             }
+
+            $debug[] = "File not found in public path: {$normalizedPath}";
         }
 
-        return null;
-    }
+        $this->logoResolutionCache = [
+            'url' => null,
+            'debug' => $debug,
+            'raw' => $this->logo_path ?? $this->logo ?? null,
+        ];
 
-    public function getWebsiteUrlAttribute()
-    {
-        return $this->website;
+        if (config('app.debug') && ($this->logo_path || $this->logo)) {
+            Log::warning('Developer logo missing or invalid', [
+                'developer_id' => $this->id,
+                'raw_logo_path' => $this->logo_path,
+                'raw_logo_legacy' => $this->logo,
+                'debug' => $debug,
+            ]);
+        }
+
+        return $this->logoResolutionCache;
     }
 }

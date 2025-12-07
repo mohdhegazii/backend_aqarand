@@ -64,12 +64,20 @@
                                     {{ $developer->display_name }}
                                 </td>
                                 <td class="px-5 py-5 border-b border-gray-200 text-sm">
+                                    @php
+                                        $rawLogo = $developer->logo_path ?? $developer->logo ?? null;
+                                        $logoDebug = $developer->logo_debug ?? [];
+                                    @endphp
                                     <div class="logo-thumb h-10 w-10 rounded border bg-white flex items-center justify-center overflow-hidden">
                                         @if($developer->logo_url)
                                             <img src="{{ $developer->logo_url }}" alt="{{ $developer->display_name }}" class="h-full w-full object-contain" onerror="this.classList.add('hidden'); this.nextElementSibling?.classList.remove('hidden');">
                                             <span class="hidden text-[10px] text-gray-400">N/A</span>
                                         @else
-                                            <span class="text-[10px] text-gray-400">N/A</span>
+                                            @if(config('app.debug'))
+                                                <span class="text-[10px] text-red-500 text-center px-1 leading-tight">LOGO DEBUG: raw="{{ $rawLogo }}" {{ $logoDebug ? 'notes='.e(implode(' | ', $logoDebug)) : '' }} id={{ $developer->id }}</span>
+                                            @else
+                                                <span class="text-[10px] text-gray-400">N/A</span>
+                                            @endif
                                         @endif
                                     </div>
                                 </td>
