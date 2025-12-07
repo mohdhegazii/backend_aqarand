@@ -24,6 +24,7 @@ class Developer extends Model
         'description_en',
         'description_ar',
         'logo_path',
+        'logo',
         'website',
         'is_active',
     ];
