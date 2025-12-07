@@ -15,6 +15,34 @@ Laravel backend for "Aqar-and" real estate listing platform.
 *   URL: `/admin` (Redirects to `/login` if not authenticated)
 *   Admin User: `admin@aqarand.test` / `password` (check DatabaseSeeder for actual credentials)
 
+## Debugging logo 404s (storage links)
+
+On macOS with XAMPP the project path is typically:
+
+```
+/Applications/XAMPP/xamppfiles/htdocs/backend_aqarAnd
+```
+
+Logos are written under:
+
+```
+storage/app/public/developers/...
+```
+
+Laravel expects a storage symlink from the public directory:
+
+```
+public/storage -> storage/app/public
+```
+
+If `/storage/developers/...` returns 404, ensure the link exists:
+
+```
+php artisan storage:link
+```
+
+Also confirm the folder name casing is consistent. The repo directory uses `backend_aqarAnd`, so avoid mixing `backend_aqarand` vs `backend_aqarAnd` when creating manual paths on case-sensitive file systems.
+
 ## Phase 3 - Advanced Real Estate Modules
 
 Phase 3 introduces advanced real estate management capabilities, including Projects, Property Models, Units, and Listings, with full bilingual (English/Arabic) and SEO support.

@@ -4,8 +4,8 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 
 class Developer extends Model
 {
@@ -85,76 +85,74 @@ class Developer extends Model
             return $this->logoResolutionCache;
         }
 
-        $debug = [];
-        $candidates = [
-            $this->logo_path,
-            $this->logo ?? null,
+        $raw = $this->logo_path ?? $this->logo ?? null;
+
+        $debug = [
+            'developer_id' => $this->id ?? null,
+            'raw' => $raw,
+            'storage_disk_root' => config('filesystems.disks.public.root') ?? null,
+            'public_path' => public_path(),
+            'candidate_urls' => [],
+            'exists_storage' => null,
+            'exists_public' => null,
         ];
 
-        foreach ($candidates as $path) {
-            if (!$path) {
-                $debug[] = 'Empty path candidate skipped';
-                continue;
-            }
-
-            $normalizedPath = ltrim($path, '/');
-
-            if (filter_var($normalizedPath, FILTER_VALIDATE_URL)) {
-                return $this->logoResolutionCache = [
-                    'url' => $normalizedPath,
-                    'debug' => $debug,
-                    'raw' => $path,
-                ];
-            }
-
-            if (str_starts_with($normalizedPath, 'storage/')) {
-                if (file_exists(public_path($normalizedPath))) {
-                    return $this->logoResolutionCache = [
-                        'url' => asset($normalizedPath),
-                        'debug' => $debug,
-                        'raw' => $path,
-                    ];
-                }
-
-                $debug[] = "Path under public storage missing: {$normalizedPath}";
-            }
-
-            if (Storage::disk('public')->exists($normalizedPath)) {
-                return $this->logoResolutionCache = [
-                    'url' => Storage::disk('public')->url($normalizedPath),
-                    'debug' => $debug,
-                    'raw' => $path,
-                ];
-            }
-
-            $debug[] = "File not found on public disk: {$normalizedPath}";
-
-            if (file_exists(public_path($normalizedPath))) {
-                return $this->logoResolutionCache = [
-                    'url' => asset($normalizedPath),
-                    'debug' => $debug,
-                    'raw' => $path,
-                ];
-            }
-
-            $debug[] = "File not found in public path: {$normalizedPath}";
+        if (!$raw) {
+            \Log::warning('Developer logo missing raw value', $debug);
+            return $this->logoResolutionCache = [
+                'url' => null,
+                'debug' => $debug,
+            ];
         }
 
-        $this->logoResolutionCache = [
+        if (Str::startsWith($raw, ['http://', 'https://'])) {
+            $debug['candidate_urls'][] = $raw;
+            \Log::debug('Developer logo using full URL', $debug);
+
+            return $this->logoResolutionCache = [
+                'url' => $raw,
+                'debug' => $debug,
+            ];
+        }
+
+        $storagePath = ltrim($raw, '/');
+        $debug['candidate_urls'][] = 'storage://' . $storagePath;
+
+        $existsOnStorage = Storage::disk('public')->exists($storagePath);
+        $debug['exists_storage'] = $existsOnStorage;
+
+        if ($existsOnStorage) {
+            $url = Storage::disk('public')->url($storagePath);
+            $debug['candidate_urls'][] = $url;
+            \Log::debug('Developer logo resolved via Storage::disk(public)', $debug);
+
+            return $this->logoResolutionCache = [
+                'url' => $url,
+                'debug' => $debug,
+            ];
+        }
+
+        $publicStoragePath = public_path('storage/' . ltrim($raw, '/'));
+        $debug['candidate_urls'][] = $publicStoragePath;
+        $existsOnPublic = file_exists($publicStoragePath);
+        $debug['exists_public'] = $existsOnPublic;
+
+        if ($existsOnPublic) {
+            $url = asset('storage/' . ltrim($raw, '/'));
+            $debug['candidate_urls'][] = $url;
+            \Log::debug('Developer logo resolved via public/storage', $debug);
+
+            return $this->logoResolutionCache = [
+                'url' => $url,
+                'debug' => $debug,
+            ];
+        }
+
+        \Log::error('Developer logo could NOT be resolved', $debug);
+
+        return $this->logoResolutionCache = [
             'url' => null,
             'debug' => $debug,
-            'raw' => $this->logo_path ?? $this->logo ?? null,
         ];
-
-        if (config('app.debug') && ($this->logo_path || $this->logo)) {
-            Log::warning('Developer logo missing or invalid', [
-                'developer_id' => $this->id,
-                'raw_logo_path' => $this->logo_path,
-                'raw_logo_legacy' => $this->logo,
-                'debug' => $debug,
-            ]);
-        }
-
-        return $this->logoResolutionCache;
     }
 }
