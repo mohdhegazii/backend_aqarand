@@ -24,8 +24,7 @@ class Developer extends Model
         'description_en',
         'description_ar',
         'logo_path',
-        'logo',
-        'logo_url', // Added just in case, based on schema.sql
+        'logo_url',
         'website',
         'is_active',
     ];

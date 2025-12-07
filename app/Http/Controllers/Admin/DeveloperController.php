@@ -71,15 +71,12 @@ class DeveloperController extends Controller
             // resulting path will be like 'developers/filename.png'
             $path = $request->file('logo')->store('developers', 'public');
 
-            // Save to both possible columns to ensure compatibility
+            // Save to compatible columns
             $validated['logo_path'] = $path;
-            $validated['logo'] = $path;
-
-            // If the model has logo_url in fillable, maybe clear it or set it?
-            // Better to rely on the robust accessor.
-        } else {
-            unset($validated['logo']);
         }
+
+        // Always unset 'logo' to prevent SQL error if the column does not exist
+        unset($validated['logo']);
 
         if (isset($validated['website_url'])) {
             $validated['website'] = $validated['website_url'];
@@ -131,7 +128,7 @@ class DeveloperController extends Controller
 
         if ($request->hasFile('logo')) {
             // Delete old logo if it exists
-            $oldLogo = $developer->logo_path ?? $developer->logo;
+            $oldLogo = $developer->logo_path ?? $developer->logo ?? $developer->logo_url;
             if ($oldLogo) {
                 // Check if it's a file on disk (not a URL)
                 if (!Str::startsWith($oldLogo, ['http://', 'https://'])) {
@@ -142,10 +139,10 @@ class DeveloperController extends Controller
             // Store new logo
             $path = $request->file('logo')->store('developers', 'public');
             $validated['logo_path'] = $path;
-            $validated['logo'] = $path;
-        } else {
-            unset($validated['logo']);
         }
+
+        // Always unset 'logo' to prevent SQL error if the column does not exist
+        unset($validated['logo']);
 
         if (isset($validated['website_url'])) {
             $validated['website'] = $validated['website_url'];
