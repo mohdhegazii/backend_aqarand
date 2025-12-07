@@ -11,6 +11,7 @@ use App\Models\Developer;
 use App\Models\Project;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 
 class ProjectController extends Controller
 {
@@ -67,6 +68,28 @@ class ProjectController extends Controller
 
             // Fallback for 'name' legacy column
             $data['name'] = $data['name_en'] ?? $data['name_ar'];
+
+            // Normalize location + dates
+            $data['lat'] = $data['map_lat'] ?? $data['lat'] ?? null;
+            $data['lng'] = $data['map_lng'] ?? $data['lng'] ?? null;
+            $data['sales_launch_date'] = $data['sales_launch_date'] ?? $data['launch_date'] ?? null;
+            $data['launch_date'] = $data['launch_date'] ?? $data['sales_launch_date'] ?? null;
+
+            // Media uploads
+            if ($request->hasFile('master_plan_image')) {
+                $data['master_plan_image'] = $request->file('master_plan_image')->store('projects/master-plan', 'public');
+            }
+
+            if ($request->hasFile('brochure_file')) {
+                $data['brochure_file_path'] = $request->file('brochure_file')->store('projects/brochures', 'public');
+            }
+
+            $data['gallery_images'] = $this->processGalleryUploads($request);
+
+            // Arrays & repeaters
+            $data['video_urls'] = $this->filteredArray($request->input('video_urls', []));
+            $data['payment_profiles'] = $this->filteredRepeater($request->input('payment_profiles', []));
+            $data['phases'] = $this->filteredRepeater($request->input('phases', []));
 
             $project = Project::create($data);
 
@@ -135,6 +158,32 @@ class ProjectController extends Controller
              // Fallback for 'name' legacy column
             $data['name'] = $data['name_en'] ?? $data['name_ar'];
 
+            // Normalize location + dates
+            $data['lat'] = $data['map_lat'] ?? $data['lat'] ?? $project->lat;
+            $data['lng'] = $data['map_lng'] ?? $data['lng'] ?? $project->lng;
+            $data['sales_launch_date'] = $data['sales_launch_date'] ?? $data['launch_date'] ?? $project->sales_launch_date;
+            $data['launch_date'] = $data['launch_date'] ?? $data['sales_launch_date'] ?? $project->launch_date;
+
+            // Media uploads
+            if ($request->hasFile('master_plan_image')) {
+                $data['master_plan_image'] = $request->file('master_plan_image')->store('projects/master-plan', 'public');
+            } else {
+                unset($data['master_plan_image']);
+            }
+
+            if ($request->hasFile('brochure_file')) {
+                $data['brochure_file_path'] = $request->file('brochure_file')->store('projects/brochures', 'public');
+            } else {
+                unset($data['brochure_file_path']);
+            }
+
+            $data['gallery_images'] = $this->processGalleryUploads($request, $project->gallery_images ?? []);
+
+            // Arrays & repeaters
+            $data['video_urls'] = $this->filteredArray($request->input('video_urls', $project->video_urls ?? []));
+            $data['payment_profiles'] = $this->filteredRepeater($request->input('payment_profiles', $project->payment_profiles ?? []));
+            $data['phases'] = $this->filteredRepeater($request->input('phases', $project->phases ?? []));
+
             $project->update($data);
 
             // Amenities
@@ -195,5 +244,45 @@ class ProjectController extends Controller
         // Check dependencies if needed
         $project->delete();
         return redirect()->route($this->adminRoutePrefix().'projects.index')->with('success', 'Project deleted successfully.');
+    }
+
+    protected function processGalleryUploads(Request $request, array $existing = []): array
+    {
+        $kept = collect($request->input('existing_gallery_images', $existing))
+            ->filter(fn ($path) => !empty($path))
+            ->values()
+            ->toArray();
+
+        $new = [];
+        if ($request->hasFile('gallery_images')) {
+            foreach ($request->file('gallery_images') as $file) {
+                if ($file) {
+                    $new[] = $file->store('projects/gallery', 'public');
+                }
+            }
+        }
+
+        return array_merge($kept, $new);
+    }
+
+    protected function filteredArray($values): array
+    {
+        return collect($values)->filter(fn ($value) => !empty($value))->values()->toArray();
+    }
+
+    protected function filteredRepeater($items): array
+    {
+        return collect($items)
+            ->filter(function ($item) {
+                if (!is_array($item)) {
+                    return false;
+                }
+
+                return collect($item)
+                    ->filter(fn ($value) => $value !== null && $value !== '')
+                    ->isNotEmpty();
+            })
+            ->values()
+            ->toArray();
     }
 }
