@@ -21,9 +21,9 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
 
 // Fallback for missing storage symlink - placed globally to avoid middleware interference
-Route::get('storage/{path}', [\App\Http\Controllers\StorageController::class, 'serve'])
+Route::get('media-fallback/{path}', [\App\Http\Controllers\StorageController::class, 'serve'])
     ->where('path', '.*')
-    ->name('storage.fallback');
+    ->name('media.fallback');
 
 // Shared route definitions to avoid duplicating default and localized groups
 $registerAdminRoutes = function (string $namePrefix = 'admin.'): void {
@@ -128,9 +128,9 @@ Route::group([
     'middleware' => ['web', 'set.locale'],
 ], function () use ($registerPublicRoutes, $registerAdminRoutes) {
     // Fallback for missing storage symlink
-    Route::get('storage/{path}', [\App\Http\Controllers\StorageController::class, 'serve'])
+    Route::get('media-fallback/{path}', [\App\Http\Controllers\StorageController::class, 'serve'])
         ->where('path', '.*')
-        ->name('storage.fallback');
+        ->name('media.fallback');
 
     $registerPublicRoutes();
 
