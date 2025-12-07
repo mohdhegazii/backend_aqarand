@@ -20,6 +20,11 @@ use Illuminate\Routing\Middleware\SubstituteBindings;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
 
+// Fallback for missing storage symlink - placed globally to avoid middleware interference
+Route::get('storage/{path}', [\App\Http\Controllers\StorageController::class, 'serve'])
+    ->where('path', '.*')
+    ->name('storage.fallback');
+
 // Shared route definitions to avoid duplicating default and localized groups
 $registerAdminRoutes = function (string $namePrefix = 'admin.'): void {
     Route::group([

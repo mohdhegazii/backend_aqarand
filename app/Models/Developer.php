@@ -132,10 +132,12 @@ class Developer extends Model
         $debug['exists_on_disk'] = $existsOnDisk;
 
         if ($existsOnDisk) {
-            $url = Storage::disk('public')->url($storagePath);
+            // Force relative URL for local storage to avoid port mismatch issues
+            $url = '/storage/' . $storagePath;
+
             $debug['candidate_public_url'] = $url;
              if (config('app.debug')) {
-                \Log::debug('Developer logo: resolved via Storage::disk(public)', $debug);
+                \Log::debug('Developer logo: resolved via Storage::disk(public) with relative path', $debug);
              }
             return $this->logoResolutionCache = [
                 'url' => $url,
@@ -151,7 +153,9 @@ class Developer extends Model
         $debug['public_storage_path'] = $publicStoragePath;
 
         if ($existsPublic) {
-            $url = asset('storage/' . $storagePath);
+             // Force relative URL
+            $url = '/storage/' . $storagePath;
+
             $debug['candidate_public_url'] = $url;
              if (config('app.debug')) {
                 \Log::debug('Developer logo: resolved via public/storage path', $debug);
