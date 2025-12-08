@@ -294,7 +294,7 @@
                 clearSelect(districtSelect);
 
                 if (regionId) {
-                    fetch(`{{ url('admin/locations/regions') }}/${regionId}`)
+                    fetch(`{{ url('admin/locations/cities') }}/${regionId}`)
                         .then(response => response.json())
                         .then(data => {
                             if(data.cities) populateSelect(citySelect, data.cities);
@@ -313,7 +313,7 @@
                 clearSelect(districtSelect);
 
                 if (cityId) {
-                    fetch(`{{ url('admin/locations/cities') }}/${cityId}`)
+                    fetch(`{{ url('admin/locations/districts') }}/${cityId}`)
                         .then(response => response.json())
                         .then(data => {
                             if(data.districts) populateSelect(districtSelect, data.districts);
