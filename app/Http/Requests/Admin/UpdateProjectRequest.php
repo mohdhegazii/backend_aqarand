@@ -2,7 +2,9 @@
 
 namespace App\Http\Requests\Admin;
 
+use App\Models\City;
 use App\Models\Country;
+use App\Models\District;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
@@ -46,7 +48,7 @@ class UpdateProjectRequest extends FormRequest
             'country_id' => ['required', Rule::in([$egyptId])],
             'region_id' => 'required|exists:regions,id',
             'city_id' => 'required|exists:cities,id',
-            'district_id' => 'nullable|exists:districts,id',
+            'district_id' => 'required|exists:districts,id', // Changed to required
             'location_project_id' => [
                 'nullable',
                 'exists:projects,id',
@@ -58,6 +60,7 @@ class UpdateProjectRequest extends FormRequest
             'lat' => 'nullable|numeric',
             'lng' => 'nullable|numeric',
             'map_polygon' => 'nullable',
+            'boundary_geojson' => ['nullable', 'string'], // Added
             'address_text' => 'nullable|string|max:255',
 
             // Description
@@ -113,7 +116,7 @@ class UpdateProjectRequest extends FormRequest
             'phases.*.status' => 'nullable|string|max:255',
             'phases.*.notes' => 'nullable|string',
 
-            // Media Validation (Add basic rules)
+            // Media Validation
             'hero_image_url' => 'nullable|image|max:10240', // 10MB
             'brochure_file' => 'nullable|file|mimes:pdf|max:10240',
             'gallery_images' => 'nullable|array',
@@ -122,6 +125,51 @@ class UpdateProjectRequest extends FormRequest
             'video_urls' => 'nullable|array',
             'video_urls.*' => 'nullable|url',
         ];
+    }
+
+    public function withValidator($validator)
+    {
+        $validator->after(function ($validator) {
+            $data = $this->all();
+
+            // Relationship Validation (Region -> City -> District)
+            $regionId = $data['region_id'] ?? null;
+            $cityId = $data['city_id'] ?? null;
+            $districtId = $data['district_id'] ?? null;
+
+            if ($regionId && $cityId) {
+                $city = City::find($cityId);
+                // Check if city exists (it should due to 'exists' rule, but safe to check)
+                // And check if it belongs to the region
+                if ($city && $city->region_id != $regionId) {
+                    $validator->errors()->add('city_id', __('validation_custom.city_must_belong_to_region'));
+                }
+            }
+
+            if ($cityId && $districtId) {
+                $district = District::find($districtId);
+                if ($district && $district->city_id != $cityId) {
+                    $validator->errors()->add('district_id', __('validation_custom.district_must_belong_to_city'));
+                }
+            }
+
+            // Optional: Simple bounds check for lat/lng (Egypt bounds)
+            // Lat: 22-32, Lng: 24-37
+            $lat = $data['lat'] ?? null;
+            $lng = $data['lng'] ?? null;
+
+            if ($lat !== null && is_numeric($lat)) {
+                if ($lat < 22 || $lat > 32) {
+                    $validator->errors()->add('lat', __('validation_custom.lat_out_of_bounds'));
+                }
+            }
+
+            if ($lng !== null && is_numeric($lng)) {
+                if ($lng < 24 || $lng > 37) {
+                    $validator->errors()->add('lng', __('validation_custom.lng_out_of_bounds'));
+                }
+            }
+        });
     }
 
     public function messages()
