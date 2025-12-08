@@ -5,11 +5,19 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\PropertyType;
 use App\Models\UnitType;
+use App\Services\LookupService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 
 class UnitTypeController extends Controller
 {
+    protected $lookupService;
+
+    public function __construct(LookupService $lookupService)
+    {
+        $this->lookupService = $lookupService;
+    }
+
     public function index(Request $request)
     {
         $query = UnitType::with('propertyType');
@@ -35,14 +43,16 @@ class UnitTypeController extends Controller
         }
 
         $unitTypes = $query->paginate(10);
-        $propertyTypes = PropertyType::where('is_active', true)->get();
+        // Refactored to use LookupService
+        $propertyTypes = $this->lookupService->getAllActivePropertyTypes();
 
         return view('admin.unit_types.index', compact('unitTypes', 'propertyTypes'));
     }
 
     public function create()
     {
-        $propertyTypes = PropertyType::where('is_active', true)->get();
+        // Refactored to use LookupService
+        $propertyTypes = $this->lookupService->getAllActivePropertyTypes();
         return view('admin.unit_types.create', compact('propertyTypes'));
     }
 
@@ -91,7 +101,8 @@ class UnitTypeController extends Controller
     public function edit(UnitType $unitType)
     {
         try {
-            $propertyTypes = PropertyType::where('is_active', true)->get();
+            // Refactored to use LookupService
+            $propertyTypes = $this->lookupService->getAllActivePropertyTypes();
             return view('admin.unit_types.edit', compact('unitType', 'propertyTypes'))->render();
         } catch (\Throwable $e) {
             dd('DEBUG CAUGHT ERROR IN UnitTypeController::edit', $e->getMessage(), $e->getFile(), $e->getLine(), $e->getTraceAsString());
