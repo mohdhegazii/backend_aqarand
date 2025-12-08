@@ -71,17 +71,20 @@ class LocationPolygonController extends Controller
             });
 
         $projects = Project::query()
-            ->select('id', 'name_en', 'name_ar', 'map_polygon')
-            ->whereNotNull('map_polygon')
+            ->select('id', 'name_en', 'name_ar', 'map_polygon', 'project_boundary_geojson')
+            ->where(function($q) {
+                $q->whereNotNull('map_polygon')
+                  ->orWhereNotNull('project_boundary_geojson');
+            })
             ->get()
             ->filter(function ($item) {
-                return !empty($item->map_polygon);
+                return !empty($item->boundary_geojson);
             })
             ->map(function ($item) {
                 return [
                     'id' => $item->id,
                     'name' => $item->name_en ?? $item->name_ar,
-                    'polygon' => $item->map_polygon, // map_polygon is already an array (GeoJSON)
+                    'polygon' => $item->boundary_geojson, // Uses the accessor
                     'level' => 'project'
                 ];
             })

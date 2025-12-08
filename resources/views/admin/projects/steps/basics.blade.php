@@ -217,7 +217,7 @@
 
                 <div id="map-container" class="w-full h-96 rounded-lg border border-gray-300 z-0"></div>
 
-                <input type="hidden" name="project_boundary_geojson" id="project_boundary_geojson" value="{{ old('project_boundary_geojson', json_encode($project->project_boundary_geojson ?? null)) }}">
+                <input type="hidden" name="boundary_geojson" id="boundary_geojson" value="{{ old('boundary_geojson', json_encode($project->boundary_geojson ?? null)) }}">
             </div>
 
         </div>
@@ -345,7 +345,7 @@
             map.addLayer(drawnItems);
 
             // Init existing polygon if any
-            const existingGeoJsonInput = document.getElementById('project_boundary_geojson');
+            const existingGeoJsonInput = document.getElementById('boundary_geojson');
             if (existingGeoJsonInput.value && existingGeoJsonInput.value !== 'null' && existingGeoJsonInput.value !== '""') {
                 try {
                     let geoJsonData = JSON.parse(existingGeoJsonInput.value);
@@ -390,9 +390,9 @@
                 if (data.features.length > 0) {
                      // Save as FeatureCollection or just the Geometry?
                      // Usually FeatureCollection is safer standard.
-                     document.getElementById('project_boundary_geojson').value = JSON.stringify(data);
+                     document.getElementById('boundary_geojson').value = JSON.stringify(data);
                 } else {
-                    document.getElementById('project_boundary_geojson').value = '';
+                    document.getElementById('boundary_geojson').value = '';
                 }
             }
 

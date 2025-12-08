@@ -98,7 +98,7 @@
                 <input type="hidden" name="map_lat" id="map_lat" value="{{ old('map_lat', $project->map_lat ?? $project->lat ?? '') }}">
                 <input type="hidden" name="map_lng" id="map_lng" value="{{ old('map_lng', $project->map_lng ?? $project->lng ?? '') }}">
                 <input type="hidden" name="map_zoom" id="map_zoom" value="{{ old('map_zoom', $project->map_zoom ?? 10) }}">
-                <input type="hidden" name="map_polygon" id="map_polygon" value="{{ old('map_polygon', json_encode($project->map_polygon ?? null)) }}">
+                <input type="hidden" name="boundary_geojson" id="boundary_geojson" value="{{ old('boundary_geojson', json_encode($project->boundary_geojson ?? null)) }}">
             </div>
             <x-admin.location-map
                 mapId="project-map"
@@ -107,7 +107,7 @@
                 :zoom="old('map_zoom', $project->map_zoom ?? 10)"
                 entityLevel="project"
                 :entityId="$project->id ?? null"
-                polygonFieldSelector="#map_polygon"
+                polygonFieldSelector="#boundary_geojson"
                 latFieldSelector="#map_lat"
                 lngFieldSelector="#map_lng" />
         </div>
