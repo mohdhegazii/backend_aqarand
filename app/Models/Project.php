@@ -20,6 +20,7 @@ class Project extends Model
         'region_id',
         'city_id',
         'district_id',
+        'location_project_id',
         'name', // Keep for backward compatibility/search if needed
         'name_ar',
         'name_en',
@@ -132,6 +133,11 @@ class Project extends Model
     public function masterProject()
     {
         return $this->belongsTo(Project::class, 'master_project_id');
+    }
+
+    public function locationProject()
+    {
+        return $this->belongsTo(Project::class, 'location_project_id');
     }
 
     public function subProjects()

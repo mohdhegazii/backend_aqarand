@@ -8,6 +8,7 @@ use App\Models\Country;
 use App\Models\Region;
 use App\Models\City;
 use App\Models\District;
+use App\Models\Project;
 
 class LocationHelperController extends Controller
 {
@@ -111,19 +112,42 @@ class LocationHelperController extends Controller
 
     public function getRegions($countryId)
     {
-        $regions = Region::where('country_id', $countryId)->orderBy('name_en')->get();
+        $regions = Region::where('country_id', $countryId)
+            ->where('is_active', true)
+            ->orderBy('name_en')
+            ->get();
+
         return response()->json(['regions' => $regions]);
     }
 
     public function getCities($regionId)
     {
-        $cities = City::where('region_id', $regionId)->orderBy('name_en')->get();
+        $cities = City::where('region_id', $regionId)
+            ->where('is_active', true)
+            ->orderBy('name_en')
+            ->get();
+
         return response()->json(['cities' => $cities]);
     }
 
     public function getDistricts($cityId)
     {
-        $districts = District::where('city_id', $cityId)->orderBy('name_en')->get();
+        $districts = District::where('city_id', $cityId)
+            ->where('is_active', true)
+            ->orderBy('name_en')
+            ->get();
+
         return response()->json(['districts' => $districts]);
+    }
+
+    public function getProjects($districtId)
+    {
+        $projects = Project::where('district_id', $districtId)
+            ->where('is_active', true)
+            ->orderBy('name_en')
+            ->orderBy('name_ar')
+            ->get(['id', 'name_en', 'name_ar', 'name', 'district_id', 'map_lat', 'map_lng', 'lat', 'lng', 'map_zoom', 'map_polygon']);
+
+        return response()->json(['projects' => $projects]);
     }
 }

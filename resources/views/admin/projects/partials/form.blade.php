@@ -433,10 +433,8 @@
                     }
                 }
 
-                if (partOfMaster === '0') {
-                    if (!region) this.step1Errors.push(@json(__('admin.projects.region')).concat(' ', 'is required'));
-                    if (!city) this.step1Errors.push(@json(__('admin.projects.city')).concat(' ', 'is required'));
-                }
+                if (!region) this.step1Errors.push(@json(__('admin.projects.region')).concat(' ', 'is required'));
+                if (!city) this.step1Errors.push(@json(__('admin.projects.city')).concat(' ', 'is required'));
 
                 return this.step1Errors.length === 0;
             },
@@ -460,10 +458,9 @@
         const regionSelect = document.getElementById('region_id');
         const citySelect = document.getElementById('city_id');
         const districtSelect = document.getElementById('district_id');
+        const locationProjectSelect = document.getElementById('location_project_id');
         const masterProjectSelect = document.getElementById('master_project_id');
         const partOfMasterSelect = document.getElementById('is_part_of_master_project');
-        const locationSearchInput = document.getElementById('location_search');
-        const locationSearchResults = document.getElementById('location_search_results');
         const locationInheritBadge = document.getElementById('location_inherit_badge');
         const locationInputs = document.querySelectorAll('[data-location-select]');
         const locationBlock = document.getElementById('project-location-block');
@@ -484,20 +481,28 @@
         const presetRegion = '{{ old('region_id', $project->region_id ?? '') }}';
         const presetCity = '{{ old('city_id', $project->city_id ?? '') }}';
         const presetDistrict = '{{ old('district_id', $project->district_id ?? '') }}';
+        const presetLocationProject = '{{ old('location_project_id', $project->location_project_id ?? '') }}';
+        const currentProjectId = '{{ $project->id ?? '' }}';
         const defaultCountryId = document.getElementById('country_id')?.value || '{{ $defaultCountryId ?? '' }}';
 
-        function clearSelect(select, placeholder) {
+        function clearSelect(select, placeholder, disable = false) {
+            if (!select) return;
             select.innerHTML = `<option value="">${placeholder}</option>`;
+            select.disabled = disable;
         }
 
-        function populateSelect(select, data, selectedValue, placeholder) {
-            clearSelect(select, placeholder);
+        function populateSelect(select, data, selectedValue, placeholder, allowEmptyOption = true) {
+            if (!select) return;
+            select.innerHTML = allowEmptyOption ? `<option value="">${placeholder}</option>` : '';
             data.forEach(item => {
                 const option = document.createElement('option');
                 option.value = item.id;
                 option.text = item.name_en || item.name_local || item.name;
                 if (item.lat) option.dataset.lat = item.lat;
                 if (item.lng) option.dataset.lng = item.lng;
+                if (item.map_lat) option.dataset.lat = item.map_lat;
+                if (item.map_lng) option.dataset.lng = item.map_lng;
+                if (item.map_zoom) option.dataset.mapZoom = item.map_zoom;
                 if (selectedValue && String(selectedValue) === String(item.id)) {
                     option.selected = true;
                 }
@@ -521,28 +526,54 @@
                 clearSelect(regionSelect, '{{ __('admin.select_region') }}');
                 clearSelect(citySelect, '{{ __('admin.select_city') }}');
                 clearSelect(districtSelect, '{{ __('admin.select_district') }}');
+                clearSelect(locationProjectSelect, '{{ __('admin.projects.select_location_project') }}', true);
                 return;
             }
             const data = await fetchOptions(buildAdminUrl(`/locations/countries/${countryId}`), 'regions');
             populateSelect(regionSelect, data, selected, '{{ __('admin.select_region') }}');
-            regionSelect.dispatchEvent(new Event('change'));
         }
 
         async function loadCities(regionId, selected) {
             if (!regionId) {
                 clearSelect(citySelect, '{{ __('admin.select_city') }}');
                 clearSelect(districtSelect, '{{ __('admin.select_district') }}');
+                clearSelect(locationProjectSelect, '{{ __('admin.projects.select_location_project') }}', true);
                 return;
             }
             const data = await fetchOptions(buildAdminUrl(`/locations/regions/${regionId}`), 'cities');
             populateSelect(citySelect, data, selected, '{{ __('admin.select_city') }}');
-            citySelect.dispatchEvent(new Event('change'));
         }
 
         async function loadDistricts(cityId, selected) {
-            if (!cityId) { clearSelect(districtSelect, '{{ __('admin.select_district') }}'); return; }
+            if (!cityId) {
+                clearSelect(districtSelect, '{{ __('admin.select_district') }}');
+                clearSelect(locationProjectSelect, '{{ __('admin.projects.select_location_project') }}', true);
+                return;
+            }
             const data = await fetchOptions(buildAdminUrl(`/locations/cities/${cityId}`), 'districts');
             populateSelect(districtSelect, data, selected, '{{ __('admin.select_district') }}');
+        }
+
+        async function loadLocationProjects(districtId, selected) {
+            if (!districtId) {
+                clearSelect(locationProjectSelect, '{{ __('admin.projects.select_location_project') }}', true);
+                return;
+            }
+            const projects = await fetchOptions(buildAdminUrl(`/locations/districts/${districtId}/projects`), 'projects');
+            const filteredProjects = projects.filter(item => !currentProjectId || String(item.id) !== String(currentProjectId));
+            if (!filteredProjects.length) {
+                clearSelect(locationProjectSelect, '{{ __('admin.projects.no_linked_projects') }}', false);
+                locationProjectSelect.disabled = false;
+                const emptyOption = document.createElement('option');
+                emptyOption.value = '';
+                emptyOption.textContent = '{{ __('admin.projects.no_linked_projects') }}';
+                emptyOption.disabled = true;
+                emptyOption.selected = true;
+                locationProjectSelect.appendChild(emptyOption);
+                return;
+            }
+            populateSelect(locationProjectSelect, filteredProjects, selected, '{{ __('admin.projects.select_location_project') }}');
+            locationProjectSelect.disabled = false;
         }
 
         function toggleLocationLock(lock) {
@@ -557,10 +588,6 @@
                     select.tabIndex = 0;
                 }
             });
-            if (locationSearchInput) {
-                locationSearchInput.readOnly = lock;
-                locationSearchInput.classList.toggle('bg-gray-100', lock);
-            }
             if (locationInheritBadge) {
                 locationInheritBadge.hidden = !lock;
             }
@@ -603,11 +630,19 @@
                     clearSelect(regionSelect, '{{ __('admin.select_region') }}');
                     clearSelect(citySelect, '{{ __('admin.select_city') }}');
                     clearSelect(districtSelect, '{{ __('admin.select_district') }}');
+                    clearSelect(locationProjectSelect, '{{ __('admin.projects.select_location_project') }}');
                 }
             } else {
                 hideLocationBlock();
                 toggleLocationLock(false);
             }
+        }
+
+        function updateCoordinateInputs(lat, lng) {
+            const latInput = document.getElementById('map_lat');
+            const lngInput = document.getElementById('map_lng');
+            if (latInput) latInput.value = lat;
+            if (lngInput) lngInput.value = lng;
         }
 
         function flyMapTo(lat, lng, zoom = 14) {
@@ -620,14 +655,15 @@
                 }
                 window.projectMapMarker = L.marker([lat, lng]).addTo(map);
                 map.flyTo([lat, lng], zoom);
+                const zoomInput = document.getElementById('map_zoom');
+                if (zoomInput) {
+                    zoomInput.value = map.getZoom();
+                }
             }
             if (window.unifiedMap && typeof window.unifiedMap.flyToLocation === 'function') {
                 window.unifiedMap.flyToLocation({ lat, lng, zoom });
             }
-            const latInput = document.getElementById('map_lat');
-            const lngInput = document.getElementById('map_lng');
-            if (latInput) latInput.value = lat;
-            if (lngInput) lngInput.value = lng;
+            updateCoordinateInputs(lat, lng);
         }
 
         function flyToSelectedOption(select, zoom = 12) {
@@ -639,6 +675,75 @@
             }
         }
 
+        let highlightedPolygonLayer = null;
+        let polygonsDataPromise = null;
+
+        function clearHighlightedPolygon() {
+            const map = window['map_project-map'];
+            if (highlightedPolygonLayer && map) {
+                map.removeLayer(highlightedPolygonLayer);
+            }
+            highlightedPolygonLayer = null;
+        }
+
+        function parsePolygon(polygon) {
+            if (!polygon) return null;
+            if (typeof polygon === 'string') {
+                try {
+                    return JSON.parse(polygon);
+                } catch (e) {
+                    return null;
+                }
+            }
+            return polygon;
+        }
+
+        async function loadPolygonData() {
+            if (!polygonsDataPromise) {
+                polygonsDataPromise = fetch(buildAdminUrl('/location-polygons'))
+                    .then(res => res.ok ? res.json() : {})
+                    .catch(() => ({}));
+            }
+            return polygonsDataPromise;
+        }
+
+        async function focusOnSelection(level, id, selectEl, fallbackZoom = 12) {
+            if (!id) {
+                clearHighlightedPolygon();
+                return;
+            }
+            const map = window['map_project-map'];
+            showLocationBlock();
+            const polygons = await loadPolygonData();
+            const keyMap = { country: 'countries', region: 'regions', city: 'cities', district: 'districts', project: 'projects' };
+            const collection = polygons?.[keyMap[level]] || [];
+            const target = collection.find(item => String(item.id) === String(id));
+            const polygonData = parsePolygon(target?.polygon);
+            if (polygonData && map) {
+                if (highlightedPolygonLayer) {
+                    map.removeLayer(highlightedPolygonLayer);
+                }
+                highlightedPolygonLayer = L.geoJSON(polygonData, {
+                    style: { color: '#2563eb', weight: 2, fillOpacity: 0.12 }
+                }).addTo(map);
+                if (highlightedPolygonLayer.getBounds().isValid()) {
+                    map.fitBounds(highlightedPolygonLayer.getBounds(), { padding: [20, 20] });
+                    const center = highlightedPolygonLayer.getBounds().getCenter();
+                    updateCoordinateInputs(center.lat, center.lng);
+                    const zoomInput = document.getElementById('map_zoom');
+                    if (zoomInput) zoomInput.value = map.getZoom();
+                }
+                return;
+            }
+            const option = selectEl?.selectedOptions?.[0];
+            const lat = option?.dataset?.lat;
+            const lng = option?.dataset?.lng;
+            const zoom = option?.dataset?.mapZoom || fallbackZoom;
+            if (lat && lng) {
+                flyMapTo(parseFloat(lat), parseFloat(lng), Number(zoom) || fallbackZoom);
+            }
+        }
+
         async function applyLocationFromMaster(option) {
             setProjectType('1');
             if (!option || !option.value) {
@@ -646,6 +751,7 @@
                 clearSelect(regionSelect, '{{ __('admin.select_region') }}');
                 clearSelect(citySelect, '{{ __('admin.select_city') }}');
                 clearSelect(districtSelect, '{{ __('admin.select_district') }}');
+                clearSelect(locationProjectSelect, '{{ __('admin.projects.select_location_project') }}');
                 return;
             }
             const regionId = option.dataset.region;
@@ -662,6 +768,9 @@
                 await loadCities(regionId, cityId);
                 if (cityId) {
                     await loadDistricts(cityId, districtId);
+                    if (districtId) {
+                        await loadLocationProjects(districtId, null);
+                    }
                 }
             }
 
@@ -672,78 +781,32 @@
                 flyMapTo(parseFloat(lat), parseFloat(lng));
             }
             showLocationBlock();
-            if (locationSearchInput && option.textContent) {
-                locationSearchInput.value = option.textContent.trim();
-            }
         }
 
-        function ensureMasterProjectOption(item) {
-            if (!masterProjectSelect || !item?.id) return null;
-            let option = Array.from(masterProjectSelect.options).find(opt => String(opt.value) === String(item.id));
-            if (!option) {
-                option = document.createElement('option');
-                option.value = item.id;
-                option.textContent = item.label || item.name || `Project #${item.id}`;
-                masterProjectSelect.appendChild(option);
-            }
-            option.dataset.country = item.country_id ?? defaultCountryId ?? '';
-            option.dataset.region = item.region_id ?? '';
-            option.dataset.city = item.city_id ?? '';
-            option.dataset.district = item.district_id ?? '';
-            if (item.lat) option.dataset.lat = item.lat;
-            if (item.lng) option.dataset.lng = item.lng;
-            option.selected = true;
-            return option;
-        }
-
-        async function applyLocationFromSearch(item) {
-            if (!item) return;
-
-            if (item.type === 'project') {
-                const option = ensureMasterProjectOption(item);
-                setProjectType('1');
-                if (option) {
-                    await applyLocationFromMaster(option);
-                }
-                return;
-            }
-
-            setProjectType('0');
-            const regionId = item.region_id ?? null;
-            const cityId = item.city_id ?? null;
-            const districtId = item.district_id ?? (item.type === 'district' ? (item.id ?? null) : null);
-            const zoomLevel = item.type === 'district' ? 14 : (item.type === 'city' ? 12 : 10);
-
-            document.getElementById('country_id').value = item.country_id ?? defaultCountryId ?? '';
-            await loadRegions(regionId);
-            if (regionId) {
-                await loadCities(regionId, cityId);
-                if (cityId) {
-                    await loadDistricts(cityId, districtId);
-                } else {
-                    clearSelect(districtSelect, '{{ __('admin.select_district') }}');
-                }
-            }
-            toggleLocationLock(false);
-            if (item.lat && item.lng) {
-                flyMapTo(item.lat, item.lng, zoomLevel);
-            } else {
-                flyToSelectedOption(citySelect);
-            }
-            if (locationSearchInput && item.label) {
-                locationSearchInput.value = item.label;
-            }
-        }
-
-        regionSelect.addEventListener('change', () => {
+        regionSelect?.addEventListener('change', () => {
+            clearSelect(citySelect, '{{ __('admin.select_city') }}');
+            clearSelect(districtSelect, '{{ __('admin.select_district') }}');
+            clearSelect(locationProjectSelect, '{{ __('admin.projects.select_location_project') }}', true);
             loadCities(regionSelect.value);
-            flyToSelectedOption(regionSelect, 9);
+            focusOnSelection('region', regionSelect.value, regionSelect, 9);
         });
-        citySelect.addEventListener('change', () => {
+
+        citySelect?.addEventListener('change', () => {
+            clearSelect(districtSelect, '{{ __('admin.select_district') }}');
+            clearSelect(locationProjectSelect, '{{ __('admin.projects.select_location_project') }}', true);
             loadDistricts(citySelect.value);
-            flyToSelectedOption(citySelect, 12);
+            focusOnSelection('city', citySelect.value, citySelect, 12);
         });
-        districtSelect.addEventListener('change', () => flyToSelectedOption(districtSelect, 14));
+
+        districtSelect?.addEventListener('change', () => {
+            clearSelect(locationProjectSelect, '{{ __('admin.projects.select_location_project') }}', true);
+            loadLocationProjects(districtSelect.value);
+            focusOnSelection('district', districtSelect.value, districtSelect, 14);
+        });
+
+        locationProjectSelect?.addEventListener('change', () => {
+            focusOnSelection('project', locationProjectSelect.value, locationProjectSelect, 15);
+        });
 
         partOfMasterSelect?.addEventListener('change', async (event) => {
             syncLocationVisibility();
@@ -767,66 +830,43 @@
             }
         });
 
-        function debounce(fn, delay) {
-            let timer;
-            return function(...args) {
-                clearTimeout(timer);
-                timer = setTimeout(() => fn.apply(this, args), delay);
-            };
-        }
-
-        const searchHandler = debounce(async (term) => {
-            if (!locationSearchResults) return;
-            if (!term || term.length < 2) {
-                locationSearchResults.classList.add('hidden');
-                return;
-            }
-            const response = await fetch(buildAdminUrl(`/location-search?q=${encodeURIComponent(term)}`));
-            if (!response.ok) return;
-            const results = await response.json();
-            locationSearchResults.innerHTML = results.map(item => {
-                const payload = encodeURIComponent(JSON.stringify(item));
-                return `
-                <button type="button" class="w-full text-left px-3 py-2 hover:bg-gray-100" data-item="${payload}">
-                    <span class="font-semibold">${item.label}</span>
-                    <span class="block text-xs text-gray-500">${item.path ?? ''}</span>
-                </button>`;
-            }).join('');
-            locationSearchResults.classList.toggle('hidden', results.length === 0);
-        }, 250);
-
-        locationSearchInput?.addEventListener('input', (e) => searchHandler(e.target.value));
-
-        locationSearchResults?.addEventListener('click', async (event) => {
-            const button = event.target.closest('button[data-item]');
-            if (!button) return;
-            const payload = JSON.parse(decodeURIComponent(button.dataset.item));
-            await applyLocationFromSearch(payload);
-            locationSearchResults.classList.add('hidden');
-        });
-
         // initial load
-        if (defaultCountryId) {
-            loadRegions(presetRegion).then(() => {
+        const loadInitial = async () => {
+            if (defaultCountryId) {
+                await loadRegions(presetRegion);
                 if (presetRegion) {
-                    loadCities(presetRegion, presetCity).then(() => {
-                        if (presetCity) {
-                            loadDistricts(presetCity, presetDistrict);
+                    await loadCities(presetRegion, presetCity);
+                    if (presetCity) {
+                        await loadDistricts(presetCity, presetDistrict);
+                        if (presetDistrict) {
+                            await loadLocationProjects(presetDistrict, presetLocationProject);
                         }
-                    });
+                    }
                 }
-            });
-        } else {
-            clearSelect(regionSelect, '{{ __('admin.select_region') }}');
-            clearSelect(citySelect, '{{ __('admin.select_city') }}');
-            clearSelect(districtSelect, '{{ __('admin.select_district') }}');
-        }
+            } else {
+                clearSelect(regionSelect, '{{ __('admin.select_region') }}');
+                clearSelect(citySelect, '{{ __('admin.select_city') }}');
+                clearSelect(districtSelect, '{{ __('admin.select_district') }}');
+                clearSelect(locationProjectSelect, '{{ __('admin.projects.select_location_project') }}', true);
+            }
 
-        const selectedMasterOption = masterProjectSelect?.selectedOptions[0];
-        if (partOfMasterSelect?.value === '1' && selectedMasterOption?.value) {
-            applyLocationFromMaster(selectedMasterOption);
-        } else {
-            syncLocationVisibility();
-        }
+            const selectedMasterOption = masterProjectSelect?.selectedOptions[0];
+            if (partOfMasterSelect?.value === '1' && selectedMasterOption?.value) {
+                await applyLocationFromMaster(selectedMasterOption);
+            } else {
+                syncLocationVisibility();
+                if (locationProjectSelect?.value) {
+                    focusOnSelection('project', locationProjectSelect.value, locationProjectSelect, 15);
+                } else if (districtSelect?.value) {
+                    focusOnSelection('district', districtSelect.value, districtSelect, 14);
+                } else if (citySelect?.value) {
+                    focusOnSelection('city', citySelect.value, citySelect, 12);
+                } else if (regionSelect?.value) {
+                    focusOnSelection('region', regionSelect.value, regionSelect, 9);
+                }
+            }
+        };
+
+        loadInitial();
     });
 </script>
