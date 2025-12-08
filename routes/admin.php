@@ -13,3 +13,10 @@ Route::group(['prefix' => 'projects'], function () {
         Route::post('basics/{project?}', [ProjectWizardController::class, 'storeBasicsStep'])->name('projects.steps.basics.store');
     });
 });
+
+// Hierarchical Lookups
+Route::get('lookups/property-types', [\App\Http\Controllers\Admin\LookupHierarchyController::class, 'propertyTypes'])
+    ->name('lookups.property_types');
+
+Route::get('lookups/unit-types', [\App\Http\Controllers\Admin\LookupHierarchyController::class, 'unitTypes'])
+    ->name('lookups.unit_types');
