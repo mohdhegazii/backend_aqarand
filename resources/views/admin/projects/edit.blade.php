@@ -9,7 +9,7 @@
 @endsection
 
 @section('content')
-    @include('admin.projects.partials.form', ['project' => $project])
+    {{-- Project form content temporarily removed (to be rebuilt) --}}
 @endsection
 
 @push('scripts')
