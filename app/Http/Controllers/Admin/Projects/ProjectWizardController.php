@@ -31,7 +31,7 @@ class ProjectWizardController extends Controller
             'name_ar' => 'required|string|max:255',
             'name_en' => 'required|string|max:255',
             'developer_id' => 'required|integer|exists:developers,id',
-            'launch_date' => 'nullable|date',
+            'launch_date' => 'nullable|date', // Project Launch Date
         ]);
 
         if ($id) {
