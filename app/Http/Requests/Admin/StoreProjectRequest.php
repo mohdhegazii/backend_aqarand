@@ -39,8 +39,8 @@ class StoreProjectRequest extends FormRequest
 
             // Location
             'country_id' => ['required', Rule::in([$egyptId])],
-            'region_id' => 'nullable|exists:regions,id',
-            'city_id' => 'nullable|exists:cities,id',
+            'region_id' => 'required|exists:regions,id',
+            'city_id' => 'required|exists:cities,id',
             'district_id' => 'nullable|exists:districts,id',
             'location_project_id' => 'nullable|exists:projects,id',
             'map_lat' => 'nullable|numeric',
