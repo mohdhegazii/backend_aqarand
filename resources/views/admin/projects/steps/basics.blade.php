@@ -93,19 +93,10 @@
                 <label for="developer_id" class="block text-sm font-semibold text-gray-700">
                     {{ __('admin.project_wizard.developer') }} <span class="text-red-500">*</span>
                 </label>
-                <select
-                    id="developer_id"
+                <x-developers.select
                     name="developer_id"
-                    class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
-                    required
-                >
-                    <option value="">{{ __('admin.project_wizard.select_developer') }}</option>
-                    @foreach($developers as $developer)
-                        <option value="{{ $developer->id }}" {{ (old('developer_id', $project->developer_id) == $developer->id) ? 'selected' : '' }}>
-                            {{ $developer->display_name }}
-                        </option>
-                    @endforeach
-                </select>
+                    :selected-id="old('developer_id', $project->developer_id)"
+                />
                 @error('developer_id')
                     <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
                 @enderror
