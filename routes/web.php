@@ -97,6 +97,9 @@ $registerAdminRoutes = function (string $namePrefix = 'admin.'): void {
 
         // Secure File Download
         Route::get('media/download/{mediaFile}', [\App\Http\Controllers\Admin\MediaController::class, 'download'])->name('media.download');
+
+        // Load separate Admin Routes
+        require __DIR__.'/admin.php';
     });
 };
 
