@@ -18,6 +18,14 @@
     <form action="{{ route('admin.projects.steps.basics.store', $project->id) }}" method="POST" id="basics-form">
         @csrf
 
+        <!-- Hidden Inputs for Map -->
+        <input type="hidden" name="lat" id="lat" value="{{ old('lat', $project->lat) }}">
+        <input type="hidden" name="lng" id="lng" value="{{ old('lng', $project->lng) }}">
+        <!-- boundary_geojson is updated via JS -->
+        <input type="hidden" name="boundary_geojson" id="boundary_geojson" value="{{ old('boundary_geojson', json_encode($project->boundary_geojson ?? null)) }}">
+        <!-- Helper input for location-map.js initialization -->
+        <input type="hidden" id="map_helper_geojson" value="{{ old('boundary_geojson', json_encode($project->boundary_geojson ?? null)) }}">
+
         <div class="space-y-6">
             <!-- Project Name (Arabic) -->
             <div>
@@ -119,7 +127,6 @@
                         <select disabled class="mt-1 block w-full rounded-md border-gray-300 bg-gray-100 cursor-not-allowed shadow-sm sm:text-sm">
                             <option selected>{{ __('admin.projects.country_fixed_egypt') }}</option>
                         </select>
-                        <!-- Implicit Country ID handling in Controller, or can send hidden -->
                     </div>
 
                     <!-- Region / Governorate -->
@@ -216,8 +223,6 @@
                 <p class="text-sm text-gray-500 mb-2">{{ __('admin.project_map_instruction') }}</p>
 
                 <div id="map-container" class="w-full h-96 rounded-lg border border-gray-300 z-0"></div>
-
-                <input type="hidden" name="boundary_geojson" id="boundary_geojson" value="{{ old('boundary_geojson', json_encode($project->boundary_geojson ?? null)) }}">
             </div>
 
         </div>
@@ -247,6 +252,7 @@
 
 @push('scripts')
     <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.js"></script>
+    <script src="/js/admin/location-map.js"></script>
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             // --- CASCADING DROPDOWNS ---
@@ -255,6 +261,7 @@
             const districtSelect = document.getElementById('district_id');
 
             const locale = "{{ app()->getLocale() }}"; // 'ar' or 'en'
+            let mapInstance;
 
             function clearSelect(select) {
                 select.innerHTML = '<option value="">{{ __('admin.select_option') }}</option>';
@@ -273,6 +280,12 @@
                     }
                     select.appendChild(option);
                 });
+            }
+
+            function flyToLocation(lat, lng, zoom) {
+                if(mapInstance) {
+                    mapInstance.flyTo([lat, lng], zoom);
+                }
             }
 
             regionSelect.addEventListener('change', function() {
@@ -322,101 +335,32 @@
                 }
             });
 
-            // --- MAP LOGIC ---
-            // Egypt Bounds
-            const southWest = L.latLng(22.0, 24.0);
-            const northEast = L.latLng(32.0, 37.0);
-            const bounds = L.latLngBounds(southWest, northEast);
-
-            const map = L.map('map-container', {
-                center: [26.8206, 30.8025], // Center of Egypt
-                zoom: 6,
-                maxBounds: bounds,
-                maxBoundsViscosity: 1.0,
-                minZoom: 5
-            });
-
-            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-                attribution: '&copy; OpenStreetMap contributors'
-            }).addTo(map);
-
-            // FeatureGroup to store editable layers
-            const drawnItems = new L.FeatureGroup();
-            map.addLayer(drawnItems);
-
-            // Init existing polygon if any
-            const existingGeoJsonInput = document.getElementById('boundary_geojson');
-            if (existingGeoJsonInput.value && existingGeoJsonInput.value !== 'null' && existingGeoJsonInput.value !== '""') {
-                try {
-                    let geoJsonData = JSON.parse(existingGeoJsonInput.value);
-                    // Handle double encoding if it happens
-                    if(typeof geoJsonData === 'string') geoJsonData = JSON.parse(geoJsonData);
-
-                    const geoJsonLayer = L.geoJSON(geoJsonData);
-                    geoJsonLayer.eachLayer(function(layer) {
-                        drawnItems.addLayer(layer);
-                    });
-                    if(drawnItems.getLayers().length > 0) {
-                        map.fitBounds(drawnItems.getBounds());
-                    }
-                } catch(e) {
-                    console.error("Error parsing GeoJSON", e);
-                }
-            }
-
-            // Init Draw Control
-            const drawControl = new L.Control.Draw({
-                draw: {
-                    polygon: {
-                        allowIntersection: false,
-                        showArea: true
-                    },
-                    polyline: false,
-                    rectangle: false,
-                    circle: false,
-                    circlemarker: false,
-                    marker: false
+            // --- MAP INIT ---
+            initLocationMap({
+                elementId: 'map-container',
+                entityLevel: 'project',
+                entityId: {{ $project->id ?? 'null' }},
+                polygonFieldSelector: '#map_helper_geojson',
+                latFieldSelector: '#lat',
+                lngFieldSelector: '#lng',
+                lat: {{ $project->lat ?? 26.8206 }}, // Default to Egypt center
+                lng: {{ $project->lng ?? 30.8025 }},
+                zoom: {{ $project->lat ? 13 : 6 }},
+                lockToEgypt: true,
+                onMapInit: function(map) {
+                    mapInstance = map;
                 },
-                edit: {
-                    featureGroup: drawnItems,
-                    remove: true
+                onPolygonChange: function(data) {
+                     // Ensure we save FeatureCollection to the real input
+                     // This overrides location-map.js default saving logic (which updates map_helper_geojson)
+                     // by updating the actual submission input
+                     if (data.features.length > 0) {
+                         document.getElementById('boundary_geojson').value = JSON.stringify(data);
+                     } else {
+                         document.getElementById('boundary_geojson').value = '';
+                     }
                 }
             });
-            map.addControl(drawControl);
-
-            function updateHiddenInput() {
-                const data = drawnItems.toGeoJSON();
-                // We only want the features, or specifically the first polygon if we enforce single
-                if (data.features.length > 0) {
-                     // Save as FeatureCollection or just the Geometry?
-                     // Usually FeatureCollection is safer standard.
-                     document.getElementById('boundary_geojson').value = JSON.stringify(data);
-                } else {
-                    document.getElementById('boundary_geojson').value = '';
-                }
-            }
-
-            map.on(L.Draw.Event.CREATED, function (e) {
-                // Remove existing layers to enforce single polygon if needed?
-                // For now allow multiple shapes or single? Requirement: "project boundary". usually single.
-                drawnItems.clearLayers(); // Clear previous
-
-                const layer = e.layer;
-                drawnItems.addLayer(layer);
-                updateHiddenInput();
-            });
-
-            map.on(L.Draw.Event.EDITED, function (e) {
-                updateHiddenInput();
-            });
-
-            map.on(L.Draw.Event.DELETED, function (e) {
-                updateHiddenInput();
-            });
-
-            function flyToLocation(lat, lng, zoom) {
-                map.flyTo([lat, lng], zoom);
-            }
         });
     </script>
 @endpush

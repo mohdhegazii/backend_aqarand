@@ -9,7 +9,10 @@
             latFieldSelector,
             lngFieldSelector,
             lat, lng, zoom,
-            readOnly
+            readOnly,
+            lockToEgypt,
+            onPointChange,
+            onPolygonChange
         } = options;
 
         const mapId = elementId;
@@ -18,6 +21,16 @@
         const initialZoom = zoom || (lat ? 13 : 6);
 
         const map = L.map(mapId).setView([initialLat, initialLng], initialZoom);
+
+        if (lockToEgypt) {
+            const southWest = L.latLng(22.0, 24.0);
+            const northEast = L.latLng(32.0, 37.0);
+            const bounds = L.latLngBounds(southWest, northEast);
+            map.setMaxBounds(bounds);
+            map.options.maxBoundsViscosity = 1.0;
+            map.options.minZoom = 5;
+        }
+
         window['map_' + mapId] = map; // Expose globally if needed (backward compatibility)
         if (options.onMapInit) {
             options.onMapInit(map);
@@ -63,6 +76,10 @@
             const displayLng = document.getElementById('display-lng-' + mapId);
             if (displayLat) displayLat.innerText = newLat.toFixed(7);
             if (displayLng) displayLng.innerText = newLng.toFixed(7);
+
+            if (onPointChange) {
+                onPointChange(newLat, newLng);
+            }
         }
 
         if (!readOnly) {
@@ -271,9 +288,14 @@
         }
 
         function updateBoundaryInput() {
+            const data = drawnItems.toGeoJSON();
+
+            if (onPolygonChange) {
+                onPolygonChange(data);
+            }
+
             if (!polygonInput) return;
 
-            const data = drawnItems.toGeoJSON();
             // Current saving logic in map_picker uses data.features[0].geometry
             // Current saving logic in project form uses e.layer.toGeoJSON() which is a Feature.
             // We need to be consistent with what the backend expects.
