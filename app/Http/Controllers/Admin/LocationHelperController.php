@@ -3,15 +3,18 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Services\LocationService;
 use Illuminate\Http\Request;
-use App\Models\Country;
-use App\Models\Region;
-use App\Models\City;
-use App\Models\District;
-use App\Models\Project;
 
 class LocationHelperController extends Controller
 {
+    protected LocationService $locationService;
+
+    public function __construct(LocationService $locationService)
+    {
+        $this->locationService = $locationService;
+    }
+
     /**
      * Search locations (Country, Region, City, District) for autocomplete.
      */
@@ -27,11 +30,7 @@ class LocationHelperController extends Controller
         $results = [];
 
         // Regions
-        $regions = Region::where('name_en', 'like', "%{$query}%")
-            ->orWhere('name_local', 'like', "%{$query}%")
-            ->limit(5)
-            ->with('country')
-            ->get();
+        $regions = $this->locationService->searchRegions($query);
 
         foreach ($regions as $r) {
             $name = $isAr
@@ -54,11 +53,7 @@ class LocationHelperController extends Controller
         }
 
         // Cities
-        $cities = City::where('name_en', 'like', "%{$query}%")
-            ->orWhere('name_local', 'like', "%{$query}%")
-            ->limit(5)
-            ->with(['region', 'region.country'])
-            ->get();
+        $cities = $this->locationService->searchCities($query);
 
         foreach ($cities as $c) {
             $name = $isAr
@@ -81,11 +76,7 @@ class LocationHelperController extends Controller
         }
 
         // Districts
-        $districts = District::where('name_en', 'like', "%{$query}%")
-            ->orWhere('name_local', 'like', "%{$query}%")
-            ->limit(5)
-            ->with(['city', 'city.region', 'city.region.country'])
-            ->get();
+        $districts = $this->locationService->searchDistricts($query);
 
         foreach ($districts as $d) {
             $name = $isAr
@@ -112,42 +103,25 @@ class LocationHelperController extends Controller
 
     public function getRegions($countryId)
     {
-        $regions = Region::where('country_id', $countryId)
-            ->where('is_active', true)
-            ->orderBy('name_en')
-            ->get();
-
+        $regions = $this->locationService->getRegionsByCountry($countryId);
         return response()->json(['regions' => $regions]);
     }
 
     public function getCities($regionId)
     {
-        $cities = City::where('region_id', $regionId)
-            ->where('is_active', true)
-            ->orderBy('name_en')
-            ->get();
-
+        $cities = $this->locationService->getCitiesByRegion($regionId);
         return response()->json(['cities' => $cities]);
     }
 
     public function getDistricts($cityId)
     {
-        $districts = District::where('city_id', $cityId)
-            ->where('is_active', true)
-            ->orderBy('name_en')
-            ->get();
-
+        $districts = $this->locationService->getDistrictsByCity($cityId);
         return response()->json(['districts' => $districts]);
     }
 
     public function getProjects($districtId)
     {
-        $projects = Project::where('district_id', $districtId)
-            ->where('is_active', true)
-            ->orderBy('name_en')
-            ->orderBy('name_ar')
-            ->get(['id', 'name_en', 'name_ar', 'name', 'district_id', 'map_lat', 'map_lng', 'lat', 'lng', 'map_zoom', 'map_polygon']);
-
+        $projects = $this->locationService->getProjectsByDistrict($districtId);
         return response()->json(['projects' => $projects]);
     }
 }
