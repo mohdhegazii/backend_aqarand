@@ -107,4 +107,17 @@ return [
     'units' => 'الوحدات',
     'listings' => 'القوائم',
     'real_estate' => 'العقارات',
+
+    // Project Wizard
+    'project_wizard' => [
+        'step_basics' => 'الأساسيات والموقع',
+        'step_1_of_x' => 'الخطوة 1 من المعالج',
+        'name_ar' => 'اسم المشروع (عربي)',
+        'name_en' => 'اسم المشروع (إنجليزي)',
+        'name_ar_placeholder' => 'مثال: المقصد',
+        'name_en_placeholder' => 'مثال: Al Maqsad',
+    ],
+    'next' => 'التالي',
+    'previous' => 'السابق',
+    'saved_successfully' => 'تم الحفظ بنجاح',
 ];
