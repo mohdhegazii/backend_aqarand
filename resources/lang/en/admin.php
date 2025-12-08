@@ -116,6 +116,8 @@ return [
         'name_en' => 'Project Name (English)',
         'name_ar_placeholder' => 'Example: Al Maqsad',
         'name_en_placeholder' => 'Example: Al Maqsad',
+        'developer' => 'Developer',
+        'select_developer' => 'Select developer',
     ],
     'next' => 'Next',
     'previous' => 'Back',
