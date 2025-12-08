@@ -21,14 +21,11 @@
                         <input type="text" name="search" value="{{ request('search') }}" placeholder="بحث باسم المشروع..." class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50">
                     </div>
                     <div class="w-full md:w-1/3">
-                        <select name="developer_id" class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50">
-                            <option value="">كل المطورين</option>
-                            @foreach($developers as $developer)
-                                <option value="{{ $developer->id }}" {{ request('developer_id') == $developer->id ? 'selected' : '' }}>
-                                    {{ $developer->display_name }}
-                                </option>
-                            @endforeach
-                        </select>
+                        <x-developers.select
+                            name="developer_id"
+                            :selected-id="request('developer_id')"
+                            :placeholder="__('admin.project_wizard.select_developer')"
+                        />
                     </div>
                     <div class="w-full md:w-auto">
                         <button type="submit" class="bg-gray-800 text-white px-4 py-2 rounded hover:bg-gray-700">
