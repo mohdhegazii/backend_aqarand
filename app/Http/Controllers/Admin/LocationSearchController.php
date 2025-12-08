@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\City;
 use App\Models\District;
+use App\Models\Region;
 use App\Models\Project;
 use Illuminate\Http\Request;
 
@@ -17,6 +18,28 @@ class LocationSearchController extends Controller
         if (strlen($query) < 2) {
             return response()->json([]);
         }
+
+        $regions = Region::with(['country'])
+            ->where(function ($builder) use ($query) {
+                $builder->where('name_en', 'like', "%{$query}%")
+                    ->orWhere('name_local', 'like', "%{$query}%");
+            })
+            ->orderBy('name_en')
+            ->limit(8)
+            ->get()
+            ->map(function (Region $region) {
+                return [
+                    'type' => 'region',
+                    'label' => trim($region->name_en),
+                    'path' => $region->country?->name_en,
+                    'country_id' => $region->country_id,
+                    'region_id' => $region->id,
+                    'city_id' => null,
+                    'district_id' => null,
+                    'lat' => $region->lat,
+                    'lng' => $region->lng,
+                ];
+            });
 
         $cities = City::with(['region', 'region.country'])
             ->where(function ($builder) use ($query) {
@@ -103,6 +126,6 @@ class LocationSearchController extends Controller
                 ];
             });
 
-        return response()->json($cities->merge($districts)->merge($projects)->values());
+        return response()->json($regions->merge($cities)->merge($districts)->merge($projects)->values());
     }
 }
