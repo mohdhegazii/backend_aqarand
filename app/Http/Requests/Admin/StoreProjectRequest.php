@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests\Admin;
 
+use App\Models\Country;
 use Illuminate\Foundation\Http\FormRequest;
 
 class StoreProjectRequest extends FormRequest
@@ -34,7 +35,7 @@ class StoreProjectRequest extends FormRequest
             'is_active' => 'boolean',
 
             // Location
-            'country_id' => 'required_unless:is_part_of_master_project,1|exists:countries,id',
+            'country_id' => 'nullable|exists:countries,id',
             'region_id' => 'required_unless:is_part_of_master_project,1|exists:regions,id',
             'city_id' => 'required_unless:is_part_of_master_project,1|exists:cities,id',
             'district_id' => 'nullable|exists:districts,id',
@@ -120,6 +121,7 @@ class StoreProjectRequest extends FormRequest
     public function prepareForValidation()
     {
         $partOfMasterRaw = $this->input('is_part_of_master_project', null);
+        $defaultCountryId = $this->defaultCountryId();
 
         $this->merge([
             'is_part_of_master_project' => $this->normalizeNullableBoolean($partOfMasterRaw),
@@ -134,7 +136,15 @@ class StoreProjectRequest extends FormRequest
             'amenities' => $this->input('amenity_ids', $this->input('amenities', [])),
             'title_ar' => $this->input('project_title_ar'),
             'title_en' => $this->input('project_title_en'),
+            'country_id' => $this->input('country_id', $defaultCountryId),
         ]);
+    }
+
+    private function defaultCountryId(): ?int
+    {
+        return Country::where('code', 'EG')->value('id')
+            ?? Country::where('name_en', 'Egypt')->value('id')
+            ?? Country::value('id');
     }
 
     private function normalizeNullableBoolean($value): ?int

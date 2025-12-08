@@ -5,8 +5,8 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\City;
 use App\Models\District;
-use App\Models\Region;
 use App\Models\Project;
+use App\Models\Region;
 use Illuminate\Http\Request;
 
 class LocationSearchController extends Controller
@@ -30,7 +30,8 @@ class LocationSearchController extends Controller
             ->map(function (Region $region) {
                 return [
                     'type' => 'region',
-                    'label' => trim($region->name_en),
+                    'id' => $region->id,
+                    'label' => $region->name_en ?? $region->name_local,
                     'path' => $region->country?->name_en,
                     'country_id' => $region->country_id,
                     'region_id' => $region->id,
@@ -52,8 +53,9 @@ class LocationSearchController extends Controller
             ->map(function (City $city) {
                 return [
                     'type' => 'city',
+                    'id' => $city->id,
                     'label' => trim($city->name_en . ' - ' . ($city->region->name_en ?? '')),
-                    'path' => $city->region?->country?->name_en,
+                    'path' => collect([$city->region?->name_en, $city->region?->country?->name_en])->filter()->implode(' / '),
                     'country_id' => $city->region->country_id,
                     'region_id' => $city->region_id,
                     'city_id' => $city->id,
@@ -85,8 +87,9 @@ class LocationSearchController extends Controller
 
                 return [
                     'type' => 'district',
+                    'id' => $district->id,
                     'label' => implode(' - ', $labelParts),
-                    'path' => $region?->country?->name_en,
+                    'path' => collect([$region?->name_en, $region?->country?->name_en])->filter()->implode(' / '),
                     'country_id' => $region?->country_id,
                     'region_id' => $region?->id,
                     'city_id' => $city?->id,
@@ -115,8 +118,9 @@ class LocationSearchController extends Controller
 
                 return [
                     'type' => 'project',
+                    'id' => $project->id,
                     'label' => implode(' - ', $labelParts),
-                    'path' => $region?->country?->name_en,
+                    'path' => collect([$region?->name_en, $region?->country?->name_en])->filter()->implode(' / '),
                     'country_id' => $project->country_id,
                     'region_id' => $project->region_id,
                     'city_id' => $project->city_id,

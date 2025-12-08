@@ -89,7 +89,7 @@
     <div id="project-location-block" class="space-y-2" style="display:none;" x-cloak>
         <div class="flex items-center justify-between">
             <div>
-                <p class="text-sm font-semibold text-gray-700">{{ $isAr ? 'البلد / المنطقة / المدينة / الحي' : 'Country / Region / City / District' }}</p>
+                <p class="text-sm font-semibold text-gray-700">{{ $isAr ? 'المحافظة / المدينة / الحي' : 'Governorate / City / District' }}</p>
             </div>
             <div class="text-xs text-gray-500" id="location_inherit_badge" hidden>
                 {{ __('admin.projects.inherited_from_master') }}
@@ -103,15 +103,7 @@
                 <div id="location_search_results" class="bg-white border border-gray-200 rounded mt-1 shadow-sm hidden"></div>
             </div>
 
-            <div>
-                <label class="block text-sm font-semibold text-gray-700">{{ __('admin.projects.country') }}</label>
-                <select name="country_id" id="country_id" class="w-full rounded border-gray-300" data-location-select>
-                    <option value="">{{ __('admin.select_country') }}</option>
-                    @foreach($countries as $country)
-                        <option value="{{ $country->id }}" {{ old('country_id', $project->country_id ?? '') == $country->id ? 'selected' : '' }}>{{ $country->name_en ?? $country->name }}</option>
-                    @endforeach
-                </select>
-            </div>
+            <input type="hidden" name="country_id" id="country_id" value="{{ old('country_id', $project->country_id ?? $defaultCountryId ?? '') }}">
             <div>
                 <label class="block text-sm font-semibold text-gray-700">{{ __('admin.projects.region') }}</label>
                 <select name="region_id" id="region_id" class="w-full rounded border-gray-300" data-location-select></select>

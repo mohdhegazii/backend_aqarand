@@ -6,7 +6,6 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\StoreProjectRequest;
 use App\Http\Requests\Admin\UpdateProjectRequest;
 use App\Models\Amenity;
-use App\Models\Country;
 use App\Models\Developer;
 use App\Models\Project;
 use Illuminate\Http\Request;
@@ -44,7 +43,7 @@ class ProjectController extends Controller
     {
         $project = new Project();
         $developers = Developer::where('is_active', true)->orderBy('name')->get();
-        $countries = Country::all();
+        $defaultCountryId = $this->defaultCountryId();
         $amenities = Amenity::whereIn('amenity_type', ['project', 'both'])
                             ->orderBy('sort_order')
                             ->orderBy('name_en')
@@ -58,7 +57,7 @@ class ProjectController extends Controller
             'map_lat', 'map_lng', 'lat', 'lng'
         )->get();
 
-        return view('admin.projects.create', compact('project', 'developers', 'countries', 'amenities', 'existingProjects'));
+        return view('admin.projects.create', compact('project', 'developers', 'amenities', 'existingProjects', 'defaultCountryId'));
     }
 
     public function store(StoreProjectRequest $request)
@@ -138,7 +137,7 @@ class ProjectController extends Controller
         $project->load(['amenities', 'faqs', 'propertyModels.unitType', 'masterProject']);
 
         $developers = Developer::where('is_active', true)->orderBy('name')->get();
-        $countries = Country::all();
+        $defaultCountryId = $this->defaultCountryId();
         $amenities = Amenity::whereIn('amenity_type', ['project', 'both'])
                             ->orderBy('sort_order')
                             ->orderBy('name_en')
@@ -149,7 +148,16 @@ class ProjectController extends Controller
             ->select('id', 'name_en', 'name_ar', 'name', 'country_id', 'region_id', 'city_id', 'district_id', 'map_lat', 'map_lng', 'lat', 'lng')
             ->get();
 
-        return view('admin.projects.edit', compact('project', 'developers', 'countries', 'amenities', 'existingProjects'));
+        return view('admin.projects.edit', compact('project', 'developers', 'amenities', 'existingProjects', 'defaultCountryId'));
+    }
+
+    private function defaultCountryId(): ?int
+    {
+        return app('cache')->remember('default_country_id', 300, function () {
+            return \App\Models\Country::where('code', 'EG')->value('id')
+                ?? \App\Models\Country::where('name_en', 'Egypt')->value('id')
+                ?? \App\Models\Country::value('id');
+        });
     }
 
     public function update(UpdateProjectRequest $request, Project $project)
