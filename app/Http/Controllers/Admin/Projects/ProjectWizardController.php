@@ -31,6 +31,7 @@ class ProjectWizardController extends Controller
             'name_ar' => 'required|string|max:255',
             'name_en' => 'required|string|max:255',
             'developer_id' => 'required|integer|exists:developers,id',
+            'launch_date' => 'nullable|date',
         ]);
 
         if ($id) {
@@ -42,6 +43,7 @@ class ProjectWizardController extends Controller
         $project->name_ar = $validated['name_ar'];
         $project->name_en = $validated['name_en'];
         $project->developer_id = $validated['developer_id'];
+        $project->launch_date = $validated['launch_date'] ?? null;
 
         // Auto-generate slug from English name if not already set or if creating new
         if (!$project->exists) {
