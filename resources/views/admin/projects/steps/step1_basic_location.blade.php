@@ -1,4 +1,8 @@
 <div class="space-y-6">
+    @php
+        $isAr = app()->getLocale() === 'ar';
+    @endphp
+
     <h3 class="text-lg font-bold text-gray-800">البيانات الأساسية</h3>
 
     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
