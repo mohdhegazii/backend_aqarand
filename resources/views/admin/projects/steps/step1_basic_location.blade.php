@@ -99,24 +99,32 @@
         <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
             <div class="md:col-span-2">
                 <label class="block text-sm font-semibold text-gray-700">{{ __('admin.projects.country') }}</label>
-                <input type="hidden" name="country_id" id="country_id" value="{{ old('country_id', $project->country_id ?? $defaultCountryId ?? '') }}">
-                <input type="text" readonly class="w-full rounded border-gray-200 bg-gray-50" value="{{ $isAr ? 'مصر' : 'Egypt' }}">
+                <input type="hidden" name="country_id" id="country_id" value="{{ $defaultCountryId ?? old('country_id', $project->country_id ?? '') }}">
+                <input type="text" readonly class="w-full rounded border-gray-200 bg-gray-50" value="{{ $isAr ? 'مصر (ثابت)' : 'Egypt (fixed)' }}">
             </div>
             <div>
                 <label class="block text-sm font-semibold text-gray-700">{{ __('admin.projects.governorate') }}</label>
-                <select name="region_id" id="region_id" class="w-full rounded border-gray-300" data-location-select required></select>
+                <select name="region_id" id="region_id" class="w-full rounded border-gray-300" data-location-select required>
+                    <option value="">{{ __('admin.select_region') }}</option>
+                </select>
             </div>
             <div>
                 <label class="block text-sm font-semibold text-gray-700">{{ __('admin.projects.city') }}</label>
-                <select name="city_id" id="city_id" class="w-full rounded border-gray-300" data-location-select required></select>
+                <select name="city_id" id="city_id" class="w-full rounded border-gray-300" data-location-select required>
+                    <option value="">{{ __('admin.select_city') }}</option>
+                </select>
             </div>
             <div>
                 <label class="block text-sm font-semibold text-gray-700">{{ __('admin.projects.district_neighborhood') }} <span class="text-gray-500 text-xs">({{ $isAr ? 'اختياري' : 'Optional' }})</span></label>
-                <select name="district_id" id="district_id" class="w-full rounded border-gray-300" data-location-select></select>
+                <select name="district_id" id="district_id" class="w-full rounded border-gray-300" data-location-select>
+                    <option value="">{{ __('admin.select_district') }}</option>
+                </select>
             </div>
             <div>
                 <label class="block text-sm font-semibold text-gray-700">{{ __('admin.projects.location_project_optional') }}</label>
-                <select name="location_project_id" id="location_project_id" class="w-full rounded border-gray-300" data-location-select></select>
+                <select name="location_project_id" id="location_project_id" class="w-full rounded border-gray-300" data-location-select>
+                    <option value="">{{ __('admin.projects.select_location_project') }}</option>
+                </select>
                 <p class="text-xs text-gray-500 mt-1">{{ $isAr ? 'مشروع مرتبط بالحي (إن وجد).' : 'Projects linked to the selected district (if any).' }}</p>
             </div>
         </div>
