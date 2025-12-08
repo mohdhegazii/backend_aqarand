@@ -65,6 +65,7 @@ class Project extends Model
         'video_url',
         'video_urls',
         'map_polygon',
+        'project_boundary_geojson',
         'meta_title',
         'meta_description',
         'main_keyword',
@@ -80,6 +81,7 @@ class Project extends Model
     protected $casts = [
         'gallery' => 'array',
         'map_polygon' => 'array',
+        'project_boundary_geojson' => 'array',
         'sales_launch_date' => 'date',
         'is_part_of_master_project' => 'boolean',
         'is_featured' => 'boolean',

@@ -159,6 +159,7 @@ return [
     'developer' => 'Developer',
     'select_developer' => 'Select Developer',
     'tagline' => 'Tagline',
+        'location_section' => 'Project Location',
     'project_location' => 'Project Location',
     'unified_search' => 'Unified Search',
     'search_placeholder' => 'Search for project location (city, district, project...)',
@@ -168,6 +169,7 @@ return [
     'select_district' => 'Select District',
     'project_map' => 'Project Map & Land Boundaries',
     'map_instruction' => 'Use drawing tools to define the project boundaries on the map.',
+    'project_map_instruction' => 'Use drawing tools to define the project boundaries on the map.',
 
     'project_details_pricing' => 'Project Details & Pricing',
     'project_details_pricing_helper' => 'Project-level summary stats, not individual unit values.',
@@ -273,6 +275,7 @@ return [
         'brochure_file' => 'Brochure (PDF)',
         'video_links' => 'Video Links',
         'map_location' => 'Map Location',
+        'map_title' => 'Set project location on the map',
         'financial_summary_ar' => 'Pricing Summary (AR)',
         'financial_summary_en' => 'Pricing Summary (EN)',
         'min_price' => 'Min Price',
