@@ -1,59 +1,19 @@
-@php
-    $isAr = app()->getLocale() === 'ar';
-    $rawPartOfMaster = old('is_part_of_master_project', $project->is_part_of_master_project);
-    $normalizedPartOfMaster = isset($rawPartOfMaster) && $rawPartOfMaster !== '' ? (string) $rawPartOfMaster : '';
-@endphp
-
 <div class="space-y-6">
-    <h3 class="text-lg font-bold text-gray-800">{{ __('admin.projects.steps.basic') }} / {{ __('admin.projects.steps.location') }}</h3>
-
-    <div x-show="step1Errors.length" x-cloak class="bg-red-50 border border-red-200 text-red-700 rounded p-3 space-y-1">
-        <template x-for="(error, index) in step1Errors" :key="index">
-            <div x-text="error" class="text-sm"></div>
-        </template>
-    </div>
+    <h3 class="text-lg font-bold text-gray-800">البيانات الأساسية</h3>
 
     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
-            <label class="block text-sm font-semibold text-gray-700">{{ $isAr ? 'اسم المشروع (عربي)' : 'Project Name (Arabic)' }}</label>
-            <input type="text" name="name_ar" value="{{ old('name_ar', $project->name_ar ?? '') }}" required class="form-control form-control-lg w-full rounded border-gray-300" placeholder="{{ $isAr ? 'مثال: كمبوند المقصد العاصمة الإدارية' : 'Example: Al Maqsad New Capital (Arabic name)' }}" />
-            @if($isAr)
-                <p class="text-xs text-gray-500 mt-1">يُستخدم في الـ SEO العربي والعنوان التعريفي.</p>
-            @else
-                <p class="text-xs text-gray-500 mt-1">Used for SEO (Arabic version) and page title in Arabic.</p>
-            @endif
+            <label class="block text-sm font-semibold text-gray-700">اسم المشروع (عربي)</label>
+            <input
+                type="text"
+                name="name_ar"
+                value="{{ old('name_ar', $project->name_ar ?? '') }}"
+                required
+                class="form-control form-control-lg w-full rounded border-gray-300"
+                placeholder="مثال: كمبوند المقصد العاصمة الإدارية"
+            />
+            <p class="text-xs text-gray-500 mt-1">يُستخدم في الـ SEO العربي والعنوان التعريفي.</p>
         </div>
-        <div>
-            <label class="block text-sm font-semibold text-gray-700">{{ $isAr ? 'اسم المشروع (إنجليزي)' : 'Project Name (English)' }}</label>
-            <input type="text" name="name_en" value="{{ old('name_en', $project->name_en ?? '') }}" required class="form-control form-control-lg w-full rounded border-gray-300" placeholder="{{ $isAr ? 'مثال: Al Maqsad New Capital' : 'Example: Al Maqsad New Capital' }}" />
-            @if($isAr)
-                <p class="text-xs text-gray-500 mt-1">يُستخدم في الـ SEO الإنجليزي والعنوان التعريفي الإنجليزي.</p>
-            @else
-                <p class="text-xs text-gray-500 mt-1">Used for English SEO and slug/title.</p>
-            @endif
-        </div>
-    </div>
-
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div>
-            <label class="block text-sm font-semibold text-gray-700">{{ $isAr ? 'المطوّر' : 'Developer' }}</label>
-            <select name="developer_id" class="w-full rounded border-gray-300" required>
-                <option value="">-- {{ __('admin.select_developer') }} --</option>
-                @foreach($developers as $dev)
-                    <option value="{{ $dev->id }}" {{ old('developer_id', $project->developer_id ?? '') == $dev->id ? 'selected' : '' }}>{{ $dev->name }}</option>
-                @endforeach
-            </select>
-        </div>
-        <div>
-            <label class="block text-sm font-semibold text-gray-700">{{ $isAr ? 'تاريخ الإطلاق' : 'Launch Date' }}</label>
-            <input type="date" name="launch_date" value="{{ old('launch_date', optional($project->launch_date ?? $project->sales_launch_date ?? null)->format('Y-m-d')) }}" class="w-full rounded border-gray-300" />
-            @if($isAr)
-                <p class="text-xs text-gray-500 mt-1">تاريخ إطلاق المشروع أو أول مرحلة.</p>
-            @else
-                <p class="text-xs text-gray-500 mt-1">Project launch date or first phase start.</p>
-            @endif
-        </div>
-    </div>
 
     <div>
         <label class="block text-sm font-semibold text-gray-700">{{ __('admin.projects.part_of_master_project_question') }}</label>
@@ -151,15 +111,16 @@
 
     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
-            <label class="block text-sm font-semibold text-gray-700">{{ $isAr ? 'مساحة المشروع (م² / فدان…)' : 'Project Area (m² / Acre…)' }}</label>
-            <div class="flex space-x-2">
-                <input type="number" step="0.01" name="project_area" value="{{ old('project_area', $project->project_area_value ?? '') }}" class="w-full rounded border-gray-300" />
-                <select name="project_area_unit" class="rounded border-gray-300">
-                    <option value="sqm" {{ old('project_area_unit', $project->project_area_unit ?? 'sqm') === 'sqm' ? 'selected' : '' }}>m²</option>
-                    <option value="feddan" {{ old('project_area_unit', $project->project_area_unit ?? '') === 'feddan' ? 'selected' : '' }}>{{ __('admin.unit_feddan') }}</option>
-                </select>
-            </div>
-            <p class="text-xs text-gray-500 mt-1">{{ $isAr ? 'الأساس بالفدان.' : 'Default unit is Feddan.' }}</p>
+            <label class="block text-sm font-semibold text-gray-700">اسم المشروع (إنجليزي)</label>
+            <input
+                type="text"
+                name="name_en"
+                value="{{ old('name_en', $project->name_en ?? '') }}"
+                required
+                class="form-control form-control-lg w-full rounded border-gray-300"
+                placeholder="مثال: Al Maqsad New Capital"
+            />
+            <p class="text-xs text-gray-500 mt-1">يُستخدم في الـ SEO الإنجليزي والعنوان التعريفي الإنجليزي.</p>
         </div>
     </div>
 </div>
