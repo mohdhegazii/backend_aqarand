@@ -45,7 +45,7 @@ class ProjectWizardController extends Controller
             'region_id' => 'required|exists:regions,id',
             'city_id' => 'required|exists:cities,id',
             'district_id' => 'required|exists:districts,id',
-            'project_boundary_geojson' => 'nullable|json',
+            'boundary_geojson' => 'nullable|json',
         ]);
 
         if ($id) {
@@ -69,10 +69,10 @@ class ProjectWizardController extends Controller
         $project->city_id = $validated['city_id'];
         $project->district_id = $validated['district_id'];
 
-        if (!empty($validated['project_boundary_geojson'])) {
-             $project->project_boundary_geojson = json_decode($validated['project_boundary_geojson'], true);
+        if (!empty($validated['boundary_geojson'])) {
+             $project->boundary_geojson = json_decode($validated['boundary_geojson'], true);
         } else {
-             $project->project_boundary_geojson = null;
+             $project->boundary_geojson = null;
         }
 
         // Auto-generate slug from English name if not already set or if creating new

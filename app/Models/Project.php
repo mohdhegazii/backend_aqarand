@@ -66,6 +66,7 @@ class Project extends Model
         'video_urls',
         'map_polygon',
         'project_boundary_geojson',
+        'boundary_geojson', // Virtual attribute
         'meta_title',
         'meta_description',
         'main_keyword',
@@ -192,6 +193,43 @@ class Project extends Model
     {
         return $this->name;
     }
+
+    /**
+     * Get the project boundary GeoJSON.
+     * Use 'project_boundary_geojson' as primary source, 'map_polygon' as fallback.
+     *
+     * @return array|null
+     */
+    public function getBoundaryGeojsonAttribute()
+    {
+        return $this->project_boundary_geojson ?? $this->map_polygon;
+    }
+
+    /**
+     * Set the project boundary GeoJSON.
+     * Syncs both 'project_boundary_geojson' and 'map_polygon' columns.
+     *
+     * @param array|string|null $value
+     * @return void
+     */
+    public function setBoundaryGeojsonAttribute($value)
+    {
+        // Ensure we are working with an array or null
+        if (is_string($value)) {
+            $decoded = json_decode($value, true);
+            if (json_last_error() === JSON_ERROR_NONE) {
+                $value = $decoded;
+            } else {
+                 // if invalid json, might treat as null or keep as is if it was intended?
+                 // usually means empty string or bad json
+                 if (empty($value)) $value = null;
+            }
+        }
+
+        $this->attributes['project_boundary_geojson'] = $value ? json_encode($value) : null;
+        $this->attributes['map_polygon'] = $value ? json_encode($value) : null;
+    }
+
 
     public static function generateSlug(string $base, ?int $ignoreId = null): string
     {
