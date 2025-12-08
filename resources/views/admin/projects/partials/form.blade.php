@@ -709,12 +709,8 @@
             }
 
             setProjectType('0');
-            if (masterProjectSelect) {
-                masterProjectSelect.value = '';
-            }
-
-            const regionId = item.region_id ?? (item.type === 'region' ? item.id ?? null : null);
-            const cityId = item.city_id ?? (item.type === 'city' ? item.id ?? null : null);
+            const regionId = item.region_id ?? null;
+            const cityId = item.city_id ?? null;
             const districtId = item.district_id ?? (item.type === 'district' ? (item.id ?? null) : null);
             const zoomLevel = item.type === 'district' ? 14 : (item.type === 'city' ? 12 : 10);
 
