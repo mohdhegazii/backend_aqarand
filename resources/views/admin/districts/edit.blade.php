@@ -38,12 +38,14 @@
                     </label>
                 </div>
 
-                @include('admin.partials.map_picker', [
-                    'lat' => old('lat', $district->lat),
-                    'lng' => old('lng', $district->lng),
-                    'boundary' => old('boundary_geojson', $district->boundary_geojson),
-                    'mapId' => 'district-map'
-                ])
+                <x-location.map
+                    :lat="old('lat', $district->lat)"
+                    :lng="old('lng', $district->lng)"
+                    :polygon="$district->boundary_geojson"
+                    mapId="district-map"
+                    entityLevel="district"
+                    :entityId="$district->id"
+                />
 
                 <div class="flex items-center justify-end space-x-4 rtl:space-x-reverse mt-4">
                     <a href="{{ route($adminRoutePrefix.'districts.index') }}" class="text-gray-600 hover:text-gray-900">

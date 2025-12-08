@@ -38,12 +38,14 @@
                     </label>
                 </div>
 
-                @include('admin.partials.map_picker', [
-                    'lat' => old('lat', $region->lat),
-                    'lng' => old('lng', $region->lng),
-                    'boundary' => old('boundary_geojson', $region->boundary_geojson),
-                    'mapId' => 'region-map'
-                ])
+                <x-location.map
+                    :lat="old('lat', $region->lat)"
+                    :lng="old('lng', $region->lng)"
+                    :polygon="$region->boundary_geojson"
+                    mapId="region-map"
+                    entityLevel="region"
+                    :entityId="$region->id"
+                />
 
                 <div class="flex items-center justify-end space-x-4 rtl:space-x-reverse mt-4">
                     <a href="{{ route($adminRoutePrefix.'regions.index') }}" class="text-gray-600 hover:text-gray-900">

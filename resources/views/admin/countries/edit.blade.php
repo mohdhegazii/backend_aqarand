@@ -32,11 +32,15 @@
                     </label>
                 </div>
 
-                @include('admin.partials.map_picker', [
-                    'lat' => old('lat', $country->lat),
-                    'lng' => old('lng', $country->lng),
-                    'mapId' => 'country-map'
-                ])
+                <x-location.map
+                    :lat="old('lat', $country->lat)"
+                    :lng="old('lng', $country->lng)"
+                    :polygon="$country->boundary_geojson"
+                    mapId="country-map"
+                    entityLevel="country"
+                    :entityId="$country->id"
+                    :lockToEgypt="false"
+                />
 
                 <div class="flex items-center justify-end space-x-4 rtl:space-x-reverse mt-4">
                     <a href="{{ route($adminRoutePrefix.'countries.index') }}" class="text-gray-600 hover:text-gray-900">
