@@ -15,6 +15,8 @@ class UpdateProjectRequest extends FormRequest
 
     public function rules()
     {
+        $egyptId = $this->defaultCountryId();
+
         return [
             // Basic Info
             'name_ar' => 'required|string|max:255',
@@ -41,7 +43,7 @@ class UpdateProjectRequest extends FormRequest
             'is_active' => 'boolean',
 
             // Location
-            'country_id' => 'required|exists:countries,id',
+            'country_id' => ['required', Rule::in([$egyptId])],
             'region_id' => 'required|exists:regions,id',
             'city_id' => 'required|exists:cities,id',
             'district_id' => 'nullable|exists:districts,id',
@@ -147,7 +149,7 @@ class UpdateProjectRequest extends FormRequest
             'amenities' => $this->input('amenity_ids', $this->input('amenities', [])),
             'title_ar' => $this->input('project_title_ar'),
             'title_en' => $this->input('project_title_en'),
-            'country_id' => $this->input('country_id', $defaultCountryId),
+            'country_id' => $defaultCountryId,
         ]);
     }
 
