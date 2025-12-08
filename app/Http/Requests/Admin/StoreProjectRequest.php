@@ -4,6 +4,7 @@ namespace App\Http\Requests\Admin;
 
 use App\Models\Country;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 class StoreProjectRequest extends FormRequest
 {
@@ -14,6 +15,8 @@ class StoreProjectRequest extends FormRequest
 
     public function rules()
     {
+        $egyptId = $this->defaultCountryId();
+
         return [
             // Basic Info
             'name_ar' => 'required|string|max:255',
@@ -35,9 +38,9 @@ class StoreProjectRequest extends FormRequest
             'is_active' => 'boolean',
 
             // Location
-            'country_id' => 'required|exists:countries,id',
-            'region_id' => 'required|exists:regions,id',
-            'city_id' => 'required|exists:cities,id',
+            'country_id' => ['required', Rule::in([$egyptId])],
+            'region_id' => 'nullable|exists:regions,id',
+            'city_id' => 'nullable|exists:cities,id',
             'district_id' => 'nullable|exists:districts,id',
             'location_project_id' => 'nullable|exists:projects,id',
             'map_lat' => 'nullable|numeric',
@@ -137,7 +140,7 @@ class StoreProjectRequest extends FormRequest
             'amenities' => $this->input('amenity_ids', $this->input('amenities', [])),
             'title_ar' => $this->input('project_title_ar'),
             'title_en' => $this->input('project_title_en'),
-            'country_id' => $this->input('country_id', $defaultCountryId),
+            'country_id' => $defaultCountryId,
         ]);
     }
 

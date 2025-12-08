@@ -483,7 +483,11 @@
         const presetDistrict = '{{ old('district_id', $project->district_id ?? '') }}';
         const presetLocationProject = '{{ old('location_project_id', $project->location_project_id ?? '') }}';
         const currentProjectId = '{{ $project->id ?? '' }}';
-        const defaultCountryId = document.getElementById('country_id')?.value || '{{ $defaultCountryId ?? '' }}';
+        const defaultCountryId = '{{ $defaultCountryId ?? '' }}';
+        const countryInput = document.getElementById('country_id');
+        if (countryInput && defaultCountryId) {
+            countryInput.value = defaultCountryId;
+        }
 
         function clearSelect(select, placeholder, disable = false) {
             if (!select) return;
@@ -563,13 +567,12 @@
             const filteredProjects = projects.filter(item => !currentProjectId || String(item.id) !== String(currentProjectId));
             if (!filteredProjects.length) {
                 clearSelect(locationProjectSelect, '{{ __('admin.projects.no_linked_projects') }}', false);
-                locationProjectSelect.disabled = false;
-                const emptyOption = document.createElement('option');
-                emptyOption.value = '';
-                emptyOption.textContent = '{{ __('admin.projects.no_linked_projects') }}';
-                emptyOption.disabled = true;
-                emptyOption.selected = true;
-                locationProjectSelect.appendChild(emptyOption);
+                locationProjectSelect.disabled = true;
+                const placeholder = locationProjectSelect.querySelector('option');
+                if (placeholder) {
+                    placeholder.disabled = true;
+                    placeholder.selected = true;
+                }
                 return;
             }
             populateSelect(locationProjectSelect, filteredProjects, selected, '{{ __('admin.projects.select_location_project') }}');
@@ -660,9 +663,7 @@
                     zoomInput.value = map.getZoom();
                 }
             }
-            if (window.unifiedMap && typeof window.unifiedMap.flyToLocation === 'function') {
-                window.unifiedMap.flyToLocation({ lat, lng, zoom });
-            }
+            focusUnifiedMap(null, lat, lng, zoom);
             updateCoordinateInputs(lat, lng);
         }
 
@@ -696,6 +697,17 @@
                 }
             }
             return polygon;
+        }
+
+        function focusUnifiedMap(polygonData, lat, lng, zoom = 14) {
+            if (!window.unifiedMap) return;
+            if (polygonData && typeof window.unifiedMap.focusOnPolygon === 'function') {
+                window.unifiedMap.focusOnPolygon(polygonData);
+                return;
+            }
+            if (typeof window.unifiedMap.flyToLocation === 'function' && lat && lng) {
+                window.unifiedMap.flyToLocation({ lat, lng, zoom });
+            }
         }
 
         async function loadPolygonData() {
@@ -732,6 +744,7 @@
                     updateCoordinateInputs(center.lat, center.lng);
                     const zoomInput = document.getElementById('map_zoom');
                     if (zoomInput) zoomInput.value = map.getZoom();
+                    focusUnifiedMap(polygonData, center.lat, center.lng, map.getZoom());
                 }
                 return;
             }
@@ -740,7 +753,9 @@
             const lng = option?.dataset?.lng;
             const zoom = option?.dataset?.mapZoom || fallbackZoom;
             if (lat && lng) {
-                flyMapTo(parseFloat(lat), parseFloat(lng), Number(zoom) || fallbackZoom);
+                const numericZoom = Number(zoom) || fallbackZoom;
+                flyMapTo(parseFloat(lat), parseFloat(lng), numericZoom);
+                focusUnifiedMap(null, parseFloat(lat), parseFloat(lng), numericZoom);
             }
         }
 
@@ -760,7 +775,7 @@
 
             const countryInput = document.getElementById('country_id');
             if (countryInput) {
-                countryInput.value = option.dataset.country || defaultCountryId || '';
+                countryInput.value = defaultCountryId || '';
             }
 
             await loadRegions(regionId);
