@@ -417,7 +417,6 @@
                 const developer = document.querySelector('select[name="developer_id"]')?.value;
                 const partOfMaster = document.getElementById('is_part_of_master_project')?.value;
                 const masterProject = document.querySelector('select[name="master_project_id"]')?.value;
-                const country = document.getElementById('country_id')?.value;
                 const region = document.getElementById('region_id')?.value;
                 const city = document.getElementById('city_id')?.value;
 
@@ -435,7 +434,6 @@
                 }
 
                 if (partOfMaster === '0') {
-                    if (!country) this.step1Errors.push(@json(__('admin.projects.country')).concat(' ', 'is required'));
                     if (!region) this.step1Errors.push(@json(__('admin.projects.region')).concat(' ', 'is required'));
                     if (!city) this.step1Errors.push(@json(__('admin.projects.city')).concat(' ', 'is required'));
                 }
@@ -459,7 +457,6 @@
     }
 
     document.addEventListener('DOMContentLoaded', function () {
-        const countrySelect = document.getElementById('country_id');
         const regionSelect = document.getElementById('region_id');
         const citySelect = document.getElementById('city_id');
         const districtSelect = document.getElementById('district_id');
@@ -487,6 +484,7 @@
         const presetRegion = '{{ old('region_id', $project->region_id ?? '') }}';
         const presetCity = '{{ old('city_id', $project->city_id ?? '') }}';
         const presetDistrict = '{{ old('district_id', $project->district_id ?? '') }}';
+        const defaultCountryId = document.getElementById('country_id')?.value || '{{ $defaultCountryId ?? '' }}';
 
         function clearSelect(select, placeholder) {
             select.innerHTML = `<option value="">${placeholder}</option>`;
@@ -517,7 +515,8 @@
             return firstArray || [];
         }
 
-        async function loadRegions(countryId, selected) {
+        async function loadRegions(selected) {
+            const countryId = defaultCountryId;
             if (!countryId) {
                 clearSelect(regionSelect, '{{ __('admin.select_region') }}');
                 clearSelect(citySelect, '{{ __('admin.select_city') }}');
@@ -649,19 +648,20 @@
                 clearSelect(districtSelect, '{{ __('admin.select_district') }}');
                 return;
             }
-            const countryId = option.dataset.country;
             const regionId = option.dataset.region;
             const cityId = option.dataset.city;
             const districtId = option.dataset.district;
 
-            if (countryId) {
-                countrySelect.value = countryId;
-                await loadRegions(countryId, regionId);
-                if (regionId) {
-                    await loadCities(regionId, cityId);
-                    if (cityId) {
-                        await loadDistricts(cityId, districtId);
-                    }
+            const countryInput = document.getElementById('country_id');
+            if (countryInput) {
+                countryInput.value = option.dataset.country || defaultCountryId || '';
+            }
+
+            await loadRegions(regionId);
+            if (regionId) {
+                await loadCities(regionId, cityId);
+                if (cityId) {
+                    await loadDistricts(cityId, districtId);
                 }
             }
 
@@ -677,22 +677,19 @@
         async function applyLocationFromSearch(item) {
             if (!item) return;
             setProjectType('0');
-            const countryId = item.country_id ?? null;
             const regionId = item.region_id ?? null;
             const cityId = item.city_id ?? null;
             const districtId = item.district_id ?? (item.type === 'district' ? (item.id ?? null) : null);
             const zoomLevel = item.type === 'district' ? 14 : (item.type === 'city' ? 12 : 10);
 
-            if (countryId) {
-                countrySelect.value = countryId;
-                await loadRegions(countryId, regionId);
-                if (regionId) {
-                    await loadCities(regionId, cityId);
-                    if (cityId) {
-                        await loadDistricts(cityId, districtId);
-                    } else {
-                        clearSelect(districtSelect, '{{ __('admin.select_district') }}');
-                    }
+            document.getElementById('country_id').value = item.country_id ?? defaultCountryId ?? '';
+            await loadRegions(regionId);
+            if (regionId) {
+                await loadCities(regionId, cityId);
+                if (cityId) {
+                    await loadDistricts(cityId, districtId);
+                } else {
+                    clearSelect(districtSelect, '{{ __('admin.select_district') }}');
                 }
             }
             toggleLocationLock(false);
@@ -706,7 +703,6 @@
             }
         }
 
-        countrySelect.addEventListener('change', () => loadRegions(countrySelect.value));
         regionSelect.addEventListener('change', () => {
             loadCities(regionSelect.value);
             flyToSelectedOption(regionSelect, 9);
@@ -778,8 +774,8 @@
         });
 
         // initial load
-        if (countrySelect.value) {
-            loadRegions(countrySelect.value, presetRegion).then(() => {
+        if (defaultCountryId) {
+            loadRegions(presetRegion).then(() => {
                 if (presetRegion) {
                     loadCities(presetRegion, presetCity).then(() => {
                         if (presetCity) {
