@@ -61,7 +61,7 @@
         document.getElementById('region_id').addEventListener('change', function() {
             var regionId = this.value;
             if (regionId) {
-                fetch('/admin/locations/regions/' + regionId)
+                fetch('/admin/locations/cities/' + regionId)
                     .then(response => response.json())
                     .then(data => {
                         if (data.lat && data.lng) {

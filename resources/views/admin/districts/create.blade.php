@@ -59,7 +59,7 @@
         document.getElementById('city_id').addEventListener('change', function() {
             var cityId = this.value;
             if (cityId) {
-                fetch('/admin/locations/cities/' + cityId)
+                fetch('/admin/locations/districts/' + cityId)
                     .then(response => response.json())
                     .then(data => {
                         if (data.lat && data.lng) {
