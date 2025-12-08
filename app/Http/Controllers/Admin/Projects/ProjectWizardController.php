@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin\Projects;
 use App\Http\Controllers\Controller;
 use App\Models\Developer;
 use App\Models\Project;
+use App\Models\Country;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 
@@ -19,7 +20,16 @@ class ProjectWizardController extends Controller
         $project = $id ? Project::findOrFail($id) : new Project();
         $developers = Developer::where('is_active', true)->get();
 
-        return view('admin.projects.steps.basics', compact('project', 'developers'));
+        // Fetch Egypt ID and Regions
+        $egypt = Country::where('code', 'EG')->orWhere('name_en', 'Egypt')->first();
+        $egyptId = $egypt ? $egypt->id : null;
+        $regions = $egyptId ? \App\Models\Region::where('country_id', $egyptId)->get() : collect();
+
+        // If project exists, we might need pre-loaded cities and districts for the dropdowns
+        $cities = $project->region_id ? \App\Models\City::where('region_id', $project->region_id)->get() : collect();
+        $districts = $project->city_id ? \App\Models\District::where('city_id', $project->city_id)->get() : collect();
+
+        return view('admin.projects.steps.basics', compact('project', 'developers', 'egyptId', 'regions', 'cities', 'districts'));
     }
 
     /**
@@ -32,6 +42,12 @@ class ProjectWizardController extends Controller
             'name_en' => 'required|string|max:255',
             'developer_id' => 'required|integer|exists:developers,id',
             'launch_date' => 'nullable|date', // Project Launch Date
+            'region_id' => 'required|exists:regions,id',
+            'city_id' => 'required|exists:cities,id',
+            'district_id' => 'required|exists:districts,id',
+            'boundary_geojson' => 'nullable|json',
+            'lat' => 'nullable|numeric',
+            'lng' => 'nullable|numeric',
         ]);
 
         if ($id) {
@@ -40,10 +56,29 @@ class ProjectWizardController extends Controller
             $project = new Project();
         }
 
+        // Handle implicit Egypt Country ID
+        $egypt = Country::where('code', 'EG')->orWhere('name_en', 'Egypt')->first();
+        if ($egypt) {
+            $project->country_id = $egypt->id;
+        }
+
         $project->name_ar = $validated['name_ar'];
         $project->name_en = $validated['name_en'];
         $project->developer_id = $validated['developer_id'];
         $project->launch_date = $validated['launch_date'] ?? null;
+
+        $project->region_id = $validated['region_id'];
+        $project->city_id = $validated['city_id'];
+        $project->district_id = $validated['district_id'];
+
+        $project->lat = $validated['lat'] ?? null;
+        $project->lng = $validated['lng'] ?? null;
+
+        if (!empty($validated['boundary_geojson'])) {
+             $project->project_boundary_geojson = json_decode($validated['boundary_geojson'], true);
+        } else {
+             $project->project_boundary_geojson = null;
+        }
 
         // Auto-generate slug from English name if not already set or if creating new
         if (!$project->exists) {
