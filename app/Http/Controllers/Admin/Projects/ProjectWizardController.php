@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Admin\Projects;
 
 use App\Http\Controllers\Controller;
+use App\Models\Developer;
 use App\Models\Project;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
@@ -16,8 +17,9 @@ class ProjectWizardController extends Controller
     public function showBasicsStep($id = null)
     {
         $project = $id ? Project::findOrFail($id) : new Project();
+        $developers = Developer::where('is_active', true)->get();
 
-        return view('admin.projects.steps.basics', compact('project'));
+        return view('admin.projects.steps.basics', compact('project', 'developers'));
     }
 
     /**
@@ -28,6 +30,7 @@ class ProjectWizardController extends Controller
         $validated = $request->validate([
             'name_ar' => 'required|string|max:255',
             'name_en' => 'required|string|max:255',
+            'developer_id' => 'required|integer|exists:developers,id',
         ]);
 
         if ($id) {
@@ -38,6 +41,7 @@ class ProjectWizardController extends Controller
 
         $project->name_ar = $validated['name_ar'];
         $project->name_en = $validated['name_en'];
+        $project->developer_id = $validated['developer_id'];
 
         // Auto-generate slug from English name if not already set or if creating new
         if (!$project->exists) {
