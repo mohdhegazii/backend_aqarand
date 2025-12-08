@@ -74,14 +74,10 @@
         </div>
         <div>
             <label class="block text-sm font-medium text-gray-700">Developer</label>
-            <select name="developer_id" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
-                <option value="">-- Select Developer --</option>
-                @foreach($developers as $developer)
-                    <option value="{{ $developer->id }}" {{ (old('developer_id', $project->developer_id ?? '') == $developer->id) ? 'selected' : '' }}>
-                        {{ $developer->name }}
-                    </option>
-                @endforeach
-            </select>
+            <x-developers.select
+                name="developer_id"
+                :selected-id="old('developer_id', $project->developer_id ?? null)"
+            />
         </div>
     </div>
 

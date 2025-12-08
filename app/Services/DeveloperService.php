@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Models\Developer;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Cache;
 
 class DeveloperService
 {
@@ -14,16 +15,16 @@ class DeveloperService
      */
     public function getActiveDevelopers(): Collection
     {
-        // TODO: Implement optional caching (e.g. Cache::remember)
-
-        // Fetch all active developers and sort by the display_name accessor.
-        // sortBy returns a new collection, values() resets the keys.
-        return Developer::where('is_active', true)
-            ->get()
-            ->sortBy(function ($developer) {
-                return strtolower($developer->display_name);
-            }, SORT_NATURAL | SORT_FLAG_CASE)
-            ->values();
+        return Cache::remember('developers.active.list', now()->addMinutes(60), function () {
+            // Fetch all active developers and sort by the display_name accessor.
+            // sortBy returns a new collection, values() resets the keys.
+            return Developer::where('is_active', true)
+                ->get()
+                ->sortBy(function ($developer) {
+                    return strtolower($developer->display_name);
+                }, SORT_NATURAL | SORT_FLAG_CASE)
+                ->values();
+        });
     }
 
     /**

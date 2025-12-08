@@ -5,11 +5,32 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Str;
 
 class Developer extends Model
 {
     use HasFactory;
+
+    /**
+     * The "booted" method of the model.
+     *
+     * @return void
+     */
+    protected static function booted()
+    {
+        static::saved(function ($developer) {
+            Cache::forget('developers.active.list');
+        });
+
+        static::deleted(function ($developer) {
+            Cache::forget('developers.active.list');
+        });
+
+        static::restored(function ($developer) { // In case SoftDeletes is used
+            Cache::forget('developers.active.list');
+        });
+    }
 
     protected array $logoResolutionCache = [];
 
