@@ -115,6 +115,17 @@
              apiPath = '/admin/location-polygons';
         }
 
+        // Apply filters if specific level is requested
+        const params = [];
+        if (entityLevel) {
+            params.push('level=' + encodeURIComponent(entityLevel));
+            // Note: If entityLevel is 'project', controller will include projects automatically with level=project
+        }
+
+        if (params.length > 0) {
+            apiPath += '?' + params.join('&');
+        }
+
         fetch(apiPath)
             .then(response => response.json())
             .then(data => {
