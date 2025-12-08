@@ -57,6 +57,24 @@
                 @enderror
             </div>
 
+            <!-- Launch Date -->
+            <div>
+                <label for="launch_date" class="block text-sm font-semibold text-gray-700">
+                    {{ __('admin.project_wizard.launch_date_label') }}
+                </label>
+                <input
+                    type="date"
+                    id="launch_date"
+                    name="launch_date"
+                    value="{{ old('launch_date', isset($project->launch_date) ? $project->launch_date->format('Y-m-d') : '') }}"
+                    class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                    placeholder="{{ __('admin.project_wizard.launch_date_placeholder') }}"
+                >
+                @error('launch_date')
+                    <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                @enderror
+            </div>
+
             <!-- Developer -->
             <div>
                 <label for="developer_id" class="block text-sm font-semibold text-gray-700">
