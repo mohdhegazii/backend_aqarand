@@ -672,10 +672,42 @@
                 flyMapTo(parseFloat(lat), parseFloat(lng));
             }
             showLocationBlock();
+            if (locationSearchInput && option.textContent) {
+                locationSearchInput.value = option.textContent.trim();
+            }
+        }
+
+        function ensureMasterProjectOption(item) {
+            if (!masterProjectSelect || !item?.id) return null;
+            let option = Array.from(masterProjectSelect.options).find(opt => String(opt.value) === String(item.id));
+            if (!option) {
+                option = document.createElement('option');
+                option.value = item.id;
+                option.textContent = item.label || item.name || `Project #${item.id}`;
+                masterProjectSelect.appendChild(option);
+            }
+            option.dataset.country = item.country_id ?? defaultCountryId ?? '';
+            option.dataset.region = item.region_id ?? '';
+            option.dataset.city = item.city_id ?? '';
+            option.dataset.district = item.district_id ?? '';
+            if (item.lat) option.dataset.lat = item.lat;
+            if (item.lng) option.dataset.lng = item.lng;
+            option.selected = true;
+            return option;
         }
 
         async function applyLocationFromSearch(item) {
             if (!item) return;
+
+            if (item.type === 'project') {
+                const option = ensureMasterProjectOption(item);
+                setProjectType('1');
+                if (option) {
+                    await applyLocationFromMaster(option);
+                }
+                return;
+            }
+
             setProjectType('0');
             const regionId = item.region_id ?? null;
             const cityId = item.city_id ?? null;
