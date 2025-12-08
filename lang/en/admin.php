@@ -229,7 +229,7 @@ return [
         'name_ar' => 'Project Name (Arabic)',
         'name_en' => 'Project Name (English)',
         'developer' => 'Developer',
-        'launch_date_label' => 'Project Launch Date / Phase 1 Launch',
+        'launch_date_label' => 'Project launch date',
         'launch_date_placeholder' => 'Select launch date',
         'launch_date' => 'Launch Date',
         'project_area' => 'Project Area',

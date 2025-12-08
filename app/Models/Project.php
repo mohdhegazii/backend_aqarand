@@ -49,7 +49,7 @@ class Project extends Model
         'map_lng',
         'map_zoom',
         'address_text',
-        'launch_date',
+        'launch_date', // Project Launch Date
         'description_short_ar',
         'description_short_en',
         'financial_summary_ar',

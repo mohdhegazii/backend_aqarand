@@ -228,7 +228,7 @@ return [
         'name_ar' => 'اسم المشروع (عربي)',
         'name_en' => 'اسم المشروع (إنجليزي)',
         'developer' => 'المطور',
-        'launch_date_label' => 'تاريخ إطلاق المشروع / المرحلة الأولى',
+        'launch_date_label' => 'تاريخ اطلاق المشروع',
         'launch_date_placeholder' => 'اختر تاريخ الإطلاق',
         'launch_date' => 'تاريخ الإطلاق',
         'project_area' => 'مساحة المشروع',
