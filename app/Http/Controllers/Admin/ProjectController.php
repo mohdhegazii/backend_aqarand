@@ -65,6 +65,7 @@ class ProjectController extends Controller
         DB::beginTransaction();
         try {
             $data = $request->validated();
+            $data['country_id'] = $this->defaultCountryId();
 
             // Slug Generation
             $slugBase = $data['name_en'] ?? $data['name_ar'];
@@ -165,6 +166,7 @@ class ProjectController extends Controller
         DB::beginTransaction();
         try {
             $data = $request->validated();
+            $data['country_id'] = $this->defaultCountryId();
             $slugBase = $data['name_en'] ?? $data['name_ar'];
             if (empty($project->slug)) {
                 $data['slug'] = Project::generateSlug($slugBase, $project->id);
