@@ -471,6 +471,19 @@
         const locationInputs = document.querySelectorAll('[data-location-select]');
         const locationBlock = document.getElementById('project-location-block');
 
+        const adminPrefix = (() => {
+            const parts = window.location.pathname.split('/').filter(Boolean);
+            if (parts[0] && parts[0].length === 2 && parts[1] === 'admin') {
+                return `/${parts[0]}/admin`;
+            }
+            return '/admin';
+        })();
+
+        const buildAdminUrl = (path) => {
+            const normalized = path.startsWith('/') ? path : `/${path}`;
+            return `${adminPrefix}${normalized.replace(/^\/admin/, '')}`;
+        };
+
         const presetRegion = '{{ old('region_id', $project->region_id ?? '') }}';
         const presetCity = '{{ old('city_id', $project->city_id ?? '') }}';
         const presetDistrict = '{{ old('district_id', $project->district_id ?? '') }}';
@@ -511,7 +524,7 @@
                 clearSelect(districtSelect, '{{ __('admin.select_district') }}');
                 return;
             }
-            const data = await fetchOptions(`/admin/locations/countries/${countryId}`, 'regions');
+            const data = await fetchOptions(buildAdminUrl(`/locations/countries/${countryId}`), 'regions');
             populateSelect(regionSelect, data, selected, '{{ __('admin.select_region') }}');
             regionSelect.dispatchEvent(new Event('change'));
         }
@@ -522,14 +535,14 @@
                 clearSelect(districtSelect, '{{ __('admin.select_district') }}');
                 return;
             }
-            const data = await fetchOptions(`/admin/locations/regions/${regionId}`, 'cities');
+            const data = await fetchOptions(buildAdminUrl(`/locations/regions/${regionId}`), 'cities');
             populateSelect(citySelect, data, selected, '{{ __('admin.select_city') }}');
             citySelect.dispatchEvent(new Event('change'));
         }
 
         async function loadDistricts(cityId, selected) {
             if (!cityId) { clearSelect(districtSelect, '{{ __('admin.select_district') }}'); return; }
-            const data = await fetchOptions(`/admin/locations/cities/${cityId}`, 'districts');
+            const data = await fetchOptions(buildAdminUrl(`/locations/cities/${cityId}`), 'districts');
             populateSelect(districtSelect, data, selected, '{{ __('admin.select_district') }}');
         }
 
@@ -668,6 +681,7 @@
             const regionId = item.region_id ?? null;
             const cityId = item.city_id ?? null;
             const districtId = item.district_id ?? (item.type === 'district' ? (item.id ?? null) : null);
+            const zoomLevel = item.type === 'district' ? 14 : (item.type === 'city' ? 12 : 10);
 
             if (countryId) {
                 countrySelect.value = countryId;
@@ -683,7 +697,7 @@
             }
             toggleLocationLock(false);
             if (item.lat && item.lng) {
-                flyMapTo(item.lat, item.lng);
+                flyMapTo(item.lat, item.lng, zoomLevel);
             } else {
                 flyToSelectedOption(citySelect);
             }
@@ -739,7 +753,7 @@
                 locationSearchResults.classList.add('hidden');
                 return;
             }
-            const response = await fetch(`/admin/location-search?q=${encodeURIComponent(term)}`);
+            const response = await fetch(buildAdminUrl(`/location-search?q=${encodeURIComponent(term)}`));
             if (!response.ok) return;
             const results = await response.json();
             locationSearchResults.innerHTML = results.map(item => {
