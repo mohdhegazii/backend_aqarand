@@ -89,7 +89,7 @@
     <div id="project-location-block" class="space-y-2" style="display:none;" x-cloak>
         <div class="flex items-center justify-between">
             <div>
-                <p class="text-sm font-semibold text-gray-700">{{ $isAr ? 'المحافظة / المدينة / الحي' : 'Governorate / City / District' }}</p>
+                <p class="text-sm font-semibold text-gray-700">{{ $isAr ? 'المحافظة / المدينة / الحي / المشروع' : 'Governorate / City / District / Project' }}</p>
             </div>
             <div class="text-xs text-gray-500" id="location_inherit_badge" hidden>
                 {{ __('admin.projects.inherited_from_master') }}
@@ -98,23 +98,26 @@
 
         <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
             <div class="md:col-span-2">
-                <label class="block text-sm font-semibold text-gray-700">{{ __('admin.search') }}: {{ __('admin.projects.city_district_project_search') }}</label>
-                <input type="text" id="location_search" class="w-full rounded border-gray-300" placeholder="{{ __('admin.projects.city_district_project_search') }}" autocomplete="off">
-                <div id="location_search_results" class="bg-white border border-gray-200 rounded mt-1 shadow-sm hidden"></div>
+                <label class="block text-sm font-semibold text-gray-700">{{ __('admin.projects.country') }}</label>
+                <input type="hidden" name="country_id" id="country_id" value="{{ old('country_id', $project->country_id ?? $defaultCountryId ?? '') }}">
+                <input type="text" readonly class="w-full rounded border-gray-200 bg-gray-50" value="{{ $isAr ? 'مصر' : 'Egypt' }}">
             </div>
-
-            <input type="hidden" name="country_id" id="country_id" value="{{ old('country_id', $project->country_id ?? $defaultCountryId ?? '') }}">
             <div>
-                <label class="block text-sm font-semibold text-gray-700">{{ __('admin.projects.region') }}</label>
-                <select name="region_id" id="region_id" class="w-full rounded border-gray-300" data-location-select></select>
+                <label class="block text-sm font-semibold text-gray-700">{{ __('admin.projects.governorate') }}</label>
+                <select name="region_id" id="region_id" class="w-full rounded border-gray-300" data-location-select required></select>
             </div>
             <div>
                 <label class="block text-sm font-semibold text-gray-700">{{ __('admin.projects.city') }}</label>
-                <select name="city_id" id="city_id" class="w-full rounded border-gray-300" data-location-select></select>
+                <select name="city_id" id="city_id" class="w-full rounded border-gray-300" data-location-select required></select>
             </div>
             <div>
-                <label class="block text-sm font-semibold text-gray-700">{{ __('admin.projects.district') }}</label>
+                <label class="block text-sm font-semibold text-gray-700">{{ __('admin.projects.district_neighborhood') }} <span class="text-gray-500 text-xs">({{ $isAr ? 'اختياري' : 'Optional' }})</span></label>
                 <select name="district_id" id="district_id" class="w-full rounded border-gray-300" data-location-select></select>
+            </div>
+            <div>
+                <label class="block text-sm font-semibold text-gray-700">{{ __('admin.projects.location_project_optional') }}</label>
+                <select name="location_project_id" id="location_project_id" class="w-full rounded border-gray-300" data-location-select></select>
+                <p class="text-xs text-gray-500 mt-1">{{ $isAr ? 'مشروع مرتبط بالحي (إن وجد).' : 'Projects linked to the selected district (if any).' }}</p>
             </div>
         </div>
 
