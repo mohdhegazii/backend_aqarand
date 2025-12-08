@@ -6,11 +6,19 @@ use App\Http\Controllers\Controller;
 use App\Models\Developer;
 use App\Models\Project;
 use App\Models\Country;
+use App\Services\DeveloperService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 
 class ProjectWizardController extends Controller
 {
+    protected $developerService;
+
+    public function __construct(DeveloperService $developerService)
+    {
+        $this->developerService = $developerService;
+    }
+
     /**
      * Show Step 1: Basics and Location
      * Note: Currently only Basics (name_ar, name_en) are implemented as per requirements.
@@ -18,7 +26,7 @@ class ProjectWizardController extends Controller
     public function showBasicsStep($id = null)
     {
         $project = $id ? Project::findOrFail($id) : new Project();
-        $developers = Developer::where('is_active', true)->get();
+        $developers = $this->developerService->getActiveDevelopers();
 
         // Fetch Egypt ID and Regions
         $egypt = Country::where('code', 'EG')->orWhere('name_en', 'Egypt')->first();
