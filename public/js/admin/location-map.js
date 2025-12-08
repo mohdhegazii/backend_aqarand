@@ -50,7 +50,13 @@
         const drawTools = setupDrawLogic(map, config);
 
         // 4. Load Context Layers (Background Polygons)
-        loadContextLayers(map, config);
+        // Store layer references to allow updates/replacement
+        const contextLayers = {};
+        if (config.useViewportLoading) {
+            setupViewportLoading(map, config, contextLayers);
+        } else {
+            loadContextLayers(map, config, contextLayers);
+        }
 
         // 5. Setup Search (Legacy support)
         setupSearchBox(map, markerTools, drawTools, config);
@@ -100,6 +106,7 @@
             readOnly: !!options.readOnly,
             // Default to false if not provided (matches legacy behavior)
             lockToEgypt: !!options.lockToEgypt,
+            useViewportLoading: !!options.useViewportLoading,
 
             // Callbacks
             onPointChange: options.onPointChange,
@@ -205,7 +212,7 @@
      * Loads background context layers (other regions, cities, etc.)
      * Optimized to reduce DOM nodes and refetches.
      */
-    function loadContextLayers(map, config) {
+    function loadContextLayers(map, config, contextLayers) {
         const apiPath = resolveApiPath(config.entityLevel);
 
         // Use cached promise if available to avoid duplicate requests
@@ -215,71 +222,145 @@
 
         _polygonCache[apiPath].then(data => {
             Object.keys(data).forEach(key => {
-                const items = data[key]; // Array of {id, name, polygon, level}
-                if (!items || items.length === 0) return;
-
-                // Group features by level to create a single layer per level (Performance)
-                // Filter out current entity
-                const validItems = items.filter(item => {
-                    // Filter out invalid polygons
-                    if (!item.polygon) return false;
-                    // Filter out self
-                    if (config.entityLevel && config.entityId &&
-                        item.level === config.entityLevel && String(item.id) === config.entityId) {
-                        return false;
-                    }
-                    return true;
-                });
-
-                if (validItems.length === 0) return;
-
-                // Assume all items in this group have same level, or handle individually
-                // Usually `data[key]` groups by type (countries, regions...), but check first item
-                const level = validItems[0].level;
-                const levelConf = LEVEL_CONFIG[level] || LEVEL_CONFIG.country;
-
-                // Create Pane for Z-Index management
-                const paneName = 'pane_' + level;
-                if (!map.getPane(paneName)) {
-                    map.createPane(paneName);
-                    map.getPane(paneName).style.zIndex = levelConf.zIndex;
-                }
-
-                // Convert to FeatureCollection for efficient rendering
-                const geoJsonData = {
-                    type: "FeatureCollection",
-                    features: validItems.map(item => ({
-                        type: "Feature",
-                        geometry: item.polygon,
-                        properties: {
-                            name: item.name,
-                            level: item.level,
-                            id: item.id
-                        }
-                    }))
-                };
-
-                L.geoJSON(geoJsonData, {
-                    pane: paneName,
-                    style: {
-                        color: levelConf.color,
-                        fillColor: levelConf.color,
-                        fillOpacity: levelConf.opacity,
-                        weight: 2
-                    },
-                    onEachFeature: function(feature, layer) {
-                        if (feature.properties && feature.properties.name) {
-                            layer.bindTooltip(`${feature.properties.name} (${feature.properties.level})`, {
-                                permanent: false,
-                                direction: 'center'
-                            });
-                        }
-                    }
-                }).addTo(map);
+                const items = data[key];
+                updateLayerForLevel(map, items, config, contextLayers);
             });
         }).catch(err => {
             console.error('Error fetching location polygons:', err);
         });
+    }
+
+    /**
+     * Viewport Loading Logic
+     */
+    function setupViewportLoading(map, config, contextLayers) {
+        let debounceTimer;
+        const debouncedFetch = () => {
+            clearTimeout(debounceTimer);
+            debounceTimer = setTimeout(() => {
+                fetchPolygonsForViewport(map, config, contextLayers);
+            }, 300);
+        };
+
+        map.on('moveend', debouncedFetch);
+        map.on('zoomend', debouncedFetch);
+
+        // Initial fetch
+        debouncedFetch();
+    }
+
+    // Cache for viewport requests to prevent identical calls
+    const _viewportCache = new Set();
+
+    function fetchPolygonsForViewport(map, config, contextLayers) {
+        const bounds = map.getBounds();
+        const southWest = bounds.getSouthWest();
+        const northEast = bounds.getNorthEast();
+
+        // Round to 2 decimal places to create an approximate key
+        const precision = 100;
+        const keyParts = [
+            Math.round(southWest.lat * precision),
+            Math.round(southWest.lng * precision),
+            Math.round(northEast.lat * precision),
+            Math.round(northEast.lng * precision),
+            config.entityLevel || 'all',
+            map.getZoom()
+        ];
+        const cacheKey = keyParts.join('_');
+
+        if (_viewportCache.has(cacheKey)) {
+            return;
+        }
+        _viewportCache.add(cacheKey);
+
+        // Construct API URL
+        let apiPath = resolveApiPath(config.entityLevel);
+        const separator = apiPath.includes('?') ? '&' : '?';
+        apiPath += `${separator}min_lat=${southWest.lat}&min_lng=${southWest.lng}&max_lat=${northEast.lat}&max_lng=${northEast.lng}`;
+
+        fetch(apiPath)
+            .then(r => r.json())
+            .then(data => {
+                Object.keys(data).forEach(key => {
+                    const items = data[key];
+                    updateLayerForLevel(map, items, config, contextLayers);
+                });
+            })
+            .catch(err => console.error('Error fetching viewport polygons:', err));
+    }
+
+    /**
+     * Renders or updates a layer for a specific level.
+     * Replaces existing layer to avoid duplication and flickering.
+     */
+    function updateLayerForLevel(map, items, config, contextLayers) {
+        if (!items || items.length === 0) return;
+
+        // Filter valid items and remove self
+        const validItems = items.filter(item => {
+            if (!item.polygon) return false;
+            if (config.entityLevel && config.entityId &&
+                item.level === config.entityLevel && String(item.id) === config.entityId) {
+                return false;
+            }
+            return true;
+        });
+
+        if (validItems.length === 0) return;
+
+        const level = validItems[0].level;
+        const levelConf = LEVEL_CONFIG[level] || LEVEL_CONFIG.country;
+
+        // Ensure Pane exists
+        const paneName = 'pane_' + level;
+        if (!map.getPane(paneName)) {
+            map.createPane(paneName);
+            map.getPane(paneName).style.zIndex = levelConf.zIndex;
+        }
+
+        // Create new GeoJSON layer
+        const geoJsonData = {
+            type: "FeatureCollection",
+            features: validItems.map(item => ({
+                type: "Feature",
+                geometry: item.polygon,
+                properties: {
+                    name: item.name,
+                    level: item.level,
+                    id: item.id
+                }
+            }))
+        };
+
+        const newLayer = L.geoJSON(geoJsonData, {
+            pane: paneName,
+            style: {
+                color: levelConf.color,
+                fillColor: levelConf.color,
+                fillOpacity: levelConf.opacity,
+                weight: 2
+            },
+            onEachFeature: function(feature, layer) {
+                if (feature.properties && feature.properties.name) {
+                    layer.bindTooltip(`${feature.properties.name} (${feature.properties.level})`, {
+                        permanent: false,
+                        direction: 'center'
+                    });
+                }
+            }
+        });
+
+        // Add new layer first (to avoid blink), then remove old
+        newLayer.addTo(map);
+
+        if (contextLayers[level]) {
+            // Removing immediately might cause slight flicker if rendering takes time,
+            // but L.geoJSON is usually synchronous in rendering SVG.
+            map.removeLayer(contextLayers[level]);
+        }
+
+        contextLayers[level] = newLayer;
     }
 
     /**
