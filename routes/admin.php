@@ -11,6 +11,10 @@ Route::group(['prefix' => 'projects'], function () {
     Route::group(['prefix' => 'steps'], function () {
         Route::get('basics/{project?}', [ProjectWizardController::class, 'showBasicsStep'])->name('projects.steps.basics');
         Route::post('basics/{project?}', [ProjectWizardController::class, 'storeBasicsStep'])->name('projects.steps.basics.store');
+
+        // Wizard Step 2: Amenities
+        Route::get('amenities/{project}', [ProjectWizardController::class, 'showAmenitiesStep'])->name('projects.steps.amenities');
+        Route::post('amenities/{project}', [ProjectWizardController::class, 'storeAmenitiesStep'])->name('projects.steps.amenities.store');
     });
 });
 

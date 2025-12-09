@@ -7,16 +7,19 @@ use App\Models\Developer;
 use App\Models\Project;
 use App\Models\Country;
 use App\Services\DeveloperService;
+use App\Services\AmenityService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 
 class ProjectWizardController extends Controller
 {
     protected $developerService;
+    protected $amenityService;
 
-    public function __construct(DeveloperService $developerService)
+    public function __construct(DeveloperService $developerService, AmenityService $amenityService)
     {
         $this->developerService = $developerService;
+        $this->amenityService = $amenityService;
     }
 
     /**
@@ -95,7 +98,49 @@ class ProjectWizardController extends Controller
 
         $project->save();
 
-        return redirect()->route('admin.projects.steps.basics', ['project' => $project->id])
+        return redirect()->route('admin.projects.steps.amenities', ['project' => $project->id])
+                         ->with('success', __('admin.saved_successfully'));
+    }
+
+    /**
+     * Show Step 2: Amenities
+     */
+    public function showAmenitiesStep($id)
+    {
+        $project = Project::findOrFail($id);
+
+        // Fetch grouped amenities using service
+        $amenitiesByCategory = $this->amenityService->getAmenitiesGroupedByCategory('project', true);
+
+        // Fetch currently selected amenity IDs
+        $selectedAmenityIds = $project->amenities()->pluck('amenities.id')->toArray();
+
+        return view('admin.projects.steps.amenities', compact('project', 'amenitiesByCategory', 'selectedAmenityIds'));
+    }
+
+    /**
+     * Store/Update Step 2: Amenities
+     */
+    public function storeAmenitiesStep(Request $request, $id)
+    {
+        $project = Project::findOrFail($id);
+
+        $request->validate([
+            'amenities' => 'nullable|array',
+            'amenities.*' => 'exists:amenities,id',
+        ]);
+
+        // Sync amenities
+        $project->amenities()->sync($request->input('amenities', []));
+
+        // For now, redirect back or to index if it's the last step.
+        // Assuming there will be more steps later, but for now let's redirect back with success.
+        // Or if this is the last implemented step, maybe to index?
+        // Let's redirect to the same step for now to allow review, or maybe back to index if done.
+        // The user requirement said: "Make sure the new Amenities tab/step integrates smoothly... next/previous buttons".
+        // The view has "Save" button.
+
+        return redirect()->route('admin.projects.steps.amenities', ['project' => $project->id])
                          ->with('success', __('admin.saved_successfully'));
     }
 
