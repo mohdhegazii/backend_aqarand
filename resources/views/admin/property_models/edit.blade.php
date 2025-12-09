@@ -29,13 +29,12 @@
                         <input type="hidden" name="project_id" value="{{ $selectedProject }}">
                     @endif
                 </div>
-                <div>
-                    <label class="block text-sm font-medium text-gray-700">Unit Type *</label>
-                    <select name="unit_type_id" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50" required>
-                        @foreach($unitTypes as $type)
-                            <option value="{{ $type->id }}" {{ old('unit_type_id', $propertyModel->unit_type_id) == $type->id ? 'selected' : '' }}>{{ $type->name_en }}</option>
-                        @endforeach
-                    </select>
+                <div class="col-span-1 md:col-span-2">
+                    <x-lookup.property-hierarchy-picker
+                        :selected-category-id="old('category_id', data_get($propertyModel, 'unitType.propertyType.category_id'))"
+                        :selected-property-type-id="old('property_type_id', data_get($propertyModel, 'unitType.property_type_id'))"
+                        :selected-unit-type-id="old('unit_type_id', $propertyModel->unit_type_id)"
+                    />
                 </div>
 
                 <!-- Names -->
