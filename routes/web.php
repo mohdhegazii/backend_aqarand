@@ -7,6 +7,7 @@ use App\Http\Controllers\Admin\CountryController;
 use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\Admin\DeveloperController;
 use App\Http\Controllers\Admin\DistrictController;
+use App\Http\Controllers\Admin\FeaturedPlaceController;
 use App\Http\Controllers\Admin\ListingController;
 use App\Http\Controllers\Admin\LocationHelperController;
 use App\Http\Controllers\Admin\ProjectController;
@@ -91,6 +92,21 @@ $registerAdminRoutes = function (string $namePrefix = 'admin.'): void {
             ->parameters(['property-models' => 'propertyModel']);
         Route::resource('units', UnitController::class);
         Route::resource('listings', ListingController::class);
+
+        // Featured Places Routes
+        Route::get('featured-places', [FeaturedPlaceController::class, 'index'])->name('featured-places.index');
+        Route::post('featured-places/main-categories', [FeaturedPlaceController::class, 'storeMainCategory'])->name('featured-places.main-categories.store');
+        Route::put('featured-places/main-categories/{id}', [FeaturedPlaceController::class, 'updateMainCategory'])->name('featured-places.main-categories.update');
+        Route::delete('featured-places/main-categories/{id}', [FeaturedPlaceController::class, 'destroyMainCategory'])->name('featured-places.main-categories.destroy');
+
+        Route::post('featured-places/sub-categories', [FeaturedPlaceController::class, 'storeSubCategory'])->name('featured-places.sub-categories.store');
+        Route::put('featured-places/sub-categories/{id}', [FeaturedPlaceController::class, 'updateSubCategory'])->name('featured-places.sub-categories.update');
+        Route::delete('featured-places/sub-categories/{id}', [FeaturedPlaceController::class, 'destroySubCategory'])->name('featured-places.sub-categories.destroy');
+
+        Route::post('featured-places/places', [FeaturedPlaceController::class, 'storePlace'])->name('featured-places.places.store');
+        Route::put('featured-places/places/{id}', [FeaturedPlaceController::class, 'updatePlace'])->name('featured-places.places.update');
+        Route::delete('featured-places/places/{id}', [FeaturedPlaceController::class, 'destroyPlace'])->name('featured-places.places.destroy');
+
 
         // Media Manager
         Route::resource('media', \App\Http\Controllers\Admin\MediaController::class)
