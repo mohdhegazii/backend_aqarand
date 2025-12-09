@@ -288,7 +288,8 @@
                     const option = document.createElement('option');
                     option.value = item.id;
                     option.text = locale === 'ar' ? (item.name_local || item.name_en) : item.name_en;
-                    if(item.lat && item.lng) {
+                    // Ensure lat/lng are not null/undefined (allow 0)
+                    if(item.lat != null && item.lng != null) {
                         option.dataset.lat = item.lat;
                         option.dataset.lng = item.lng;
                     }
@@ -297,8 +298,8 @@
             }
 
             function flyToLocation(lat, lng, zoom) {
-                if(mapInstance) {
-                    mapInstance.flyTo([lat, lng], zoom);
+                if(mapInstance && lat != null && lng != null) {
+                    mapInstance.flyTo([parseFloat(lat), parseFloat(lng)], zoom);
                 }
             }
 
@@ -352,8 +353,10 @@
 
                     // Map Fly To
                     const option = this.options[this.selectedIndex];
-                    if(option.dataset.lat && option.dataset.lng) {
-                        flyToLocation(option.dataset.lat, option.dataset.lng, 6);
+                    const lat = option.getAttribute('data-lat');
+                    const lng = option.getAttribute('data-lng');
+                    if(lat && lng) {
+                        flyToLocation(lat, lng, 6);
                     }
                 }
             });
@@ -372,8 +375,10 @@
 
                     // Map Fly To
                     const option = this.options[this.selectedIndex];
-                    if(option.dataset.lat && option.dataset.lng) {
-                        flyToLocation(option.dataset.lat, option.dataset.lng, 9);
+                    const lat = option.getAttribute('data-lat');
+                    const lng = option.getAttribute('data-lng');
+                    if(lat && lng) {
+                        flyToLocation(lat, lng, 9);
                     }
                     // Update Boundary
                     updateMapBoundary('region', regionId);
@@ -393,8 +398,10 @@
 
                     // Map Fly To
                     const option = this.options[this.selectedIndex];
-                    if(option.dataset.lat && option.dataset.lng) {
-                        flyToLocation(option.dataset.lat, option.dataset.lng, 11);
+                    const lat = option.getAttribute('data-lat');
+                    const lng = option.getAttribute('data-lng');
+                    if(lat && lng) {
+                        flyToLocation(lat, lng, 11);
                     }
                     // Update Boundary
                     updateMapBoundary('city', cityId);
@@ -405,8 +412,10 @@
                 const districtId = this.value;
                 // Map Fly To
                 const option = this.options[this.selectedIndex];
-                if(option.dataset.lat && option.dataset.lng) {
-                    flyToLocation(option.dataset.lat, option.dataset.lng, 13);
+                const lat = option.getAttribute('data-lat');
+                const lng = option.getAttribute('data-lng');
+                if(lat && lng) {
+                    flyToLocation(lat, lng, 13);
                 }
                 // Update Boundary
                 if (districtId) {
@@ -432,19 +441,56 @@
                 zoom: {{ $project->lat ? 13 : 6 }},
                 lockToEgypt: false,
                 onMapInit: function(map) {
-                    mapInstance = map;
+                    mapInstance = map; // Assign to outer scope variable
 
                     // Initial load logic if editing
                     const regionId = regionSelect.value;
                     const cityId = citySelect.value;
                     const districtId = districtSelect.value;
 
+                    // Determine active level and ID
+                    let activeLevel = null;
+                    let activeId = null;
+                    let activeSelect = null;
+                    let activeZoom = 6;
+
                     if (districtId) {
-                        updateMapBoundary('district', districtId);
+                        activeLevel = 'district';
+                        activeId = districtId;
+                        activeSelect = districtSelect;
+                        activeZoom = 13;
                     } else if (cityId) {
-                        updateMapBoundary('city', cityId);
+                        activeLevel = 'city';
+                        activeId = cityId;
+                        activeSelect = citySelect;
+                        activeZoom = 11;
                     } else if (regionId) {
-                        updateMapBoundary('region', regionId);
+                        activeLevel = 'region';
+                        activeId = regionId;
+                        activeSelect = regionSelect;
+                        activeZoom = 9;
+                    }
+
+                    if (activeLevel && activeId) {
+                        updateMapBoundary(activeLevel, activeId);
+
+                        // Also fly to the location point if available in the selected option
+                        // Prioritize point over default map center.
+                        // We check if the PROJECT itself has coordinates.
+                        // If project->lat is null, we are in "Create" mode (or no coords set).
+                        // In this case, we should fly to the selected Region/City.
+                        // If project->lat IS set, we respect the saved project location and do NOT fly away.
+                        const projectHasCoords = {{ $project->lat ? 'true' : 'false' }};
+
+                        if (!projectHasCoords && activeSelect && activeSelect.options[activeSelect.selectedIndex]) {
+                             const option = activeSelect.options[activeSelect.selectedIndex];
+                             const lat = option.getAttribute('data-lat');
+                             const lng = option.getAttribute('data-lng');
+
+                             if (lat && lng) {
+                                 flyToLocation(lat, lng, activeZoom);
+                             }
+                        }
                     }
                 },
                 onPolygonChange: function(data) {
