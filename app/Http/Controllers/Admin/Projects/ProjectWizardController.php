@@ -65,8 +65,10 @@ class ProjectWizardController extends Controller
             'country_id' => 'required|exists:countries,id',
             'region_id' => 'required|exists:regions,id',
             'city_id' => 'required|exists:cities,id',
-            'district_id' => 'required|exists:districts,id',
+            'district_id' => 'nullable|exists:districts,id',
             'boundary_geojson' => 'nullable|json',
+            'lat' => 'nullable|numeric',
+            'lng' => 'nullable|numeric',
         ]);
 
         if ($id) {
@@ -77,13 +79,21 @@ class ProjectWizardController extends Controller
 
         $project->name_ar = $validated['name_ar'];
         $project->name_en = $validated['name_en'];
+        // Provide default for legacy 'name' column if missing
+        if (empty($project->name)) {
+            $project->name = $validated['name_en'];
+        }
         $project->developer_id = $validated['developer_id'];
         $project->launch_date = $validated['launch_date'] ?? null;
 
         $project->country_id = $validated['country_id'];
         $project->region_id = $validated['region_id'];
         $project->city_id = $validated['city_id'];
-        $project->district_id = $validated['district_id'];
+        $project->district_id = $validated['district_id'] ?? null;
+
+        // Save coordinates
+        $project->lat = $validated['lat'] ?? null;
+        $project->lng = $validated['lng'] ?? null;
 
         if (!empty($validated['boundary_geojson'])) {
              $project->boundary_geojson = json_decode($validated['boundary_geojson'], true);
@@ -95,10 +105,8 @@ class ProjectWizardController extends Controller
         if (!$project->exists) {
             $project->slug = $this->generateUniqueSlug($validated['name_en']);
 
-            // Set 'is_active' to false by default until published?
-            // Memory says "The 'Soft Delete' behavior is implemented via an is_active boolean column... Inactive records are hidden by default".
-            // Let's default to inactive or active depending on business logic. Usually drafts are inactive.
-            // But I won't touch it if it has a default in DB.
+            // Default to active so it appears in lists immediately
+            $project->is_active = true;
         }
 
         $project->save();
