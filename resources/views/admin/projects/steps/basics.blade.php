@@ -388,8 +388,11 @@
                         fetch(url)
                             .then(response => {
                                 if (!response.ok) {
-                                    console.error('[DEBUG][locations] AJAX error (regions):', response.status, response.statusText);
-                                    throw new Error('Network response was not ok');
+                                    console.error('[DEBUG][locations] AJAX error (regions) status:', response.status);
+                                    return response.json().then(err => {
+                                        console.error('[DEBUG][locations] AJAX error (regions) body:', err);
+                                        throw new Error(err.error || 'Network response was not ok');
+                                    });
                                 }
                                 return response.json();
                             })
@@ -427,8 +430,11 @@
                         fetch(url)
                             .then(response => {
                                 if (!response.ok) {
-                                    console.error('[DEBUG][locations] AJAX error (cities):', response.status, response.statusText);
-                                    throw new Error('Network response was not ok');
+                                    console.error('[DEBUG][locations] AJAX error (cities) status:', response.status);
+                                    return response.json().then(err => {
+                                        console.error('[DEBUG][locations] AJAX error (cities) body:', err);
+                                        throw new Error(err.error || 'Network response was not ok');
+                                    });
                                 }
                                 return response.json();
                             })
@@ -467,8 +473,11 @@
                         fetch(url)
                             .then(response => {
                                 if (!response.ok) {
-                                    console.error('[DEBUG][locations] AJAX error (districts):', response.status, response.statusText);
-                                    throw new Error('Network response was not ok');
+                                    console.error('[DEBUG][locations] AJAX error (districts) status:', response.status);
+                                    return response.json().then(err => {
+                                        console.error('[DEBUG][locations] AJAX error (districts) body:', err);
+                                        throw new Error(err.error || 'Network response was not ok');
+                                    });
                                 }
                                 return response.json();
                             })
