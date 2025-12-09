@@ -54,8 +54,8 @@
     @endphp
     <div class="min-h-screen bg-gray-100 flex flex-col md:flex-row">
         <!-- Sidebar -->
-        <aside id="admin-sidebar" data-hidden-class="{{ $isRtl ? 'translate-x-full' : '-translate-x-full' }}" class="fixed inset-y-0 {{ $isRtl ? 'right-0 translate-x-full' : 'left-0 -translate-x-full' }} w-64 bg-white border-{{ $isRtl ? 'l' : 'r' }} border-gray-200 transform md:translate-x-0 transition-transform duration-200 z-30 md:static md:block">
-            <div class="p-4 border-b border-gray-200 flex items-center justify-between">
+        <aside id="admin-sidebar" data-hidden-class="{{ $isRtl ? 'translate-x-full' : '-translate-x-full' }}" class="fixed inset-y-0 {{ $isRtl ? 'right-0 translate-x-full' : 'left-0 -translate-x-full' }} w-64 bg-white border-{{ $isRtl ? 'l' : 'r' }} border-gray-200 transform md:translate-x-0 transition-transform duration-200 z-30 md:fixed md:block h-screen">
+            <div class="p-4 border-b border-gray-200 flex items-center justify-between h-16">
                 <span class="text-xl font-bold">@lang('admin.app_name')</span>
                 <button type="button" id="sidebar-close-button" class="md:hidden text-gray-500 hover:text-gray-700" aria-label="@lang('admin.close_sidebar')" onclick="toggleSidebar()">
                     <i class="bi bi-x-lg"></i>
@@ -67,7 +67,7 @@
         <div id="sidebar-backdrop" class="fixed inset-0 bg-black/40 hidden md:hidden z-20" onclick="toggleSidebar()"></div>
 
         <!-- Main Content -->
-        <div class="flex-1 flex flex-col overflow-hidden min-h-screen">
+        <div class="flex-1 flex flex-col min-h-screen transition-all duration-200 {{ $isRtl ? 'md:mr-64' : 'md:ml-64' }}">
             <!-- Navbar -->
             <header class="bg-white shadow sticky top-0 z-10">
                 <div class="max-w-7xl mx-auto py-4 px-4 sm:px-6 lg:px-8 flex justify-between items-center">
