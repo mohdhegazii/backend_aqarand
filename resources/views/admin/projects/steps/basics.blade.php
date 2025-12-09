@@ -6,13 +6,13 @@
 
 @section('content')
 <div class="bg-white shadow rounded-lg p-6">
+    <!-- Wizard Progress -->
+    @include('admin.projects.partials.wizard_steps', ['currentStep' => 1, 'projectId' => $project->id])
+
     <!-- Step Indicator -->
     <div class="mb-6">
         <h2 class="text-xl font-bold text-gray-800">{{ __('admin.project_wizard.step_basics') }}</h2>
         <p class="text-sm text-gray-500">{{ __('admin.project_wizard.step_1_of_x') }}</p>
-        <div class="mt-2 h-2 bg-gray-200 rounded-full">
-            <div class="h-2 bg-indigo-600 rounded-full" style="width: 15%"></div>
-        </div>
     </div>
 
     <form action="{{ route('admin.projects.steps.basics.store', $project->id) }}" method="POST" id="basics-form">
