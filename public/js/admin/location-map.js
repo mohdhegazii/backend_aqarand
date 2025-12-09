@@ -25,9 +25,10 @@
         project:  { color: '#dc3545', zIndex: 440, opacity: 0.7 }
     };
 
+    // Bounds for Egypt with a slight buffer to ensure borders are visible and usable.
     const EGYPT_BOUNDS = {
-        southWest: [22.0, 24.0],
-        northEast: [32.0, 37.0]
+        southWest: [21.5, 24.0], // Slightly south of 22.0 and west of 25.0
+        northEast: [32.5, 37.5]  // Slightly north of 31.8 and east of 37.0
     };
 
     // Cache to store promises of fetching polygons (key: apiPath)
@@ -156,6 +157,50 @@
             "Satellite": satelliteLayer
         };
         L.control.layers(baseMaps).addTo(map);
+
+        // Auto-switch to Satellite view when zooming in close (High detail / Low altitude)
+        const SATELLITE_ZOOM_THRESHOLD = 15;
+        let userManuallySwitchedLayer = false;
+
+        // Detect manual layer changes
+        map.on('baselayerchange', function(e) {
+            // If the switch wasn't programmatic (we can't easily tell, so we assume user intent if it happens)
+            // Ideally we'd set a flag when WE switch it, but Leaflet events trigger anyway.
+            // A simple heuristic: if we are in the zone where we would have switched it anyway,
+            // and the user switches it to something else, then disable auto-switch.
+            // Actually, any manual interaction with the layer control should disable auto-pilot.
+            // However, since we trigger this event programmatically too, we need to distinguish.
+
+            // To reliably distinguish, we check if the event matches our expected state.
+            const currentZoom = map.getZoom();
+            const expectedLayer = (currentZoom >= SATELLITE_ZOOM_THRESHOLD) ? satelliteLayer : osmLayer;
+
+            // If the new layer is NOT what our logic would put there, the user overrode it.
+            if (e.layer !== expectedLayer) {
+                userManuallySwitchedLayer = true;
+            }
+        });
+
+        map.on('zoomend', function() {
+            if (userManuallySwitchedLayer) return;
+
+            const currentZoom = map.getZoom();
+
+            // If zoomed in (>= threshold), switch to satellite if not already there
+            if (currentZoom >= SATELLITE_ZOOM_THRESHOLD) {
+                if (!map.hasLayer(satelliteLayer)) {
+                    map.removeLayer(osmLayer);
+                    map.addLayer(satelliteLayer);
+                }
+            }
+            // If zoomed out (< threshold), switch back to standard map if not already there
+            else {
+                if (!map.hasLayer(osmLayer)) {
+                    map.removeLayer(satelliteLayer);
+                    map.addLayer(osmLayer);
+                }
+            }
+        });
 
         return map;
     }
