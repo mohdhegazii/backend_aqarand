@@ -6,6 +6,8 @@ use App\Http\Controllers\Controller;
 use App\Models\PropertyType;
 use App\Models\UnitType;
 use App\Services\LookupService;
+use App\Http\Requests\Admin\UnitTypes\StoreUnitTypeRequest;
+use App\Http\Requests\Admin\UnitTypes\UpdateUnitTypeRequest;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 
@@ -56,17 +58,9 @@ class UnitTypeController extends Controller
         return view('admin.unit_types.create', compact('propertyTypes'));
     }
 
-    public function store(Request $request)
+    public function store(StoreUnitTypeRequest $request)
     {
-        $validated = $request->validate([
-            'property_type_id' => 'required|exists:property_types,id',
-            'name_en' => 'required|string|max:150',
-            'name_local' => 'required|string|max:150',
-            'code' => 'nullable|string|max:50',
-            'description' => 'nullable|string',
-            'icon_class' => 'nullable|string|max:120',
-            'image' => 'nullable|image|max:2048',
-        ]);
+        $validated = $request->validated();
 
         $booleans = [
             'is_active',
@@ -94,6 +88,8 @@ class UnitTypeController extends Controller
 
         UnitType::create($validated);
 
+        $this->lookupService->clearUnitTypeCache($validated['property_type_id']);
+
         return redirect()->route($this->adminRoutePrefix().'unit-types.index')
             ->with('success', __('admin.created_successfully'));
     }
@@ -109,17 +105,9 @@ class UnitTypeController extends Controller
         }
     }
 
-    public function update(Request $request, UnitType $unitType)
+    public function update(UpdateUnitTypeRequest $request, UnitType $unitType)
     {
-        $validated = $request->validate([
-            'property_type_id' => 'required|exists:property_types,id',
-            'name_en' => 'required|string|max:150',
-            'name_local' => 'required|string|max:150',
-            'code' => 'nullable|string|max:50',
-            'description' => 'nullable|string',
-            'icon_class' => 'nullable|string|max:120',
-            'image' => 'nullable|image|max:2048',
-        ]);
+        $validated = $request->validated();
 
         $booleans = [
             'is_active',
@@ -147,7 +135,14 @@ class UnitTypeController extends Controller
             $validated['image_url'] = Storage::url($path);
         }
 
+        $oldPropertyTypeId = $unitType->property_type_id;
+
         $unitType->update($validated);
+
+        $this->lookupService->clearUnitTypeCache($oldPropertyTypeId);
+        if ($oldPropertyTypeId != $validated['property_type_id']) {
+             $this->lookupService->clearUnitTypeCache($validated['property_type_id']);
+        }
 
         return redirect()->route($this->adminRoutePrefix().'unit-types.index')
             ->with('success', __('admin.updated_successfully'));
@@ -156,6 +151,8 @@ class UnitTypeController extends Controller
     public function destroy(UnitType $unitType)
     {
         $unitType->update(['is_active' => false]);
+
+        $this->lookupService->clearUnitTypeCache($unitType->property_type_id);
 
         return redirect()->route($this->adminRoutePrefix().'unit-types.index')
             ->with('success', __('admin.deleted_successfully'));

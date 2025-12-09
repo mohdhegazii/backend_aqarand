@@ -6,6 +6,8 @@ use App\Http\Controllers\Controller;
 use App\Models\PropertyModel;
 use App\Models\Project;
 use App\Models\UnitType;
+use App\Http\Requests\Admin\PropertyModels\StorePropertyModelRequest;
+use App\Http\Requests\Admin\PropertyModels\UpdatePropertyModelRequest;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 
@@ -40,25 +42,9 @@ class PropertyModelController extends Controller
         return view('admin.property_models.create', compact('projects', 'unitTypes', 'projectId', 'redirectTo'));
     }
 
-    public function store(Request $request)
+    public function store(StorePropertyModelRequest $request)
     {
-        $validated = $request->validate([
-            'project_id' => 'required|exists:projects,id',
-            'unit_type_id' => 'required|exists:unit_types,id',
-            'name_en' => 'required|string|max:200',
-            'name_ar' => 'nullable|string|max:200',
-            'code' => 'nullable|string|max:50',
-            'description_en' => 'nullable|string',
-            'description_ar' => 'nullable|string',
-            'bedrooms' => 'nullable|integer',
-            'bathrooms' => 'nullable|integer',
-            'min_bua' => 'nullable|numeric',
-            'max_bua' => 'nullable|numeric',
-            'min_price' => 'nullable|numeric',
-            'max_price' => 'nullable|numeric',
-            'seo_slug_en' => 'nullable|string|unique:property_models,seo_slug_en',
-            'seo_slug_ar' => 'nullable|string|unique:property_models,seo_slug_ar',
-        ]);
+        $validated = $request->validated();
 
         // Auto-generate slugs
         $validated['name'] = $validated['name_en']; // Fallback
@@ -90,16 +76,9 @@ class PropertyModelController extends Controller
         return view('admin.property_models.edit', compact('propertyModel', 'projects', 'unitTypes', 'redirectTo', 'lockedProjectId'));
     }
 
-    public function update(Request $request, PropertyModel $propertyModel)
+    public function update(UpdatePropertyModelRequest $request, PropertyModel $propertyModel)
     {
-        $validated = $request->validate([
-            'project_id' => 'required|exists:projects,id',
-            'unit_type_id' => 'required|exists:unit_types,id',
-            'name_en' => 'required|string|max:200',
-            'name_ar' => 'nullable|string|max:200',
-            'code' => 'nullable|string|max:50',
-            'seo_slug_en' => 'nullable|string|unique:property_models,seo_slug_en,' . $propertyModel->id,
-        ]);
+        $validated = $request->validated();
 
         if (empty($validated['seo_slug_en'])) {
             $validated['seo_slug_en'] = Str::slug($validated['name_en']);

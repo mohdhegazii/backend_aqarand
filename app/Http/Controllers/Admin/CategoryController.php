@@ -7,6 +7,7 @@ use App\Models\Category;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Storage;
+use App\Services\LookupService;
 
 class CategoryController extends Controller
 {
@@ -21,7 +22,7 @@ class CategoryController extends Controller
         return view('admin.categories.create');
     }
 
-    public function store(Request $request)
+    public function store(Request $request, LookupService $lookupService)
     {
         $validated = $request->validate([
             'name_en' => 'required|string|max:255',
@@ -48,6 +49,8 @@ class CategoryController extends Controller
 
         Category::create($validated);
 
+        $lookupService->clearCategoryCache();
+
         return redirect()->route($this->adminRoutePrefix().'categories.index')->with('success', __('admin.created_successfully'));
     }
 
@@ -56,7 +59,7 @@ class CategoryController extends Controller
         return view('admin.categories.edit', compact('category'));
     }
 
-    public function update(Request $request, Category $category)
+    public function update(Request $request, Category $category, LookupService $lookupService)
     {
         $validated = $request->validate([
             'name_en' => 'required|string|max:255',
@@ -88,12 +91,16 @@ class CategoryController extends Controller
 
         $category->update($validated);
 
+        $lookupService->clearCategoryCache();
+
         return redirect()->route($this->adminRoutePrefix().'categories.index')->with('success', __('admin.updated_successfully'));
     }
 
-    public function destroy(Category $category)
+    public function destroy(Category $category, LookupService $lookupService)
     {
         $category->update(['is_active' => false]);
+        $lookupService->clearCategoryCache();
+
         return redirect()->route($this->adminRoutePrefix().'categories.index')->with('success', __('admin.deleted_successfully'));
     }
 
