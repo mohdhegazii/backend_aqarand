@@ -79,10 +79,14 @@ class ProjectWizardController extends Controller
 
         $project->name_ar = $validated['name_ar'];
         $project->name_en = $validated['name_en'];
-        // Provide default for legacy 'name' column if missing
-        if (empty($project->name)) {
+
+        // Ensure legacy 'name' column is populated.
+        // We use getAttributes() to check the raw value because getNameAttribute() accessor
+        // might return name_en/name_ar, masking the fact that 'name' column is actually null.
+        if (!isset($project->getAttributes()['name']) || empty($project->getAttributes()['name'])) {
             $project->name = $validated['name_en'];
         }
+
         $project->developer_id = $validated['developer_id'];
         $project->launch_date = $validated['launch_date'] ?? null;
 
