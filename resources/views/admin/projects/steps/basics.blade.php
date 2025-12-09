@@ -355,6 +355,9 @@
                                     },
                                     interactive: false // Don't block clicks
                                 }).addTo(mapInstance);
+
+                                // Fit bounds to the selected location boundary (Task 2)
+                                mapInstance.fitBounds(currentReferenceLayer.getBounds());
                             } else if (item.lat != null && item.lng != null) {
                                 flyToLocation(item.lat, item.lng, getZoomForLevel(level));
                             }
