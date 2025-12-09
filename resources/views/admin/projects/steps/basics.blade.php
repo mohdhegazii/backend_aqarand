@@ -277,6 +277,21 @@
             let mapInstance;
             let currentReferenceLayer = null; // Store reference to current boundary layer
 
+            function getZoomForLevel(level) {
+                switch (level) {
+                    case 'country':
+                        return 6;
+                    case 'region':
+                        return 9;
+                    case 'city':
+                        return 11;
+                    case 'district':
+                        return 13;
+                    default:
+                        return 10;
+                }
+            }
+
             function clearSelect(select) {
                 select.innerHTML = '<option value="">{{ __('admin.select_option') }}</option>';
                 select.disabled = true;
@@ -332,6 +347,8 @@
                                     },
                                     interactive: false // Don't block clicks
                                 }).addTo(mapInstance);
+                            } else if (item.lat != null && item.lng != null) {
+                                flyToLocation(item.lat, item.lng, getZoomForLevel(level));
                             }
                         }
                     })

@@ -297,8 +297,13 @@
     function updateLayerForLevel(map, items, config, contextLayers) {
         if (!items || items.length === 0) return;
 
-        // Filter valid items and remove self
-        const validItems = items.filter(item => {
+        const level = items[0].level;
+        const levelConf = LEVEL_CONFIG[level] || LEVEL_CONFIG.country;
+
+        const layersForLevel = contextLayers[level] || {};
+
+        // Separate polygon-based items and point-only items
+        const polygonItems = items.filter(item => {
             if (!item.polygon) return false;
             if (config.entityLevel && config.entityId &&
                 item.level === config.entityLevel && String(item.id) === config.entityId) {
@@ -307,60 +312,98 @@
             return true;
         });
 
-        if (validItems.length === 0) return;
-
-        const level = validItems[0].level;
-        const levelConf = LEVEL_CONFIG[level] || LEVEL_CONFIG.country;
-
-        // Ensure Pane exists
-        const paneName = 'pane_' + level;
-        if (!map.getPane(paneName)) {
-            map.createPane(paneName);
-            map.getPane(paneName).style.zIndex = levelConf.zIndex;
-        }
-
-        // Create new GeoJSON layer
-        const geoJsonData = {
-            type: "FeatureCollection",
-            features: validItems.map(item => ({
-                type: "Feature",
-                geometry: item.polygon,
-                properties: {
-                    name: item.name,
-                    level: item.level,
-                    id: item.id
-                }
-            }))
-        };
-
-        const newLayer = L.geoJSON(geoJsonData, {
-            pane: paneName,
-            style: {
-                color: levelConf.color,
-                fillColor: levelConf.color,
-                fillOpacity: levelConf.opacity,
-                weight: 2
-            },
-            onEachFeature: function(feature, layer) {
-                if (feature.properties && feature.properties.name) {
-                    layer.bindTooltip(`${feature.properties.name} (${feature.properties.level})`, {
-                        permanent: false,
-                        direction: 'center'
-                    });
-                }
+        const pointItems = items.filter(item => {
+            const hasPoint = item.lat != null && item.lng != null;
+            if (!hasPoint) return false;
+            if (config.entityLevel && config.entityId &&
+                item.level === config.entityLevel && String(item.id) === config.entityId) {
+                return false;
             }
+            return !item.polygon; // prioritize polygon rendering when available
         });
 
-        // Add new layer first (to avoid blink), then remove old
-        newLayer.addTo(map);
+        // Handle polygon layer
+        if (polygonItems.length > 0) {
+            // Ensure Pane exists
+            const paneName = 'pane_' + level;
+            if (!map.getPane(paneName)) {
+                map.createPane(paneName);
+                map.getPane(paneName).style.zIndex = levelConf.zIndex;
+            }
 
-        if (contextLayers[level]) {
-            // Removing immediately might cause slight flicker if rendering takes time,
-            // but L.geoJSON is usually synchronous in rendering SVG.
-            map.removeLayer(contextLayers[level]);
+            const geoJsonData = {
+                type: "FeatureCollection",
+                features: polygonItems.map(item => ({
+                    type: "Feature",
+                    geometry: item.polygon,
+                    properties: {
+                        name: item.name,
+                        level: item.level,
+                        id: item.id
+                    }
+                }))
+            };
+
+            const newPolygonLayer = L.geoJSON(geoJsonData, {
+                pane: 'pane_' + level,
+                style: {
+                    color: levelConf.color,
+                    fillColor: levelConf.color,
+                    fillOpacity: levelConf.opacity,
+                    weight: 2
+                },
+                onEachFeature: function(feature, layer) {
+                    if (feature.properties && feature.properties.name) {
+                        layer.bindTooltip(`${feature.properties.name} (${feature.properties.level})`, {
+                            permanent: false,
+                            direction: 'center'
+                        });
+                    }
+                }
+            });
+
+            newPolygonLayer.addTo(map);
+
+            if (layersForLevel.polygonLayer) {
+                map.removeLayer(layersForLevel.polygonLayer);
+            }
+
+            layersForLevel.polygonLayer = newPolygonLayer;
+        } else if (layersForLevel.polygonLayer) {
+            map.removeLayer(layersForLevel.polygonLayer);
+            layersForLevel.polygonLayer = null;
         }
 
-        contextLayers[level] = newLayer;
+        // Handle point-only layer (for locations without polygons)
+        if (pointItems.length > 0) {
+            const pointLayer = L.layerGroup(pointItems.map(item => {
+                const marker = L.circleMarker([item.lat, item.lng], {
+                    color: levelConf.color,
+                    radius: 6,
+                    weight: 2,
+                    fillOpacity: 0.9
+                });
+
+                if (item.name) {
+                    marker.bindTooltip(`${item.name} (${item.level})`, { permanent: false });
+                }
+
+                return marker;
+            }));
+
+            pointLayer.addTo(map);
+
+            if (layersForLevel.pointLayer) {
+                map.removeLayer(layersForLevel.pointLayer);
+            }
+
+            layersForLevel.pointLayer = pointLayer;
+        } else if (layersForLevel.pointLayer) {
+            map.removeLayer(layersForLevel.pointLayer);
+            layersForLevel.pointLayer = null;
+        }
+
+        contextLayers[level] = layersForLevel;
     }
 
     /**
