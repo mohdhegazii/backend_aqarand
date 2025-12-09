@@ -288,8 +288,8 @@
                     const option = document.createElement('option');
                     option.value = item.id;
                     option.text = locale === 'ar' ? (item.name_local || item.name_en) : item.name_en;
-                    // Ensure lat/lng are not null/undefined (allow 0)
-                    if(item.lat != null && item.lng != null) {
+                    // Ensure lat/lng are present (handle 0)
+                    if(item.lat !== null && item.lat !== undefined && item.lng !== null && item.lng !== undefined) {
                         option.dataset.lat = item.lat;
                         option.dataset.lng = item.lng;
                     }
@@ -298,8 +298,20 @@
             }
 
             function flyToLocation(lat, lng, zoom) {
-                if(mapInstance && lat != null && lng != null) {
-                    mapInstance.flyTo([parseFloat(lat), parseFloat(lng)], zoom);
+                // Parse coordinates carefully
+                const latNum = parseFloat(lat);
+                const lngNum = parseFloat(lng);
+
+                if (isNaN(latNum) || isNaN(lngNum)) {
+                    console.warn('[ProjectWizard] Invalid coordinates for flyTo:', lat, lng);
+                    return;
+                }
+
+                if(mapInstance) {
+                    console.log(`[ProjectWizard] Flying to: [${latNum}, ${lngNum}] with zoom ${zoom}`);
+                    mapInstance.flyTo([latNum, lngNum], zoom);
+                } else {
+                    console.error('[ProjectWizard] Map instance is not initialized yet. Cannot fly to location.');
                 }
             }
 
@@ -312,6 +324,8 @@
                     currentReferenceLayer = null;
                 }
 
+                console.log(`[ProjectWizard] Fetching boundary for ${level} ID: ${id}`);
+
                 // Fetch polygon for the selected location
                 fetch(`{{ url('admin/location-polygons') }}?level=${level}&id=${id}`)
                     .then(response => response.json())
@@ -322,6 +336,7 @@
                         if (data[key] && data[key].length > 0) {
                             const item = data[key][0];
                             if (item.polygon) {
+                                console.log(`[ProjectWizard] Boundary found for ${level}, adding to map.`);
                                 currentReferenceLayer = L.geoJSON(item.polygon, {
                                     style: {
                                         color: '#3388ff',
@@ -332,10 +347,12 @@
                                     },
                                     interactive: false // Don't block clicks
                                 }).addTo(mapInstance);
+                            } else {
+                                console.log(`[ProjectWizard] No polygon data found for ${level}.`);
                             }
                         }
                     })
-                    .catch(err => console.error("Error fetching location polygon:", err));
+                    .catch(err => console.error("[ProjectWizard] Error fetching location polygon:", err));
             }
 
             countrySelect.addEventListener('change', function() {
@@ -355,6 +372,9 @@
                     const option = this.options[this.selectedIndex];
                     const lat = option.getAttribute('data-lat');
                     const lng = option.getAttribute('data-lng');
+
+                    console.log(`[ProjectWizard] Country changed. Lat: ${lat}, Lng: ${lng}`);
+
                     if(lat && lng) {
                         flyToLocation(lat, lng, 6);
                     }
@@ -373,14 +393,17 @@
                             if(data.cities) populateSelect(citySelect, data.cities);
                         });
 
-                    // Map Fly To
+                    // Map Fly To - Priority: Point
                     const option = this.options[this.selectedIndex];
                     const lat = option.getAttribute('data-lat');
                     const lng = option.getAttribute('data-lng');
+
+                    console.log(`[ProjectWizard] Region changed. Lat: ${lat}, Lng: ${lng}`);
+
                     if(lat && lng) {
                         flyToLocation(lat, lng, 9);
                     }
-                    // Update Boundary
+                    // Update Boundary - Secondary
                     updateMapBoundary('region', regionId);
                 }
             });
@@ -396,32 +419,38 @@
                             if(data.districts) populateSelect(districtSelect, data.districts);
                         });
 
-                    // Map Fly To
+                    // Map Fly To - Priority: Point
                     const option = this.options[this.selectedIndex];
                     const lat = option.getAttribute('data-lat');
                     const lng = option.getAttribute('data-lng');
+
+                    console.log(`[ProjectWizard] City changed. Lat: ${lat}, Lng: ${lng}`);
+
                     if(lat && lng) {
                         flyToLocation(lat, lng, 11);
                     }
-                    // Update Boundary
+                    // Update Boundary - Secondary
                     updateMapBoundary('city', cityId);
                 }
             });
 
             districtSelect.addEventListener('change', function() {
                 const districtId = this.value;
-                // Map Fly To
+                // Map Fly To - Priority: Point
                 const option = this.options[this.selectedIndex];
                 const lat = option.getAttribute('data-lat');
                 const lng = option.getAttribute('data-lng');
+
+                console.log(`[ProjectWizard] District changed. Lat: ${lat}, Lng: ${lng}`);
+
                 if(lat && lng) {
                     flyToLocation(lat, lng, 13);
                 }
-                // Update Boundary
+                // Update Boundary - Secondary
                 if (districtId) {
                     updateMapBoundary('district', districtId);
                 } else if (citySelect.value) {
-                    // Fallback to city
+                    // Fallback to city boundary
                     updateMapBoundary('city', citySelect.value);
                 }
             });
@@ -441,6 +470,7 @@
                 zoom: {{ $project->lat ? 13 : 6 }},
                 lockToEgypt: false,
                 onMapInit: function(map) {
+                    console.log('[ProjectWizard] Map initialized successfully.');
                     mapInstance = map; // Assign to outer scope variable
 
                     // Initial load logic if editing
@@ -472,6 +502,7 @@
                     }
 
                     if (activeLevel && activeId) {
+                        // Visual boundary
                         updateMapBoundary(activeLevel, activeId);
 
                         // Also fly to the location point if available in the selected option
@@ -486,6 +517,8 @@
                              const option = activeSelect.options[activeSelect.selectedIndex];
                              const lat = option.getAttribute('data-lat');
                              const lng = option.getAttribute('data-lng');
+
+                             console.log(`[ProjectWizard] Initial location detected. Lat: ${lat}, Lng: ${lng}`);
 
                              if (lat && lng) {
                                  flyToLocation(lat, lng, activeZoom);
