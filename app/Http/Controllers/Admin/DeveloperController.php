@@ -23,6 +23,7 @@ class DeveloperController extends Controller
 
         if ($request->filled('search')) {
             $search = $request->search;
+            // Current search uses multi-column OR LIKE; consider migrating to fulltext in the future.
             $query->where(function($q) use ($search) {
                 $q->where('name', 'like', "%$search%")
                   ->orWhere('name_en', 'like', "%$search%")
@@ -31,7 +32,8 @@ class DeveloperController extends Controller
             });
         }
 
-        $developers = $query->paginate(10);
+        // Ensure we order by name for index usage, or other indexed columns
+        $developers = $query->orderBy('name')->paginate(10);
 
         return view('admin.developers.index', compact('developers'));
     }

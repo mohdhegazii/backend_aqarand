@@ -20,6 +20,7 @@ class ProjectController extends Controller
 
         if ($request->filled('search')) {
             $search = $request->input('search');
+            // Current search uses multi-column OR LIKE; consider migrating to fulltext in the future.
             $projectsQuery->where(function ($query) use ($search) {
                 $likeSearch = '%'.$search.'%';
 
@@ -35,6 +36,7 @@ class ProjectController extends Controller
 
         $projects = $projectsQuery->paginate(20)->withQueryString();
         // Limited load for filters or empty
+        // Uses developers_active_name_index to fetch active developers sorted by name.
         $developers = Developer::where('is_active', true)->orderBy('name')->limit(20)->get();
 
         return view('admin.projects.index', compact('projects', 'developers'));
