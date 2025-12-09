@@ -55,10 +55,20 @@ class LocationPolygonController extends Controller
             if ($targetId) return;
 
             if ($hasBounds) {
-                // Using MBRIntersects for bounding box intersection against the spatial index.
-                // ST_MakeEnvelope(min_lng, min_lat, max_lng, max_lat) creates a polygon from the viewport bounds.
-                $query->whereRaw('MBRIntersects(boundary, ST_MakeEnvelope(?, ?, ?, ?))',
-                    [$minLng, $minLat, $maxLng, $maxLat]);
+                $query->where(function($nested) use ($minLat, $maxLat, $minLng, $maxLng) {
+                    // Prefer polygon intersection when boundaries exist
+                    $nested->whereNotNull('boundary')
+                        ->whereRaw('MBRIntersects(boundary, ST_MakeEnvelope(?, ?, ?, ?))',
+                            [$minLng, $minLat, $maxLng, $maxLat])
+                        ->orWhere(function($pointQuery) use ($minLat, $maxLat, $minLng, $maxLng) {
+                            // Fallback to point-based filtering when boundary is missing
+                            $pointQuery->whereNull('boundary')
+                                ->whereNotNull('lat')
+                                ->whereNotNull('lng')
+                                ->whereBetween('lat', [$minLat, $maxLat])
+                                ->whereBetween('lng', [$minLng, $maxLng]);
+                        });
+                });
             }
         };
 
@@ -80,8 +90,7 @@ class LocationPolygonController extends Controller
 
         if ($loadAll || in_array('country', $levels)) {
             $q = Country::query()
-                ->select('id', 'name_en', 'name_local', DB::raw('ST_AsGeoJSON(boundary) as polygon'))
-                ->whereNotNull('boundary');
+                ->select('id', 'name_en', 'name_local', 'lat', 'lng', DB::raw('ST_AsGeoJSON(boundary) as polygon'));
 
             $applyIdFilter($q);
             $applySpatialFilter($q);
@@ -91,7 +100,9 @@ class LocationPolygonController extends Controller
                     return [
                         'id' => $item->id,
                         'name' => $item->getDisplayNameAttribute(),
-                        'polygon' => json_decode($item->polygon),
+                        'polygon' => $item->polygon ? json_decode($item->polygon) : null,
+                        'lat' => $item->lat,
+                        'lng' => $item->lng,
                         'level' => 'country'
                     ];
                 });
@@ -99,8 +110,7 @@ class LocationPolygonController extends Controller
 
         if ($loadAll || in_array('region', $levels)) {
             $q = Region::query()
-                ->select('id', 'name_en', 'name_local', DB::raw('ST_AsGeoJSON(boundary) as polygon'))
-                ->whereNotNull('boundary');
+                ->select('id', 'name_en', 'name_local', 'lat', 'lng', DB::raw('ST_AsGeoJSON(boundary) as polygon'));
 
             $applyIdFilter($q);
             $applySpatialFilter($q);
@@ -110,7 +120,9 @@ class LocationPolygonController extends Controller
                     return [
                         'id' => $item->id,
                         'name' => $item->getDisplayNameAttribute(),
-                        'polygon' => json_decode($item->polygon),
+                        'polygon' => $item->polygon ? json_decode($item->polygon) : null,
+                        'lat' => $item->lat,
+                        'lng' => $item->lng,
                         'level' => 'region'
                     ];
                 });
@@ -118,8 +130,7 @@ class LocationPolygonController extends Controller
 
         if ($loadAll || in_array('city', $levels)) {
             $q = City::query()
-                ->select('id', 'name_en', 'name_local', DB::raw('ST_AsGeoJSON(boundary) as polygon'))
-                ->whereNotNull('boundary');
+                ->select('id', 'name_en', 'name_local', 'lat', 'lng', DB::raw('ST_AsGeoJSON(boundary) as polygon'));
 
             $applyIdFilter($q);
             $applySpatialFilter($q);
@@ -129,7 +140,9 @@ class LocationPolygonController extends Controller
                     return [
                         'id' => $item->id,
                         'name' => $item->getDisplayNameAttribute(),
-                        'polygon' => json_decode($item->polygon),
+                        'polygon' => $item->polygon ? json_decode($item->polygon) : null,
+                        'lat' => $item->lat,
+                        'lng' => $item->lng,
                         'level' => 'city'
                     ];
                 });
@@ -137,8 +150,7 @@ class LocationPolygonController extends Controller
 
         if ($loadAll || in_array('district', $levels)) {
             $q = District::query()
-                ->select('id', 'name_en', 'name_local', DB::raw('ST_AsGeoJSON(boundary) as polygon'))
-                ->whereNotNull('boundary');
+                ->select('id', 'name_en', 'name_local', 'lat', 'lng', DB::raw('ST_AsGeoJSON(boundary) as polygon'));
 
             $applyIdFilter($q);
             $applySpatialFilter($q);
@@ -148,7 +160,9 @@ class LocationPolygonController extends Controller
                     return [
                         'id' => $item->id,
                         'name' => $item->getDisplayNameAttribute(),
-                        'polygon' => json_decode($item->polygon),
+                        'polygon' => $item->polygon ? json_decode($item->polygon) : null,
+                        'lat' => $item->lat,
+                        'lng' => $item->lng,
                         'level' => 'district'
                     ];
                 });
