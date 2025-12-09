@@ -24,7 +24,7 @@ class LocationService
         return Region::where('country_id', $countryId)
             ->where('is_active', true)
             ->orderBy('name_en')
-            ->get();
+            ->get(['id', 'country_id', 'name_en', 'name_local', 'slug', 'lat', 'lng']);
     }
 
     /**
@@ -40,7 +40,7 @@ class LocationService
         return City::where('region_id', $regionId)
             ->where('is_active', true)
             ->orderBy('name_en')
-            ->get();
+            ->get(['id', 'region_id', 'name_en', 'name_local', 'slug', 'lat', 'lng']);
     }
 
     /**
@@ -56,7 +56,7 @@ class LocationService
         return District::where('city_id', $cityId)
             ->where('is_active', true)
             ->orderBy('name_en')
-            ->get();
+            ->get(['id', 'city_id', 'name_en', 'name_local', 'slug', 'lat', 'lng']);
     }
 
     /**
