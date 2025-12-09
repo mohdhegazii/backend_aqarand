@@ -39,6 +39,8 @@ class StoreUnitRequest extends FormRequest
             'bathrooms' => 'nullable|integer',
             'is_corner' => 'sometimes|boolean',
             'is_furnished' => 'sometimes|boolean',
+            'amenities' => 'nullable|array',
+            'amenities.*' => 'integer|exists:amenities,id',
         ];
     }
 

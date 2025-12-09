@@ -128,6 +128,11 @@
                 </div>
             </div>
 
+            <div class="mb-6">
+                <h3 class="text-lg font-medium text-gray-900 mb-4">{{ __('admin.amenities') }}</h3>
+                @include('admin.units.partials.amenities')
+            </div>
+
             <div class="flex justify-end">
                 <a href="{{ route($adminRoutePrefix.'units.index') }}" class="bg-gray-500 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded mr-2">Cancel</a>
                 <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">Save</button>
