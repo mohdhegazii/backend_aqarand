@@ -7,7 +7,21 @@
 @section('content')
 <div class="bg-white dark:bg-gray-800 shadow rounded-lg p-6">
     <!-- Wizard Progress -->
-    @include('admin.projects.partials.wizard_steps', ['currentStep' => 2, 'projectId' => $project->id])
+    @if(view()->exists('admin.projects.partials.wizard_steps'))
+        @include('admin.projects.partials.wizard_steps', ['currentStep' => 2, 'projectId' => $project->id])
+    @else
+        <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-6" role="alert">
+            <strong class="font-bold">Debug Error!</strong>
+            <span class="block sm:inline">The view 'admin.projects.partials.wizard_steps' was not found.</span>
+            <div class="mt-2 text-xs font-mono bg-white p-2 rounded border border-red-200">
+                <strong>Current View Paths:</strong>
+                <pre>{{ print_r(config('view.paths'), true) }}</pre>
+            </div>
+            <div class="mt-2 text-xs font-mono bg-white p-2 rounded border border-red-200">
+                <strong>Exists check failed for:</strong> admin.projects.partials.wizard_steps
+            </div>
+        </div>
+    @endif
 
     <div class="mb-6">
         <h2 class="text-xl font-bold text-gray-800 dark:text-white">{{ __('admin.projects.amenities') }}</h2>
