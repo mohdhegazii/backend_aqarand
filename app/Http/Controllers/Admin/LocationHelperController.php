@@ -103,80 +103,25 @@ class LocationHelperController extends Controller
 
     public function getRegions($countryId)
     {
-        \Log::debug('[DEBUG][locations] getRegions called', [
-            'country_id' => $countryId,
-            'url' => request()->fullUrl(),
-        ]);
-        try {
-            $regions = $this->locationService->getRegionsByCountry($countryId);
-            \Log::debug('[DEBUG][locations] getRegions response count', [
-                'count' => count($regions),
-            ]);
-            return response()->json(['regions' => $regions]);
-        } catch (\Throwable $e) {
-            \Log::error('[DEBUG][locations] getRegions exception', [
-                'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString(),
-            ]);
-            return response()->json(['error' => $e->getMessage()], 500);
-        }
+        $regions = $this->locationService->getRegionsByCountry($countryId);
+        return response()->json(['regions' => $regions]);
     }
 
     public function getCities($regionId)
     {
-        \Log::debug('[DEBUG][locations] getCities called', [
-            'region_id' => $regionId,
-            'url' => request()->fullUrl(),
-        ]);
-        try {
-            $cities = $this->locationService->getCitiesByRegion($regionId);
-            \Log::debug('[DEBUG][locations] getCities response count', [
-                'count' => count($cities),
-            ]);
-            return response()->json(['cities' => $cities]);
-        } catch (\Throwable $e) {
-            \Log::error('[DEBUG][locations] getCities exception', [
-                'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString(),
-            ]);
-            return response()->json(['error' => $e->getMessage()], 500);
-        }
+        $cities = $this->locationService->getCitiesByRegion($regionId);
+        return response()->json(['cities' => $cities]);
     }
 
     public function getDistricts($cityId)
     {
-        \Log::debug('[DEBUG][locations] getDistricts called', [
-            'city_id' => $cityId,
-            'url' => request()->fullUrl(),
-        ]);
-        try {
-            $districts = $this->locationService->getDistrictsByCity($cityId);
-            \Log::debug('[DEBUG][locations] getDistricts response count', [
-                'count' => count($districts),
-            ]);
-            return response()->json(['districts' => $districts]);
-        } catch (\Throwable $e) {
-            \Log::error('[DEBUG][locations] getDistricts exception', [
-                'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString(),
-            ]);
-            return response()->json(['error' => $e->getMessage()], 500);
-        }
+        $districts = $this->locationService->getDistrictsByCity($cityId);
+        return response()->json(['districts' => $districts]);
     }
 
     public function getProjects($districtId)
     {
-        \Log::debug('[DEBUG][locations] getProjects called', ['district_id' => $districtId]);
-        try {
-            $projects = $this->locationService->getProjectsByDistrict($districtId);
-            \Log::debug('[DEBUG][locations] getProjects response count', ['count' => count($projects)]);
-            return response()->json(['projects' => $projects]);
-        } catch (\Throwable $e) {
-            \Log::error('[DEBUG][locations] getProjects exception', [
-                'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString(),
-            ]);
-            return response()->json(['error' => $e->getMessage()], 500);
-        }
+        $projects = $this->locationService->getProjectsByDistrict($districtId);
+        return response()->json(['projects' => $projects]);
     }
 }
