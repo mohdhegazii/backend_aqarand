@@ -145,6 +145,8 @@ return [
     'back_to_list' => 'Back to List',
     'no_records_found' => 'No media files found.',
     'are_you_sure' => 'Are you sure?',
+    'top_project_amenities' => 'Top Project Amenities',
+    'no_data_available' => 'No data available',
 
     // Project Form
     'step_basic_info' => '1- Basic Info',

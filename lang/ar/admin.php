@@ -145,6 +145,8 @@ return [
     'back_to_list' => 'العودة للقائمة',
     'no_records_found' => 'لا توجد ملفات وسائط.',
     'are_you_sure' => 'هل أنت متأكد؟',
+    'top_project_amenities' => 'أكثر المرافق استخداماً في المشاريع',
+    'no_data_available' => 'لا توجد بيانات متاحة',
 
     // Project Form
     'step_basic_info' => '١- المعلومات الأساسية',

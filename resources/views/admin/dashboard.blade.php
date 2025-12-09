@@ -59,7 +59,7 @@
 </div>
 
 <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
-    <!-- Row 2: Revenue Chart (Large, 2x width), Quick Actions Card -->
+    <!-- Row 2: Revenue Chart (Large, 2x width), Amenity Stats (New) -->
 
     <!-- Revenue Chart Placeholder -->
     <div class="card lg:col-span-2 min-h-[300px] flex flex-col">
@@ -79,9 +79,96 @@
         </div>
     </div>
 
-    <!-- Quick Actions -->
+    <!-- Quick Actions (Moved below or replaced if needed, but keeping it per user instruction to add) -->
+    <!-- Replacing Quick Actions with Amenities for this row, or adding a new row?
+         The design has 3 columns. KPI took full width.
+         Let's keep Quick Actions and Add Amenities in a new row or replace Quick Actions.
+         The prompt says "Integrate cleanly".
+         Quick Actions is useful. Let's move Quick Actions to a new row or modify the grid.
+         Actually, let's put Amenities in the 3rd column here instead of Quick Actions for visibility,
+         or move Quick Actions to the next row with Recent Projects.
+
+         Decision: Replace Quick Actions in this grid with Top Amenities, move Quick Actions down or keep it.
+         Wait, user said "Add basic analytics... integrate cleanly".
+
+         Let's add a new card for Top Amenities.
+         If I put it in the 3rd column of Row 2, it fits perfectly.
+         Quick Actions can be moved to Row 3 (sidebar style) or kept.
+         The Quick Actions card is useful.
+
+         Let's add a new Row or Column.
+
+         Option 1: Add to Row 2 (making it 4 cols? No, space issues).
+         Option 2: Add below Row 2.
+
+         Let's replace the Quick Actions slot with "Top Amenities" and move Quick Actions to be a smaller widget or merge.
+         Actually, "Top Amenities" is analytics, "Revenue Analytics" is analytics. They go well together.
+
+         Let's keep Quick Actions, and add Top Amenities as a new card in a new row or sidebar.
+
+         Let's look at the layout again.
+         Row 1: KPIs
+         Row 2: Chart (2/3) + Quick Actions (1/3)
+         Row 3: Recent Projects (1/2) + Recent Listings (1/2)
+         Row 4: System Overview (1/1)
+
+         I will add "Top Amenities" to the right of "Recent Listings" if I make it 3 cols, or add a new row.
+         Let's make Row 3 have 3 columns? Or just add it as a card.
+
+         Let's simply add a new card in the layout.
+         Maybe below Quick Actions?
+
+         Let's try putting it in place of "Quick Actions" for now to test, OR split the Quick Actions column.
+
+         Actually, the user prompt showed a "Card" example.
+
+         <div class="card">...</div>
+
+         I will add it as a new column in Row 2 if space permits, or swap it.
+         I'll move Quick Actions to a new Row 3, combined with something else, or just insert Top Amenities in the grid.
+
+         Let's look at Row 3: It has 2 columns (Projects, Listings).
+         I can make Row 3 have 3 columns: Projects, Listings, Top Amenities.
+    -->
+
+    <!-- Top Amenities Widget -->
+    <div class="card h-full">
+        <div class="flex justify-between items-center mb-4">
+            <h3 class="text-lg font-bold text-text-primary">@lang('admin.top_project_amenities')</h3>
+        </div>
+
+        @if(isset($topProjectAmenities) && $topProjectAmenities->isNotEmpty())
+            <ul class="space-y-3">
+                @foreach($topProjectAmenities as $amenity)
+                <li class="flex items-center justify-between p-2 hover:bg-gray-50 rounded transition-colors">
+                    <div class="flex items-center gap-3">
+                        <div class="w-8 h-8 rounded-full bg-primary-50 text-primary-600 flex items-center justify-center">
+                            @if($amenity->icon_class)
+                                <i class="{{ $amenity->icon_class }}"></i>
+                            @else
+                                <i class="bi bi-star"></i>
+                            @endif
+                        </div>
+                        <span class="text-sm font-medium text-text-primary">{{ $amenity->name }}</span>
+                    </div>
+                    <span class="badge badge-primary">{{ $amenity->projects_count }}</span>
+                </li>
+                @endforeach
+            </ul>
+        @else
+            <div class="text-center py-8 text-text-secondary text-sm">
+                @lang('admin.no_data_available')
+            </div>
+        @endif
+    </div>
+</div>
+
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+    <!-- Row 3: Quick Actions, Active Projects, Recent Listings -->
+
+    <!-- Quick Actions (Moved here) -->
     <div class="card">
-        <h3 class="text-lg font-bold text-text-primary mb-4">Quick Actions</h3>
+        <h3 class="text-lg font-bold text-text-primary mb-4">@lang('admin.actions')</h3>
         <div class="space-y-3">
             <a href="{{ route('admin.projects.create') }}" class="group flex items-center p-3 rounded-[var(--radius-button)] hover:bg-primary-50 transition-colors border border-transparent hover:border-primary-100">
                 <div class="w-10 h-10 rounded-full bg-primary-100 text-primary-600 flex items-center justify-center group-hover:bg-primary-500 group-hover:text-white transition-colors">
@@ -114,10 +201,6 @@
             </a>
         </div>
     </div>
-</div>
-
-<div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-    <!-- Row 3: Active Projects (Medium List), Recent Leads (Medium List) -->
 
     <!-- Active Projects -->
     <div class="card">
@@ -171,7 +254,7 @@
         </div>
     </div>
 
-    <!-- Recent Listings (instead of Leads since Listings CRUD is part of task) -->
+    <!-- Recent Listings -->
     <div class="card">
         <div class="flex justify-between items-center mb-4">
             <h3 class="text-lg font-bold text-text-primary">Recent Listings</h3>
@@ -219,7 +302,7 @@
 </div>
 
 <div class="grid grid-cols-1 mb-8">
-    <!-- Row 4: Tasks Overview (Full width) -->
+    <!-- Row 4: System Overview (Full width) -->
     <div class="card">
         <h3 class="text-lg font-bold text-text-primary mb-4">System Overview</h3>
         <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
