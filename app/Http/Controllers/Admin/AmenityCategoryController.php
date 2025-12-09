@@ -4,11 +4,19 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\AmenityCategory;
+use App\Services\AmenityService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 
 class AmenityCategoryController extends Controller
 {
+    protected $amenityService;
+
+    public function __construct(AmenityService $amenityService)
+    {
+        $this->amenityService = $amenityService;
+    }
+
     public function index(Request $request)
     {
         $query = AmenityCategory::query();
@@ -58,6 +66,7 @@ class AmenityCategoryController extends Controller
         $validated['sort_order'] = $request->input('sort_order', 0);
 
         AmenityCategory::create($validated);
+        $this->amenityService->clearCache();
 
         return redirect()->route($this->adminRoutePrefix().'amenity-categories.index')
             ->with('success', __('admin.created_successfully'));
@@ -92,6 +101,7 @@ class AmenityCategoryController extends Controller
         $validated['sort_order'] = $request->input('sort_order', 0);
 
         $amenityCategory->update($validated);
+        $this->amenityService->clearCache();
 
         return redirect()->route($this->adminRoutePrefix().'amenity-categories.index')
             ->with('success', __('admin.updated_successfully'));
@@ -106,6 +116,7 @@ class AmenityCategoryController extends Controller
         }
 
         $amenityCategory->delete();
+        $this->amenityService->clearCache();
 
         return redirect()->route($this->adminRoutePrefix().'amenity-categories.index')
             ->with('success', __('admin.deleted_successfully'));

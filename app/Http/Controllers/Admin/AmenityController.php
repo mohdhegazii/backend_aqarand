@@ -5,12 +5,20 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Amenity;
 use App\Models\AmenityCategory;
+use App\Services\AmenityService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Storage;
 
 class AmenityController extends Controller
 {
+    protected $amenityService;
+
+    public function __construct(AmenityService $amenityService)
+    {
+        $this->amenityService = $amenityService;
+    }
+
     public function index(Request $request)
     {
         $query = Amenity::query()->with('category');
@@ -77,6 +85,7 @@ class AmenityController extends Controller
         }
 
         Amenity::create($validated);
+        $this->amenityService->clearCache();
 
         return redirect()->route($this->adminRoutePrefix().'amenities.index')
             ->with('success', __('admin.created_successfully'));
@@ -131,6 +140,7 @@ class AmenityController extends Controller
         }
 
         $amenity->update($validated);
+        $this->amenityService->clearCache();
 
         return redirect()->route($this->adminRoutePrefix().'amenities.index')
             ->with('success', __('admin.updated_successfully'));
@@ -139,6 +149,7 @@ class AmenityController extends Controller
     public function destroy(Amenity $amenity)
     {
         $amenity->update(['is_active' => false]);
+        $this->amenityService->clearCache();
 
         return redirect()->route($this->adminRoutePrefix().'amenities.index')
             ->with('success', __('admin.deleted_successfully'));
@@ -154,6 +165,7 @@ class AmenityController extends Controller
 
         $isActive = $request->action === 'activate';
         Amenity::whereIn('id', $request->ids)->update(['is_active' => $isActive]);
+        $this->amenityService->clearCache();
 
         return redirect()->back()->with('success', __('admin.bulk_action_success'));
     }
