@@ -7,6 +7,8 @@ use App\Models\Unit;
 use App\Models\Project;
 use App\Models\PropertyModel;
 use App\Models\UnitType;
+use App\Http\Requests\Admin\Units\StoreUnitRequest;
+use App\Http\Requests\Admin\Units\UpdateUnitRequest;
 use Illuminate\Http\Request;
 
 class UnitController extends Controller
@@ -34,24 +36,9 @@ class UnitController extends Controller
         return view('admin.units.create', compact('projects', 'unitTypes', 'propertyModels'));
     }
 
-    public function store(Request $request)
+    public function store(StoreUnitRequest $request)
     {
-        $validated = $request->validate([
-            'project_id' => 'nullable|exists:projects,id',
-            'property_model_id' => 'nullable|exists:property_models,id',
-            'unit_type_id' => 'required|exists:unit_types,id',
-            'unit_number' => 'nullable|string|max:100',
-            'price' => 'required|numeric',
-            'currency_code' => 'required|string|size:3',
-            'built_up_area' => 'nullable|numeric',
-            'title_en' => 'nullable|string|max:255',
-            'title_ar' => 'nullable|string|max:255',
-            'unit_status' => 'required|in:available,reserved,sold,rented',
-            'construction_status' => 'nullable|in:new_launch,off_plan,under_construction,ready_to_move,livable',
-            'delivery_year' => 'nullable|integer|min:2000|max:2100',
-            'bedrooms' => 'nullable|integer',
-            'bathrooms' => 'nullable|integer',
-        ]);
+        $validated = $request->validated();
 
         // Auto calculate price per sqm
         $pricePerSqm = null;
@@ -83,20 +70,9 @@ class UnitController extends Controller
         return view('admin.units.edit', compact('unit', 'projects', 'unitTypes', 'propertyModels'));
     }
 
-    public function update(Request $request, Unit $unit)
+    public function update(UpdateUnitRequest $request, Unit $unit)
     {
-        $validated = $request->validate([
-            'project_id' => 'nullable|exists:projects,id',
-            'property_model_id' => 'nullable|exists:property_models,id',
-            'unit_type_id' => 'required|exists:unit_types,id',
-            'unit_number' => 'nullable|string|max:100',
-            'price' => 'required|numeric',
-            'currency_code' => 'required|string|size:3',
-            'built_up_area' => 'nullable|numeric',
-            'unit_status' => 'required|in:available,reserved,sold,rented',
-            'construction_status' => 'nullable|in:new_launch,off_plan,under_construction,ready_to_move,livable',
-            'delivery_year' => 'nullable|integer|min:2000|max:2100',
-        ]);
+        $validated = $request->validated();
 
         $pricePerSqm = $unit->price_per_sqm;
         if ($request->filled('built_up_area') && $request->built_up_area > 0 && $request->price > 0) {

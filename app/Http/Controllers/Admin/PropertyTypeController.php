@@ -9,6 +9,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
+use App\Services\LookupService;
 
 class PropertyTypeController extends Controller
 {
@@ -43,7 +44,7 @@ class PropertyTypeController extends Controller
         ]);
     }
 
-    public function store(Request $request)
+    public function store(Request $request, LookupService $lookupService)
     {
         $validated = $request->validate([
             'name_en' => 'required|string|max:100',
@@ -74,6 +75,8 @@ class PropertyTypeController extends Controller
 
         PropertyType::create($validated);
 
+        $lookupService->clearPropertyTypeCache($validated['category_id']);
+
         return redirect()->route($this->adminRoutePrefix().'property-types.index')
             ->with('success', __('admin.created_successfully'));
     }
@@ -93,7 +96,7 @@ class PropertyTypeController extends Controller
         }
     }
 
-    public function update(Request $request, PropertyType $propertyType)
+    public function update(Request $request, PropertyType $propertyType, LookupService $lookupService)
     {
         $validated = $request->validate([
             'name_en' => 'required|string|max:100',
