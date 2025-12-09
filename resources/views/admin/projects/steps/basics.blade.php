@@ -104,23 +104,41 @@
 
             <!-- PROJECT LOCATION SECTION -->
             <div class="pt-6 border-t border-gray-200">
-                <h3 class="text-lg font-medium text-gray-900 mb-4">{{ __('admin.projects.location_section') }}</h3>
+                <h3 class="text-lg font-medium text-gray-900 mb-4">{{ __('admin.project_wizard.location_section_unified') }}</h3>
 
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <!-- Country (Fixed) -->
+                    <!-- Country -->
                     <div>
-                        <label class="block text-sm font-semibold text-gray-700">
-                            {{ __('admin.projects.country_fixed_egypt') }}
+                        <label for="country_id" class="block text-sm font-semibold text-gray-700">
+                            {{ __('admin.country') }} <span class="text-red-500">*</span>
                         </label>
-                        <select disabled class="mt-1 block w-full rounded-md border-gray-300 bg-gray-100 cursor-not-allowed shadow-sm sm:text-sm">
-                            <option selected>{{ __('admin.projects.country_fixed_egypt') }}</option>
+                        <select
+                            id="country_id"
+                            name="country_id"
+                            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                            required
+                        >
+                            <option value="">{{ __('admin.select_option') }}</option>
+                            @foreach($countries as $country)
+                                <option
+                                    value="{{ $country->id }}"
+                                    data-lat="{{ $country->lat ?? 26.8206 }}"
+                                    data-lng="{{ $country->lng ?? 30.8025 }}"
+                                    {{ (old('country_id', $project->country_id) == $country->id) ? 'selected' : '' }}
+                                >
+                                    {{ $country->name_local ?? $country->name_en }}
+                                </option>
+                            @endforeach
                         </select>
+                        @error('country_id')
+                            <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                        @enderror
                     </div>
 
                     <!-- Region / Governorate -->
                     <div>
                         <label for="region_id" class="block text-sm font-semibold text-gray-700">
-                            {{ __('admin.projects.governorate') }} <span class="text-red-500">*</span>
+                            {{ __('admin.region') }} <span class="text-red-500">*</span>
                         </label>
                         <select
                             id="region_id"
@@ -148,14 +166,13 @@
                     <!-- City -->
                     <div>
                         <label for="city_id" class="block text-sm font-semibold text-gray-700">
-                            {{ __('admin.projects.city') }} <span class="text-red-500">*</span>
+                            {{ __('admin.city') }} <span class="text-red-500">*</span>
                         </label>
                         <select
                             id="city_id"
                             name="city_id"
                             class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
                             required
-                            {{ $cities->isEmpty() ? 'disabled' : '' }}
                         >
                             <option value="">{{ __('admin.select_option') }}</option>
                             @foreach($cities as $city)
@@ -177,14 +194,13 @@
                     <!-- District -->
                     <div>
                         <label for="district_id" class="block text-sm font-semibold text-gray-700">
-                            {{ __('admin.projects.district') }} <span class="text-red-500">*</span>
+                            {{ __('admin.district') }} <span class="text-red-500">*</span>
                         </label>
                         <select
                             id="district_id"
                             name="district_id"
                             class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
                             required
-                            {{ $districts->isEmpty() ? 'disabled' : '' }}
                         >
                             <option value="">{{ __('admin.select_option') }}</option>
                             @foreach($districts as $district)
@@ -207,7 +223,7 @@
 
             <!-- MAP SECTION -->
             <div class="pt-6 border-t border-gray-200">
-                <h3 class="text-lg font-medium text-gray-900 mb-4">{{ __('admin.projects.map_title') }}</h3>
+                <h3 class="text-lg font-medium text-gray-900 mb-4">{{ __('admin.project_map_unified') }}</h3>
                 <p class="text-sm text-gray-500 mb-2">{{ __('admin.project_map_instruction') }}</p>
 
                 <x-location.map
@@ -217,7 +233,7 @@
                     mapId="map-container"
                     entityLevel="project"
                     :entityId="$project->id"
-                    :lockToEgypt="true"
+                    :lockToEgypt="false"
                     inputLatName="lat"
                     inputLngName="lng"
                     inputPolygonName="boundary_geojson"
@@ -251,6 +267,7 @@
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             // --- CASCADING DROPDOWNS ---
+            const countrySelect = document.getElementById('country_id');
             const regionSelect = document.getElementById('region_id');
             const citySelect = document.getElementById('city_id');
             const districtSelect = document.getElementById('district_id');
@@ -282,6 +299,27 @@
                     mapInstance.flyTo([lat, lng], zoom);
                 }
             }
+
+            countrySelect.addEventListener('change', function() {
+                const countryId = this.value;
+                clearSelect(regionSelect);
+                clearSelect(citySelect);
+                clearSelect(districtSelect);
+
+                if (countryId) {
+                    fetch(`{{ url('admin/locations/regions') }}/${countryId}`)
+                        .then(response => response.json())
+                        .then(data => {
+                            if(data.regions) populateSelect(regionSelect, data.regions);
+                        });
+
+                    // Map Fly To
+                    const option = this.options[this.selectedIndex];
+                    if(option.dataset.lat && option.dataset.lng) {
+                        flyToLocation(option.dataset.lat, option.dataset.lng, 6);
+                    }
+                }
+            });
 
             regionSelect.addEventListener('change', function() {
                 const regionId = this.value;
@@ -343,7 +381,7 @@
                 lat: {{ $project->lat ?? 26.8206 }}, // Default to Egypt center
                 lng: {{ $project->lng ?? 30.8025 }},
                 zoom: {{ $project->lat ? 13 : 6 }},
-                lockToEgypt: true,
+                lockToEgypt: false,
                 onMapInit: function(map) {
                     mapInstance = map;
                 },

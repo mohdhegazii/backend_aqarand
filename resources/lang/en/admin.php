@@ -64,6 +64,7 @@ return [
     'location_on_map' => 'Location on Map',
     'search_location' => 'Search location...',
     'project_location' => 'Project Location',
+    'project_location_unified' => 'Project Location (Unified System)',
     'location_search' => 'Location Search',
     'location_search_helper' => 'Search by city or district to auto-fill the dropdowns.',
     'location_search_placeholder' => 'Start typing a city or district name...',
@@ -75,6 +76,7 @@ return [
     'select_district' => 'Select District',
     'fill_location' => 'Please complete all location fields.',
     'project_map' => 'Project Map',
+    'project_map_unified' => 'Location on Map (Unified System)',
     'map_instruction' => 'Use the draw tools to outline the project area or click on the map to drop a pin.',
     'searching' => 'Searching...',
     'activate' => 'Activate',
@@ -111,6 +113,7 @@ return [
     // Project Wizard
     'project_wizard' => [
         'step_basics' => 'Basics and Location',
+        'location_section_unified' => 'Location (Unified System)',
         'step_1_of_x' => 'Step 1 of the Wizard',
         'step_2_of_x' => 'Step 2 of the Wizard',
         'name_ar' => 'Project Name (Arabic)',
