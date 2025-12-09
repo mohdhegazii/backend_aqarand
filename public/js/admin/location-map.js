@@ -47,7 +47,8 @@
         const markerTools = setupMarkerLogic(map, config);
 
         // 3. Setup Editable Polygon Logic (Drawing)
-        const drawTools = setupDrawLogic(map, config);
+        // Passed markerTools to allow auto-centering pin on draw
+        const drawTools = setupDrawLogic(map, config, markerTools);
 
         // 4. Load Context Layers (Background Polygons)
         // Store layer references to allow updates/replacement
@@ -112,8 +113,8 @@
 
             // Flags
             readOnly: !!options.readOnly,
-            // Default to false if not provided (matches legacy behavior)
-            lockToEgypt: !!options.lockToEgypt,
+            // Default to true (Lock to Egypt) unless explicitly false (Task 1)
+            lockToEgypt: options.lockToEgypt !== undefined ? !!options.lockToEgypt : true,
             useViewportLoading: !!options.useViewportLoading,
 
             // Callbacks
@@ -136,9 +137,25 @@
             map.options.minZoom = 5;
         }
 
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        // Define Standard Layer (OpenStreetMap)
+        const osmLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
             attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-        }).addTo(map);
+        });
+
+        // Define Satellite Layer (Esri World Imagery)
+        const satelliteLayer = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+            attribution: 'Tiles &copy; Esri &mdash; Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community'
+        });
+
+        // Add Default Layer
+        osmLayer.addTo(map);
+
+        // Add Layer Control
+        const baseMaps = {
+            "Map": osmLayer,
+            "Satellite": satelliteLayer
+        };
+        L.control.layers(baseMaps).addTo(map);
 
         return map;
     }
@@ -442,7 +459,7 @@
     /**
      * Setup Drawing Tools for the main entity being edited
      */
-    function setupDrawLogic(map, config) {
+    function setupDrawLogic(map, config, markerTools) {
         const drawnItems = new L.FeatureGroup();
         map.addLayer(drawnItems);
         const polygonInput = document.querySelector(config.polygonFieldSelector);
@@ -491,6 +508,13 @@
         }
 
         if (!config.readOnly) {
+            // Task 3: Hide Drawing Tooltip Text programmatically
+            if (L.drawLocal) {
+                L.drawLocal.draw.handlers.polygon.tooltip.start = '';
+                L.drawLocal.draw.handlers.polygon.tooltip.cont = '';
+                L.drawLocal.draw.handlers.polygon.tooltip.end = '';
+            }
+
             const drawControl = new L.Control.Draw({
                 draw: {
                     polygon: { allowIntersection: false, showArea: true },
@@ -510,6 +534,13 @@
             map.on(L.Draw.Event.CREATED, function (e) {
                 drawnItems.clearLayers();
                 drawnItems.addLayer(e.layer);
+
+                // Auto-center marker on the new shape (Task 4)
+                if (markerTools && e.layer.getBounds) {
+                    const center = e.layer.getBounds().getCenter();
+                    markerTools.updateMarker(center.lat, center.lng);
+                }
+
                 updateBoundaryInput();
             });
 
