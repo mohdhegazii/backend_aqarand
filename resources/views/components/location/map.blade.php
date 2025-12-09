@@ -31,8 +31,8 @@
     <div id="{{ $mapId }}" style="height: 400px; width: 100%; border-radius: 0.5rem; z-index: 1;"></div>
 
     @if(!$readOnly)
-        <input type="hidden" name="{{ $inputLatName }}" id="lat-{{ $mapId }}" value="{{ $lat }}">
-        <input type="hidden" name="{{ $inputLngName }}" id="lng-{{ $mapId }}" value="{{ $lng }}">
+        <input type="hidden" name="{{ $inputLatName }}" id="lat-{{ $mapId }}" value="{{ $lat ? number_format($lat, 7, '.', '') : '' }}">
+        <input type="hidden" name="{{ $inputLngName }}" id="lng-{{ $mapId }}" value="{{ $lng ? number_format($lng, 7, '.', '') : '' }}">
 
         {{-- For Polygon, value must be encoded if it's an array/object --}}
         @php
@@ -71,8 +71,8 @@
                 polygonFieldSelector: "#boundary-{{ $mapId }}",
                 latFieldSelector: "#lat-{{ $mapId }}",
                 lngFieldSelector: "#lng-{{ $mapId }}",
-                lat: {{ $lat ?? 30.0444 }},
-                lng: {{ $lng ?? 31.2357 }},
+                lat: {{ number_format($lat ?? 30.0444, 7, '.', '') }},
+                lng: {{ number_format($lng ?? 31.2357, 7, '.', '') }},
                 zoom: {{ $zoom ?? ($lat ? 13 : 6) }},
                 readOnly: {{ $readOnly ? 'true' : 'false' }},
                 lockToEgypt: {{ $lockToEgypt ? 'true' : 'false' }},

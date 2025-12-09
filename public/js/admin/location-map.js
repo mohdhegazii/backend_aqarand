@@ -81,7 +81,15 @@
     function normalizeOptions(options) {
         // Determine if valid coordinates were provided to decide whether to show a marker
         // Using loose equality check for null to catch undefined as well.
-        const hasCoords = (options.lat != null && options.lng != null);
+        // Sanitize: ensure dot decimal for robustness against locale issues
+        let safeLat = null;
+        let safeLng = null;
+        if (options.lat != null && options.lng != null) {
+            safeLat = parseFloat(String(options.lat).replace(',', '.'));
+            safeLng = parseFloat(String(options.lng).replace(',', '.'));
+        }
+
+        const hasCoords = (safeLat != null && safeLng != null && !isNaN(safeLat) && !isNaN(safeLng));
 
         return {
             elementId: options.elementId,
@@ -95,8 +103,8 @@
 
             // Map State
             // If coords provided, use them. Else default to Cairo.
-            lat: hasCoords ? options.lat : 30.0444,
-            lng: hasCoords ? options.lng : 31.2357,
+            lat: hasCoords ? safeLat : 30.0444,
+            lng: hasCoords ? safeLng : 31.2357,
             hasInitialCoordinates: hasCoords,
 
             // Zoom: Use provided zoom, or 13 if coords exist, or 6 for country view
@@ -533,8 +541,8 @@
                     .then(data => {
                         if (data && data.length > 0) {
                             const result = data[0];
-                            const lat = parseFloat(result.lat);
-                            const lon = parseFloat(result.lon);
+                            const lat = parseFloat(String(result.lat).replace(',', '.'));
+                            const lon = parseFloat(String(result.lon).replace(',', '.'));
 
                             map.flyTo([lat, lon], 13);
                             markerTools.updateMarker(lat, lon);
