@@ -18,15 +18,24 @@
                     @php
                         $isLockedProject = !empty($projectId);
                         $selectedProject = old('project_id', $projectId);
+                        // We need a way to pass text if it's locked, but controller might not pass project object if it was just an ID.
+                        // Assuming if locked, user came from project page so context is known or we can just show ID/loading.
+                        // For better UX, we might want to fetch text or just assume empty for now if not provided.
+                        // But wait, if locked, the input is disabled, so search won't work anyway.
+                        // We should render a hidden input and a disabled text input, OR make the component support 'disabled' prop.
+                        // Let's add 'disabled' support to x-lookup.select if easy, or fallback to simple input if locked.
                     @endphp
-                    <select name="project_id" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50" required {{ $isLockedProject ? 'disabled' : '' }}>
-                        <option value="">Select Project</option>
-                        @foreach($projects as $project)
-                            <option value="{{ $project->id }}" {{ $selectedProject == $project->id ? 'selected' : '' }}>{{ $project->name_en }}</option>
-                        @endforeach
-                    </select>
+
                     @if($isLockedProject)
                         <input type="hidden" name="project_id" value="{{ $selectedProject }}">
+                        <input type="text" value="{{ $projects->firstWhere('id', $selectedProject)->name_en ?? 'Project #'.$selectedProject }}" class="mt-1 block w-full rounded-md border-gray-300 bg-gray-100 cursor-not-allowed shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50" disabled>
+                    @else
+                        <x-lookup.select
+                            name="project_id"
+                            url="/admin/lookups/projects"
+                            placeholder="{{ __('admin.select_project') }}"
+                            :selected-id="$selectedProject"
+                        />
                     @endif
                 </div>
                 <div class="col-span-1 md:col-span-2">

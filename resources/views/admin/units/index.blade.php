@@ -13,16 +13,18 @@
         </div>
 
         <div class="mb-4">
-             <form method="GET" action="{{ route($adminRoutePrefix.'units.index') }}" class="flex gap-4">
-                <select name="project_id" class="rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50">
-                    <option value="">@lang('admin.all') @lang('admin.projects')</option>
-                    @foreach($projects as $project)
-                        <option value="{{ $project->id }}" {{ request('project_id') == $project->id ? 'selected' : '' }}>
-                            {{ $project->name_en }}
-                        </option>
-                    @endforeach
-                </select>
-                <button type="submit" class="bg-gray-500 hover:bg-gray-600 text-white font-bold py-2 px-4 rounded">
+             <form method="GET" action="{{ route($adminRoutePrefix.'units.index') }}" class="flex gap-4 items-end">
+                <div class="w-64">
+                    <label class="block text-sm font-medium text-gray-700 mb-1">@lang('admin.projects')</label>
+                    <x-lookup.select
+                        name="project_id"
+                        url="/admin/lookups/projects"
+                        placeholder="{{ __('admin.all') }} {{ __('admin.projects') }}"
+                        :selected-id="request('project_id')"
+                        :selected-text="request('project_id') && $projects->find(request('project_id')) ? $projects->find(request('project_id'))->name_en : ''"
+                    />
+                </div>
+                <button type="submit" class="bg-gray-500 hover:bg-gray-600 text-white font-bold py-2 px-4 rounded h-[38px] mt-auto">
                     @lang('admin.search')
                 </button>
             </form>

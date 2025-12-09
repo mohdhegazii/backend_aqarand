@@ -25,12 +25,10 @@ class ListingController extends Controller
 
     public function create()
     {
-        // Only fetch units that don't have active listings? Or allow multiple?
-        // For now, allow selection from all available units.
-        $units = Unit::where('unit_status', 'available')
-                     ->doesntHave('listing') // Simple rule: 1 listing per unit
-                     ->get();
-        return view('admin.listings.create', compact('units'));
+        // Removed heavy load of units.
+        // User will search for unit via AJAX.
+
+        return view('admin.listings.create');
     }
 
     public function store(Request $request)
@@ -66,8 +64,8 @@ class ListingController extends Controller
 
     public function edit(Listing $listing)
     {
-        $units = Unit::all(); // Show all, maybe highlight the current one
-        return view('admin.listings.edit', compact('listing', 'units'));
+        // Removed heavy load of units.
+        return view('admin.listings.edit', compact('listing'));
     }
 
     public function update(Request $request, Listing $listing)

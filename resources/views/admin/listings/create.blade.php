@@ -12,14 +12,12 @@
                 <!-- Unit -->
                 <div class="md:col-span-2">
                     <label class="block text-sm font-medium text-gray-700">Unit *</label>
-                    <select name="unit_id" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50" required>
-                        <option value="">Select Unit</option>
-                        @foreach($units as $unit)
-                            <option value="{{ $unit->id }}" {{ old('unit_id') == $unit->id ? 'selected' : '' }}>
-                                {{ $unit->unit_number }} - {{ $unit->project->name_en ?? 'No Project' }} ({{ number_format($unit->price) }} {{ $unit->currency_code }})
-                            </option>
-                        @endforeach
-                    </select>
+                    <x-lookup.select
+                        name="unit_id"
+                        url="/admin/lookups/units?status=available&doesnt_have_listing=1"
+                        placeholder="{{ __('admin.select_unit') }}"
+                        :selected-id="old('unit_id')"
+                    />
                 </div>
 
                 <!-- Type & Status -->
