@@ -112,6 +112,7 @@ return [
     'project_wizard' => [
         'step_basics' => 'Basics and Location',
         'step_1_of_x' => 'Step 1 of the Wizard',
+        'step_2_of_x' => 'Step 2 of the Wizard',
         'name_ar' => 'Project Name (Arabic)',
         'name_en' => 'Project Name (English)',
         'name_ar_placeholder' => 'Example: Al Maqsad',
