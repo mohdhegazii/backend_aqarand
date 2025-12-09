@@ -6,7 +6,7 @@
     'readOnly' => false,
     'entityLevel' => null,
     'entityId' => null,
-    'lockToEgypt' => false,
+    'lockToEgypt' => true,
     'searchable' => true,
     'mapId' => 'map-' . uniqid(),
     'inputLatName' => 'lat',
