@@ -288,8 +288,8 @@
                     const option = document.createElement('option');
                     option.value = item.id;
                     option.text = locale === 'ar' ? (item.name_local || item.name_en) : item.name_en;
-                    // Ensure lat/lng are not null/undefined (allow 0)
-                    if(item.lat != null && item.lng != null) {
+                    // Ensure lat/lng are present (handle 0)
+                    if(item.lat !== null && item.lat !== undefined && item.lng !== null && item.lng !== undefined) {
                         option.dataset.lat = item.lat;
                         option.dataset.lng = item.lng;
                     }
@@ -353,8 +353,8 @@
 
                     // Map Fly To
                     const option = this.options[this.selectedIndex];
-                    const lat = option.getAttribute('data-lat');
-                    const lng = option.getAttribute('data-lng');
+                    const lat = option.dataset.lat;
+                    const lng = option.dataset.lng;
                     if(lat && lng) {
                         flyToLocation(lat, lng, 6);
                     }
@@ -373,14 +373,14 @@
                             if(data.cities) populateSelect(citySelect, data.cities);
                         });
 
-                    // Map Fly To
+                    // Map Fly To - Priority: Point
                     const option = this.options[this.selectedIndex];
-                    const lat = option.getAttribute('data-lat');
-                    const lng = option.getAttribute('data-lng');
+                    const lat = option.dataset.lat;
+                    const lng = option.dataset.lng;
                     if(lat && lng) {
                         flyToLocation(lat, lng, 9);
                     }
-                    // Update Boundary
+                    // Update Boundary - Secondary
                     updateMapBoundary('region', regionId);
                 }
             });
@@ -396,32 +396,32 @@
                             if(data.districts) populateSelect(districtSelect, data.districts);
                         });
 
-                    // Map Fly To
+                    // Map Fly To - Priority: Point
                     const option = this.options[this.selectedIndex];
-                    const lat = option.getAttribute('data-lat');
-                    const lng = option.getAttribute('data-lng');
+                    const lat = option.dataset.lat;
+                    const lng = option.dataset.lng;
                     if(lat && lng) {
                         flyToLocation(lat, lng, 11);
                     }
-                    // Update Boundary
+                    // Update Boundary - Secondary
                     updateMapBoundary('city', cityId);
                 }
             });
 
             districtSelect.addEventListener('change', function() {
                 const districtId = this.value;
-                // Map Fly To
+                // Map Fly To - Priority: Point
                 const option = this.options[this.selectedIndex];
-                const lat = option.getAttribute('data-lat');
-                const lng = option.getAttribute('data-lng');
+                const lat = option.dataset.lat;
+                const lng = option.dataset.lng;
                 if(lat && lng) {
                     flyToLocation(lat, lng, 13);
                 }
-                // Update Boundary
+                // Update Boundary - Secondary
                 if (districtId) {
                     updateMapBoundary('district', districtId);
                 } else if (citySelect.value) {
-                    // Fallback to city
+                    // Fallback to city boundary
                     updateMapBoundary('city', citySelect.value);
                 }
             });
@@ -472,6 +472,7 @@
                     }
 
                     if (activeLevel && activeId) {
+                        // Visual boundary
                         updateMapBoundary(activeLevel, activeId);
 
                         // Also fly to the location point if available in the selected option
@@ -484,8 +485,8 @@
 
                         if (!projectHasCoords && activeSelect && activeSelect.options[activeSelect.selectedIndex]) {
                              const option = activeSelect.options[activeSelect.selectedIndex];
-                             const lat = option.getAttribute('data-lat');
-                             const lng = option.getAttribute('data-lng');
+                             const lat = option.dataset.lat;
+                             const lng = option.dataset.lng;
 
                              if (lat && lng) {
                                  flyToLocation(lat, lng, activeZoom);
