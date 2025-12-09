@@ -107,20 +107,32 @@
                 <h3 class="text-lg font-medium text-gray-900 mb-4">{{ __('admin.project_wizard.location_section_unified') }}</h3>
 
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <input
-                        type="hidden"
-                        id="country_id"
-                        name="country_id"
-                        value="{{ old('country_id', $project->country_id ?? $defaultCountry->id ?? '') }}"
-                    >
-                    <div class="md:col-span-2">
-                        <div class="flex items-center justify-between">
-                            <label class="block text-sm font-semibold text-gray-700">
-                                {{ __('admin.country') }}
-                            </label>
-                            <span class="text-xs text-gray-500">{{ app()->getLocale() === 'ar' ? 'مخفي ومثبت على الدولة الافتراضية' : 'Hidden and fixed to the default country' }}</span>
-                        </div>
-                        <p class="mt-1 text-sm text-gray-600">{{ $defaultCountry?->name_local ?? $defaultCountry?->name_en }}</p>
+                    <!-- Country -->
+                    <div>
+                        <label for="country_id" class="block text-sm font-semibold text-gray-700">
+                            {{ __('admin.country') }} <span class="text-red-500">*</span>
+                        </label>
+                        <select
+                            id="country_id"
+                            name="country_id"
+                            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                            required
+                        >
+                            <option value="">{{ __('admin.select_option') }}</option>
+                            @foreach($countries as $country)
+                                <option
+                                    value="{{ $country->id }}"
+                                    data-lat="{{ $country->lat ?? 26.8206 }}"
+                                    data-lng="{{ $country->lng ?? 30.8025 }}"
+                                    {{ (old('country_id', $project->country_id) == $country->id) ? 'selected' : '' }}
+                                >
+                                    {{ $country->name_local ?? $country->name_en }}
+                                </option>
+                            @endforeach
+                        </select>
+                        @error('country_id')
+                            <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                        @enderror
                     </div>
 
                     <!-- Region / Governorate -->
@@ -131,7 +143,6 @@
                         <select
                             id="region_id"
                             name="region_id"
-                            data-selected="{{ old('region_id', $project->region_id) }}"
                             class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
                             required
                         >
@@ -160,7 +171,6 @@
                         <select
                             id="city_id"
                             name="city_id"
-                            data-selected="{{ old('city_id', $project->city_id) }}"
                             class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
                             required
                         >
@@ -184,13 +194,13 @@
                     <!-- District -->
                     <div>
                         <label for="district_id" class="block text-sm font-semibold text-gray-700">
-                            {{ __('admin.district') }} <span class="text-gray-500 text-xs">({{ __('admin.optional') }})</span>
+                            {{ __('admin.district') }} <span class="text-red-500">*</span>
                         </label>
                         <select
                             id="district_id"
                             name="district_id"
-                            data-selected="{{ old('district_id', $project->district_id) }}"
                             class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                            required
                         >
                             <option value="">{{ __('admin.select_option') }}</option>
                             @foreach($districts as $district)
@@ -264,20 +274,14 @@
 
             const locale = "{{ app()->getLocale() }}"; // 'ar' or 'en'
             let mapInstance;
-            let selectedBoundaryLayer;
 
-            function resetSelect(select, placeholder) {
-                select.innerHTML = placeholder;
+            function clearSelect(select) {
+                select.innerHTML = '<option value="">{{ __('admin.select_option') }}</option>';
                 select.disabled = true;
             }
 
-            function populateSelect(select, items, selectedId = null) {
-                const placeholder = '<option value="">{{ __('admin.select_option') }}</option>';
-                resetSelect(select, placeholder);
-                if (!items || !items.length) {
-                    return;
-                }
-
+            function populateSelect(select, items) {
+                select.disabled = false;
                 items.forEach(item => {
                     const option = document.createElement('option');
                     option.value = item.id;
@@ -286,171 +290,82 @@
                         option.dataset.lat = item.lat;
                         option.dataset.lng = item.lng;
                     }
-                    if (selectedId && String(selectedId) === String(item.id)) {
-                        option.selected = true;
-                    }
                     select.appendChild(option);
                 });
-                select.disabled = false;
             }
 
             function flyToLocation(lat, lng, zoom) {
-                if(mapInstance && lat && lng) {
+                if(mapInstance) {
                     mapInstance.flyTo([lat, lng], zoom);
                 }
             }
 
-            function fetchAndRenderBoundary(level, id) {
-                if (!level || !id || !mapInstance) {
-                    renderBoundary(null);
-                    return;
-                }
-
-                const url = new URL(`{{ url('admin/location-polygons') }}`);
-                url.searchParams.set('level', level);
-                url.searchParams.set('id', id);
-
-                fetch(url)
-                    .then(response => response.json())
-                    .then(data => {
-                        const key = level + 's';
-                        const collection = data[key] || [];
-                        const match = collection.find(item => String(item.id) === String(id));
-                        renderBoundary(match ? match.polygon : null);
-                    })
-                    .catch(() => renderBoundary(null));
-            }
-
-            function renderBoundary(geojson) {
-                const boundaryInput = document.getElementById('boundary-map-container');
-                if (selectedBoundaryLayer && mapInstance) {
-                    mapInstance.removeLayer(selectedBoundaryLayer);
-                    selectedBoundaryLayer = null;
-                }
-
-                if (!geojson || !mapInstance) {
-                    if (boundaryInput) boundaryInput.value = '';
-                    return;
-                }
-
-                const feature = geojson.type === 'FeatureCollection'
-                    ? geojson
-                    : { type: 'FeatureCollection', features: [{ type: 'Feature', geometry: geojson, properties: {} }] };
-
-                selectedBoundaryLayer = L.geoJSON(feature, {
-                    style: {
-                        color: '#2563eb',
-                        weight: 3,
-                        opacity: 0.8,
-                        fillOpacity: 0.1,
-                    }
-                }).addTo(mapInstance);
-
-                if (selectedBoundaryLayer.getBounds && selectedBoundaryLayer.getBounds().isValid()) {
-                    mapInstance.fitBounds(selectedBoundaryLayer.getBounds(), { maxZoom: 15 });
-                }
-
-                if (boundaryInput) {
-                    boundaryInput.value = JSON.stringify(feature);
-                }
-            }
-
-            function handleBoundaryUpdate() {
-                const districtId = districtSelect.value;
-                const cityId = citySelect.value;
-                const regionId = regionSelect.value;
-
-                if (districtId) {
-                    fetchAndRenderBoundary('district', districtId);
-                } else if (cityId) {
-                    fetchAndRenderBoundary('city', cityId);
-                } else if (regionId) {
-                    fetchAndRenderBoundary('region', regionId);
-                } else {
-                    renderBoundary(null);
-                }
-            }
-
-            function loadRegions(countryId, selectedRegionId = null, selectedCityId = null, selectedDistrictId = null) {
-                resetSelect(regionSelect, '<option value="">{{ __('admin.select_option') }}</option>');
-                resetSelect(citySelect, '<option value="">{{ __('admin.select_option') }}</option>');
-                resetSelect(districtSelect, '<option value="">{{ __('admin.select_option') }}</option>');
-
-                if (!countryId) return;
-
-                fetch(`{{ url('admin/locations/regions') }}/${countryId}`)
-                    .then(response => response.json())
-                    .then(data => {
-                        populateSelect(regionSelect, data.regions, selectedRegionId);
-                        if (selectedRegionId) {
-                            loadCities(selectedRegionId, selectedCityId, selectedDistrictId);
-                        } else {
-                            handleBoundaryUpdate();
-                        }
-                    });
-            }
-
-            function loadCities(regionId, selectedCityId = null, selectedDistrictId = null) {
-                resetSelect(citySelect, '<option value="">{{ __('admin.select_option') }}</option>');
-                resetSelect(districtSelect, '<option value="">{{ __('admin.select_option') }}</option>');
-
-                if (!regionId) return;
-
-                fetch(`{{ url('admin/locations/cities') }}/${regionId}`)
-                    .then(response => response.json())
-                    .then(data => {
-                        populateSelect(citySelect, data.cities, selectedCityId);
-                        if (selectedCityId) {
-                            loadDistricts(selectedCityId, selectedDistrictId);
-                        } else {
-                            handleBoundaryUpdate();
-                        }
-                    });
-            }
-
-            function loadDistricts(cityId, selectedDistrictId = null) {
-                resetSelect(districtSelect, '<option value="">{{ __('admin.select_option') }}</option>');
-                if (!cityId) return;
-
-                fetch(`{{ url('admin/locations/districts') }}/${cityId}`)
-                    .then(response => response.json())
-                    .then(data => {
-                        populateSelect(districtSelect, data.districts, selectedDistrictId);
-                        handleBoundaryUpdate();
-                    });
-            }
-
             countrySelect.addEventListener('change', function() {
-                loadRegions(this.value);
-                handleBoundaryUpdate();
+                const countryId = this.value;
+                clearSelect(regionSelect);
+                clearSelect(citySelect);
+                clearSelect(districtSelect);
+
+                if (countryId) {
+                    fetch(`{{ url('admin/locations/regions') }}/${countryId}`)
+                        .then(response => response.json())
+                        .then(data => {
+                            if(data.regions) populateSelect(regionSelect, data.regions);
+                        });
+
+                    // Map Fly To
+                    const option = this.options[this.selectedIndex];
+                    if(option.dataset.lat && option.dataset.lng) {
+                        flyToLocation(option.dataset.lat, option.dataset.lng, 6);
+                    }
+                }
             });
 
             regionSelect.addEventListener('change', function() {
-                loadCities(this.value);
+                const regionId = this.value;
+                clearSelect(citySelect);
+                clearSelect(districtSelect);
 
-                const option = this.options[this.selectedIndex];
-                if(option?.dataset.lat && option?.dataset.lng) {
-                    flyToLocation(option.dataset.lat, option.dataset.lng, 9);
+                if (regionId) {
+                    fetch(`{{ url('admin/locations/cities') }}/${regionId}`)
+                        .then(response => response.json())
+                        .then(data => {
+                            if(data.cities) populateSelect(citySelect, data.cities);
+                        });
+
+                    // Map Fly To
+                    const option = this.options[this.selectedIndex];
+                    if(option.dataset.lat && option.dataset.lng) {
+                        flyToLocation(option.dataset.lat, option.dataset.lng, 9);
+                    }
                 }
-                handleBoundaryUpdate();
             });
 
             citySelect.addEventListener('change', function() {
-                loadDistricts(this.value);
+                const cityId = this.value;
+                clearSelect(districtSelect);
 
-                const option = this.options[this.selectedIndex];
-                if(option?.dataset.lat && option?.dataset.lng) {
-                    flyToLocation(option.dataset.lat, option.dataset.lng, 11);
+                if (cityId) {
+                    fetch(`{{ url('admin/locations/districts') }}/${cityId}`)
+                        .then(response => response.json())
+                        .then(data => {
+                            if(data.districts) populateSelect(districtSelect, data.districts);
+                        });
+
+                    // Map Fly To
+                    const option = this.options[this.selectedIndex];
+                    if(option.dataset.lat && option.dataset.lng) {
+                        flyToLocation(option.dataset.lat, option.dataset.lng, 11);
+                    }
                 }
-                handleBoundaryUpdate();
             });
 
             districtSelect.addEventListener('change', function() {
+                // Map Fly To
                 const option = this.options[this.selectedIndex];
-                if(option?.dataset.lat && option?.dataset.lng) {
+                if(option.dataset.lat && option.dataset.lng) {
                     flyToLocation(option.dataset.lat, option.dataset.lng, 13);
                 }
-                handleBoundaryUpdate();
             });
 
             // --- MAP INIT ---
@@ -469,12 +384,14 @@
                 lockToEgypt: false,
                 onMapInit: function(map) {
                     mapInstance = map;
-                    const selectedRegionId = regionSelect.dataset.selected;
-                    const selectedCityId = citySelect.dataset.selected;
-                    const selectedDistrictId = districtSelect.dataset.selected;
-                    loadRegions(countrySelect.value, selectedRegionId, selectedCityId, selectedDistrictId);
                 },
                 onPolygonChange: function(data) {
+                     // The component handles basic binding, but if we need specific FeatureCollection format
+                     // we might need to intercept.
+                     // The component's input is #boundary-map-container.
+                     // location-map.js writes to it.
+
+                     // If we want to enforce FeatureCollection:
                      if (data.features.length > 0) {
                          document.getElementById('boundary-map-container').value = JSON.stringify(data);
                      } else {

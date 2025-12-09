@@ -6,7 +6,6 @@ use App\Http\Controllers\Controller;
 use App\Models\Developer;
 use App\Models\Project;
 use App\Models\Country;
-use App\Services\LocationService;
 use App\Services\DeveloperService;
 use App\Services\AmenityService;
 use Illuminate\Http\Request;
@@ -16,13 +15,11 @@ class ProjectWizardController extends Controller
 {
     protected $developerService;
     protected $amenityService;
-    protected LocationService $locationService;
 
-    public function __construct(DeveloperService $developerService, AmenityService $amenityService, LocationService $locationService)
+    public function __construct(DeveloperService $developerService, AmenityService $amenityService)
     {
         $this->developerService = $developerService;
         $this->amenityService = $amenityService;
-        $this->locationService = $locationService;
     }
 
     /**
@@ -33,24 +30,26 @@ class ProjectWizardController extends Controller
     {
         $project = $id ? Project::findOrFail($id) : new Project();
         $developers = $this->developerService->getActiveDevelopers();
+
+        // Fetch all active countries
         $countries = Country::where('is_active', true)->get();
-        $defaultCountry = $this->defaultCountry($countries);
+
+        // Set default country (Egypt) if new project
+        $defaultCountryCode = 'EG';
+        $defaultCountry = $countries->first(function ($country) use ($defaultCountryCode) {
+            return $country->code === $defaultCountryCode || $country->name_en === 'Egypt';
+        });
 
         if (!$project->exists && $defaultCountry && !$project->country_id) {
              $project->country_id = $defaultCountry->id;
         }
 
-        $regions = $project->country_id
-            ? $this->locationService->getRegionsByCountry($project->country_id)
-            : collect();
-        $cities = $project->region_id
-            ? $this->locationService->getCitiesByRegion($project->region_id)
-            : collect();
-        $districts = $project->city_id
-            ? $this->locationService->getDistrictsByCity($project->city_id)
-            : collect();
+        // Load hierarchy based on project's country (or default)
+        $regions = $project->country_id ? \App\Models\Region::where('country_id', $project->country_id)->get() : collect();
+        $cities = $project->region_id ? \App\Models\City::where('region_id', $project->region_id)->get() : collect();
+        $districts = $project->city_id ? \App\Models\District::where('city_id', $project->city_id)->get() : collect();
 
-        return view('admin.projects.steps.basics', compact('project', 'developers', 'countries', 'regions', 'cities', 'districts', 'defaultCountry'));
+        return view('admin.projects.steps.basics', compact('project', 'developers', 'countries', 'regions', 'cities', 'districts'));
     }
 
     /**
@@ -58,10 +57,6 @@ class ProjectWizardController extends Controller
      */
     public function storeBasicsStep(Request $request, $id = null)
     {
-        $request->merge([
-            'country_id' => $request->input('country_id') ?: optional($this->defaultCountry())->id,
-        ]);
-
         $validated = $request->validate([
             'name_ar' => 'required|string|max:255',
             'name_en' => 'required|string|max:255',
@@ -70,7 +65,7 @@ class ProjectWizardController extends Controller
             'country_id' => 'required|exists:countries,id',
             'region_id' => 'required|exists:regions,id',
             'city_id' => 'required|exists:cities,id',
-            'district_id' => 'nullable|exists:districts,id',
+            'district_id' => 'required|exists:districts,id',
             'boundary_geojson' => 'nullable|json',
         ]);
 
@@ -88,7 +83,7 @@ class ProjectWizardController extends Controller
         $project->country_id = $validated['country_id'];
         $project->region_id = $validated['region_id'];
         $project->city_id = $validated['city_id'];
-        $project->district_id = $validated['district_id'] ?? null;
+        $project->district_id = $validated['district_id'];
 
         if (!empty($validated['boundary_geojson'])) {
              $project->boundary_geojson = json_decode($validated['boundary_geojson'], true);
@@ -166,15 +161,5 @@ class ProjectWizardController extends Controller
         }
 
         return $slug;
-    }
-
-    private function defaultCountry($countries = null)
-    {
-        $countries = $countries ?? Country::where('is_active', true)->get();
-        $defaultCountryCode = 'EG';
-
-        return $countries->first(function ($country) use ($defaultCountryCode) {
-            return $country->code === $defaultCountryCode || $country->name_en === 'Egypt';
-        }) ?? $countries->first();
     }
 }
