@@ -82,6 +82,7 @@ return [
     'no' => 'لا',
 
     // Location helpers
+    'location' => 'الموقع',
     'location_on_map' => 'الموقع على الخريطة',
     'location_search' => 'بحث عن موقع',
     'search_location' => 'ابحث عن موقع...',
