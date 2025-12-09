@@ -29,19 +29,17 @@ class UnitController extends Controller
             $query->where('project_id', $request->project_id);
         }
 
+        // Amenities Filter
+        if ($request->has('amenities') && is_array($request->input('amenities'))) {
+            $amenityIds = array_filter($request->input('amenities'), 'is_numeric');
+            if (!empty($amenityIds)) {
+                $query->whereHas('amenities', function ($q) use ($amenityIds) {
+                    $q->whereIn('amenities.id', $amenityIds);
+                });
+            }
+        }
+
         $units = $query->latest()->paginate(10);
-        // Use async search for filter instead of loading all projects if possible,
-        // but for now keeping index as is or updating it too?
-        // Instructions said: "Eliminate heavy usages... in admin create/edit forms."
-        // Index filters might also benefit, but let's prioritize forms first.
-        // However, loading ALL projects for index filter is also bad.
-        // I will empty the projects list here and let the view handle it if I updated the index view (which I haven't yet).
-        // The plan didn't explicitly mention index views but "Identify all admin forms".
-        // Let's stick to create/edit for now to be safe, but removing unused vars.
-        $projects = []; // Replaced by async search in view if implemented, or just empty to avoid load.
-        // Actually, if I empty it, the index filter might break if it expects $projects.
-        // Let's leave index alone unless I fix the view.
-        // But for create/edit:
 
         $projects = Project::orderBy('name_en')->limit(10)->get(); // Limit for filter initial load
 
@@ -53,7 +51,10 @@ class UnitController extends Controller
             }
         }
 
-        return view('admin.units.index', compact('units', 'projects'));
+        // Load unit-related amenities for the filter
+        $amenities = $this->amenityService->getAmenitiesByType('unit', true);
+
+        return view('admin.units.index', compact('units', 'projects', 'amenities'));
     }
 
     public function create()

@@ -16,11 +16,13 @@
 
             <!-- Search and Filter -->
             <form action="{{ route($adminRoutePrefix.'projects.index') }}" method="GET" class="mb-6">
-                <div class="flex flex-col md:flex-row gap-4">
+                <div class="flex flex-col md:flex-row gap-4 items-end">
                     <div class="w-full md:w-1/3">
+                        <label class="block text-sm font-medium text-gray-700 mb-1">بحث</label>
                         <input type="text" name="search" value="{{ request('search') }}" placeholder="بحث باسم المشروع..." class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50">
                     </div>
                     <div class="w-full md:w-1/3">
+                        <label class="block text-sm font-medium text-gray-700 mb-1">المطور</label>
                         {{-- Use ajax select as $developers list is limited --}}
                         <x-developers.select
                             name="developer_id"
@@ -28,11 +30,36 @@
                             :placeholder="__('admin.project_wizard.select_developer')"
                         />
                     </div>
-                    <div class="w-full md:w-auto">
+                    <div class="w-full md:w-auto pb-1">
                         <button type="submit" class="bg-gray-800 text-white px-4 py-2 rounded hover:bg-gray-700">
                             بحث
                         </button>
                         <a href="{{ route($adminRoutePrefix.'projects.index') }}" class="text-gray-600 px-4 py-2 hover:underline">إعادة تعيين</a>
+                    </div>
+                </div>
+
+                <!-- Amenity Filter -->
+                <div x-data="{ showAmenities: {{ request()->has('amenities') ? 'true' : 'false' }} }" class="mt-4 border-t pt-4">
+                    <button type="button" @click="showAmenities = !showAmenities" class="text-sm text-indigo-600 hover:text-indigo-800 flex items-center gap-1">
+                        <span x-text="showAmenities ? 'إخفاء فلتر المرافق' : 'عرض فلتر المرافق ({{ $amenities->count() }})'"></span>
+                        <i class="bi" :class="showAmenities ? 'bi-chevron-up' : 'bi-chevron-down'"></i>
+                    </button>
+
+                    <div x-show="showAmenities" class="mt-4">
+                        @if($amenities->isNotEmpty())
+                            <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 max-h-60 overflow-y-auto p-2 border rounded-md bg-gray-50">
+                                @foreach($amenities as $amenity)
+                                    <label class="inline-flex items-center hover:bg-gray-100 p-1 rounded cursor-pointer">
+                                        <input type="checkbox" name="amenities[]" value="{{ $amenity->id }}"
+                                            {{ in_array($amenity->id, request('amenities', [])) ? 'checked' : '' }}
+                                            class="rounded border-gray-300 text-indigo-600 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50">
+                                        <span class="mr-2 text-sm text-gray-700">{{ $amenity->display_name }}</span>
+                                    </label>
+                                @endforeach
+                            </div>
+                        @else
+                            <p class="text-sm text-gray-500">لا توجد مرافق متاحة.</p>
+                        @endif
                     </div>
                 </div>
             </form>

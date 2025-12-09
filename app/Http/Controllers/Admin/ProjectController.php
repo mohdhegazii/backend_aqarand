@@ -42,12 +42,25 @@ class ProjectController extends Controller
             $projectsQuery->where('developer_id', $request->input('developer_id'));
         }
 
+        // Amenities Filter
+        if ($request->has('amenities') && is_array($request->input('amenities'))) {
+            $amenityIds = array_filter($request->input('amenities'), 'is_numeric');
+            if (!empty($amenityIds)) {
+                $projectsQuery->whereHas('amenities', function ($q) use ($amenityIds) {
+                    $q->whereIn('amenities.id', $amenityIds);
+                });
+            }
+        }
+
         $projects = $projectsQuery->paginate(20)->withQueryString();
         // Limited load for filters or empty
         // Uses developers_active_name_index to fetch active developers sorted by name.
         $developers = Developer::where('is_active', true)->orderBy('name')->limit(20)->get();
 
-        return view('admin.projects.index', compact('projects', 'developers'));
+        // Load project-related amenities for the filter
+        $amenities = $this->amenityService->getAmenitiesByType('project', true);
+
+        return view('admin.projects.index', compact('projects', 'developers', 'amenities'));
     }
 
     public function create()
