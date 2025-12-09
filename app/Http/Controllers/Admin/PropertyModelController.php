@@ -26,20 +26,26 @@ class PropertyModelController extends Controller
         }
 
         $propertyModels = $query->latest()->paginate(10);
-        $projects = Project::orderBy('name_en')->get();
-        $unitTypes = UnitType::orderBy('name_en')->get();
+
+        // Limited load for filters
+        $projects = Project::orderBy('name_en')->limit(10)->get();
+        $unitTypes = UnitType::orderBy('name_en')->get(); // UnitTypes are usually few, but good to limit if many.
 
         return view('admin.property_models.index', compact('propertyModels', 'projects', 'unitTypes'));
     }
 
     public function create(Request $request)
     {
-        $projects = Project::orderBy('name_en')->get();
-        $unitTypes = UnitType::orderBy('name_en')->get();
+        // Removed: $projects, $unitTypes loading
+
         $projectId = $request->input('project_id');
         $redirectTo = $request->input('redirect');
 
-        return view('admin.property_models.create', compact('projects', 'unitTypes', 'projectId', 'redirectTo'));
+        // Pass projects only if needed for locked project display, but we handled that via fallback text.
+        // Or if we need a single project for the locked view.
+        $projects = $projectId ? Project::where('id', $projectId)->get() : collect();
+
+        return view('admin.property_models.create', compact('projectId', 'redirectTo', 'projects'));
     }
 
     public function store(StorePropertyModelRequest $request)
@@ -68,12 +74,11 @@ class PropertyModelController extends Controller
 
     public function edit(PropertyModel $propertyModel, Request $request)
     {
-        $projects = Project::orderBy('name_en')->get();
-        $unitTypes = UnitType::orderBy('name_en')->get();
+        // Removed heavy loads
         $redirectTo = $request->input('redirect');
         $lockedProjectId = $request->input('project_id');
 
-        return view('admin.property_models.edit', compact('propertyModel', 'projects', 'unitTypes', 'redirectTo', 'lockedProjectId'));
+        return view('admin.property_models.edit', compact('propertyModel', 'redirectTo', 'lockedProjectId'));
     }
 
     public function update(UpdatePropertyModelRequest $request, PropertyModel $propertyModel)

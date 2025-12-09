@@ -34,7 +34,8 @@ class ProjectController extends Controller
         }
 
         $projects = $projectsQuery->paginate(20)->withQueryString();
-        $developers = Developer::where('is_active', true)->orderBy('name')->get();
+        // Limited load for filters or empty
+        $developers = Developer::where('is_active', true)->orderBy('name')->limit(20)->get();
 
         return view('admin.projects.index', compact('projects', 'developers'));
     }
@@ -42,20 +43,18 @@ class ProjectController extends Controller
     public function create()
     {
         $project = new Project();
-        $developers = Developer::where('is_active', true)->orderBy('name')->get();
+        // Limited or empty loads. The view is currently a placeholder anyway.
+        $developers = [];
         $defaultCountryId = $this->defaultCountryId();
+        // Amenities are fine to load as they are usually limited in number (hundreds max, not thousands like projects/units)
         $amenities = Amenity::whereIn('amenity_type', ['project', 'both'])
                             ->orderBy('sort_order')
                             ->orderBy('name_en')
                             ->get()
                             ->groupBy(fn ($amenity) => $amenity->amenity_type ?? 'other');
 
-        // For Master Project Dropdown
-        $existingProjects = Project::select(
-            'id', 'name_en', 'name_ar', 'name',
-            'country_id', 'region_id', 'city_id', 'district_id',
-            'map_lat', 'map_lng', 'lat', 'lng'
-        )->get();
+        // For Master Project Dropdown - Removed full load
+        $existingProjects = [];
 
         return view('admin.projects.create', compact('project', 'developers', 'amenities', 'existingProjects', 'defaultCountryId'));
     }
@@ -137,7 +136,7 @@ class ProjectController extends Controller
     {
         $project->load(['amenities', 'faqs', 'propertyModels.unitType', 'masterProject']);
 
-        $developers = Developer::where('is_active', true)->orderBy('name')->get();
+        $developers = []; // Async load
         $defaultCountryId = $this->defaultCountryId();
         $amenities = Amenity::whereIn('amenity_type', ['project', 'both'])
                             ->orderBy('sort_order')
@@ -145,9 +144,7 @@ class ProjectController extends Controller
                             ->get()
                             ->groupBy(fn ($amenity) => $amenity->amenity_type ?? 'other');
 
-        $existingProjects = Project::where('id', '!=', $project->id)
-            ->select('id', 'name_en', 'name_ar', 'name', 'country_id', 'region_id', 'city_id', 'district_id', 'map_lat', 'map_lng', 'lat', 'lng')
-            ->get();
+        $existingProjects = []; // Async load
 
         return view('admin.projects.edit', compact('project', 'developers', 'amenities', 'existingProjects', 'defaultCountryId'));
     }

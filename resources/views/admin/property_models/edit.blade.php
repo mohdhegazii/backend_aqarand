@@ -20,13 +20,18 @@
                         $isLockedProject = !empty($lockedProjectId);
                         $selectedProject = old('project_id', $lockedProjectId ?? $propertyModel->project_id);
                     @endphp
-                    <select name="project_id" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50" required {{ $isLockedProject ? 'disabled' : '' }}>
-                        @foreach($projects as $project)
-                            <option value="{{ $project->id }}" {{ $selectedProject == $project->id ? 'selected' : '' }}>{{ $project->name_en }}</option>
-                        @endforeach
-                    </select>
+
                     @if($isLockedProject)
                         <input type="hidden" name="project_id" value="{{ $selectedProject }}">
+                        <input type="text" value="{{ $propertyModel->project->name_en ?? 'Project #'.$selectedProject }}" class="mt-1 block w-full rounded-md border-gray-300 bg-gray-100 cursor-not-allowed shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50" disabled>
+                    @else
+                         <x-lookup.select
+                            name="project_id"
+                            url="/admin/lookups/projects"
+                            placeholder="{{ __('admin.select_project') }}"
+                            :selected-id="$selectedProject"
+                            :selected-text="$propertyModel->project ? ($propertyModel->project->name_en ?? $propertyModel->project->name_ar) : ''"
+                        />
                     @endif
                 </div>
                 <div class="col-span-1 md:col-span-2">
