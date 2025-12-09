@@ -23,6 +23,9 @@ class LocationPolygonController extends Controller
         $levelParam = $request->query('level');
         $levels = $levelParam ? explode(',', $levelParam) : [];
 
+        // Support filtering by specific ID (e.g. "Get polygon for Region 5")
+        $targetId = $request->query('id');
+
         $includeProjects = $request->boolean('include_projects');
 
         $minLat = $request->query('min_lat');
@@ -34,12 +37,23 @@ class LocationPolygonController extends Controller
 
         // If no filter is provided, retain existing behavior (load all) for backward compatibility.
         // If bounds are provided, we should obey them, effectively "loading all within bounds" if level is null.
-        $loadAll = empty($levels) && !$request->has('include_projects');
+        // If ID is provided, we ignore bounds/viewport logic to ensure we get the specific entity.
+        $loadAll = empty($levels) && !$request->has('include_projects') && !$targetId;
+
+        // Helper to apply ID filter
+        $applyIdFilter = function($query) use ($targetId) {
+            if ($targetId) {
+                $query->where('id', $targetId);
+            }
+        };
 
         // Helper to apply spatial filter if bounds exist (for Location entities)
         // This spatial query relies on locations_boundary_spatial_index (SPATIAL index on boundary column).
         // See docs/performance-guidelines.md for details on indexing and query optimization.
-        $applySpatialFilter = function($query) use ($hasBounds, $minLat, $maxLat, $minLng, $maxLng) {
+        $applySpatialFilter = function($query) use ($hasBounds, $minLat, $maxLat, $minLng, $maxLng, $targetId) {
+            // ID filter takes precedence over spatial filter
+            if ($targetId) return;
+
             if ($hasBounds) {
                 // Using MBRIntersects for bounding box intersection against the spatial index.
                 // ST_MakeEnvelope(min_lng, min_lat, max_lng, max_lat) creates a polygon from the viewport bounds.
@@ -50,7 +64,10 @@ class LocationPolygonController extends Controller
 
         // Helper to apply point filter if bounds exist (for Projects)
         // This query is designed to use projects_lat_lng_index (composite B-Tree index on lat, lng) for viewport filtering.
-        $applyPointFilter = function($query) use ($hasBounds, $minLat, $maxLat, $minLng, $maxLng) {
+        $applyPointFilter = function($query) use ($hasBounds, $minLat, $maxLat, $minLng, $maxLng, $targetId) {
+            // ID filter takes precedence
+            if ($targetId) return;
+
             if ($hasBounds) {
                 // Ensure we use range conditions on the indexed columns directly.
                 // EXPLAIN shows usage of index: projects_lat_lng_index
@@ -66,6 +83,7 @@ class LocationPolygonController extends Controller
                 ->select('id', 'name_en', 'name_local', DB::raw('ST_AsGeoJSON(boundary) as polygon'))
                 ->whereNotNull('boundary');
 
+            $applyIdFilter($q);
             $applySpatialFilter($q);
 
             $data['countries'] = $q->get()
@@ -84,6 +102,7 @@ class LocationPolygonController extends Controller
                 ->select('id', 'name_en', 'name_local', DB::raw('ST_AsGeoJSON(boundary) as polygon'))
                 ->whereNotNull('boundary');
 
+            $applyIdFilter($q);
             $applySpatialFilter($q);
 
             $data['regions'] = $q->get()
@@ -102,6 +121,7 @@ class LocationPolygonController extends Controller
                 ->select('id', 'name_en', 'name_local', DB::raw('ST_AsGeoJSON(boundary) as polygon'))
                 ->whereNotNull('boundary');
 
+            $applyIdFilter($q);
             $applySpatialFilter($q);
 
             $data['cities'] = $q->get()
@@ -120,6 +140,7 @@ class LocationPolygonController extends Controller
                 ->select('id', 'name_en', 'name_local', DB::raw('ST_AsGeoJSON(boundary) as polygon'))
                 ->whereNotNull('boundary');
 
+            $applyIdFilter($q);
             $applySpatialFilter($q);
 
             $data['districts'] = $q->get()
@@ -153,6 +174,7 @@ class LocationPolygonController extends Controller
                       ->orWhereNotNull('project_boundary_geojson');
                 });
 
+            $applyIdFilter($q);
             $applyPointFilter($q);
 
             $data['projects'] = $q->get()

@@ -107,8 +107,8 @@
                 <h3 class="text-lg font-medium text-gray-900 mb-4">{{ __('admin.project_wizard.location_section_unified') }}</h3>
 
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <!-- Country -->
-                    <div>
+                    <!-- Country (Hidden by default, used for logic) -->
+                    <div class="hidden">
                         <label for="country_id" class="block text-sm font-semibold text-gray-700">
                             {{ __('admin.country') }} <span class="text-red-500">*</span>
                         </label>
@@ -118,13 +118,13 @@
                             class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
                             required
                         >
-                            <option value="">{{ __('admin.select_option') }}</option>
+                            {{-- We don't need 'Select Option' if we are hiding and defaulting to Egypt --}}
                             @foreach($countries as $country)
                                 <option
                                     value="{{ $country->id }}"
                                     data-lat="{{ $country->lat ?? 26.8206 }}"
                                     data-lng="{{ $country->lng ?? 30.8025 }}"
-                                    {{ (old('country_id', $project->country_id) == $country->id) ? 'selected' : '' }}
+                                    {{ (old('country_id', $project->country_id) == $country->id || $country->code === 'EG' || $country->name_en === 'Egypt') ? 'selected' : '' }}
                                 >
                                     {{ $country->name_local ?? $country->name_en }}
                                 </option>
@@ -173,6 +173,7 @@
                             name="city_id"
                             class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
                             required
+                            {{ $cities->isEmpty() ? 'disabled' : '' }}
                         >
                             <option value="">{{ __('admin.select_option') }}</option>
                             @foreach($cities as $city)
@@ -191,16 +192,18 @@
                         @enderror
                     </div>
 
-                    <!-- District -->
+                    <!-- District (Optional) -->
                     <div>
                         <label for="district_id" class="block text-sm font-semibold text-gray-700">
-                            {{ __('admin.district') }} <span class="text-red-500">*</span>
+                            {{ __('admin.district') }}
+                            {{-- <span class="text-red-500">*</span> Removed required asterisk --}}
                         </label>
                         <select
                             id="district_id"
                             name="district_id"
                             class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
-                            required
+                            {{-- required Removed required attribute --}}
+                            {{ $districts->isEmpty() ? 'disabled' : '' }}
                         >
                             <option value="">{{ __('admin.select_option') }}</option>
                             @foreach($districts as $district)
@@ -274,6 +277,7 @@
 
             const locale = "{{ app()->getLocale() }}"; // 'ar' or 'en'
             let mapInstance;
+            let currentReferenceLayer = null; // Store reference to current boundary layer
 
             function clearSelect(select) {
                 select.innerHTML = '<option value="">{{ __('admin.select_option') }}</option>';
@@ -298,6 +302,41 @@
                 if(mapInstance) {
                     mapInstance.flyTo([lat, lng], zoom);
                 }
+            }
+
+            function updateMapBoundary(level, id) {
+                if (!mapInstance || !id) return;
+
+                // Remove previous reference layer if exists
+                if (currentReferenceLayer) {
+                    mapInstance.removeLayer(currentReferenceLayer);
+                    currentReferenceLayer = null;
+                }
+
+                // Fetch polygon for the selected location
+                fetch(`{{ url('admin/location-polygons') }}?level=${level}&id=${id}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        // Response structure is { regions: [ ... ] } or { cities: [ ... ] } depending on level
+                        // Since we filtered by ID, we expect one item in the array for that key.
+                        const key = level === 'region' ? 'regions' : (level === 'city' ? 'cities' : 'districts');
+                        if (data[key] && data[key].length > 0) {
+                            const item = data[key][0];
+                            if (item.polygon) {
+                                currentReferenceLayer = L.geoJSON(item.polygon, {
+                                    style: {
+                                        color: '#3388ff',
+                                        weight: 2,
+                                        opacity: 0.6,
+                                        fillOpacity: 0.1,
+                                        dashArray: '5, 5' // Dashed line to indicate reference
+                                    },
+                                    interactive: false // Don't block clicks
+                                }).addTo(mapInstance);
+                            }
+                        }
+                    })
+                    .catch(err => console.error("Error fetching location polygon:", err));
             }
 
             countrySelect.addEventListener('change', function() {
@@ -338,6 +377,8 @@
                     if(option.dataset.lat && option.dataset.lng) {
                         flyToLocation(option.dataset.lat, option.dataset.lng, 9);
                     }
+                    // Update Boundary
+                    updateMapBoundary('region', regionId);
                 }
             });
 
@@ -357,14 +398,24 @@
                     if(option.dataset.lat && option.dataset.lng) {
                         flyToLocation(option.dataset.lat, option.dataset.lng, 11);
                     }
+                    // Update Boundary
+                    updateMapBoundary('city', cityId);
                 }
             });
 
             districtSelect.addEventListener('change', function() {
+                const districtId = this.value;
                 // Map Fly To
                 const option = this.options[this.selectedIndex];
                 if(option.dataset.lat && option.dataset.lng) {
                     flyToLocation(option.dataset.lat, option.dataset.lng, 13);
+                }
+                // Update Boundary
+                if (districtId) {
+                    updateMapBoundary('district', districtId);
+                } else if (citySelect.value) {
+                    // Fallback to city
+                    updateMapBoundary('city', citySelect.value);
                 }
             });
 
@@ -384,6 +435,19 @@
                 lockToEgypt: false,
                 onMapInit: function(map) {
                     mapInstance = map;
+
+                    // Initial load logic if editing
+                    const regionId = regionSelect.value;
+                    const cityId = citySelect.value;
+                    const districtId = districtSelect.value;
+
+                    if (districtId) {
+                        updateMapBoundary('district', districtId);
+                    } else if (cityId) {
+                        updateMapBoundary('city', cityId);
+                    } else if (regionId) {
+                        updateMapBoundary('region', regionId);
+                    }
                 },
                 onPolygonChange: function(data) {
                      // The component handles basic binding, but if we need specific FeatureCollection format
