@@ -18,6 +18,7 @@ return [
     'taxonomies' => 'التصنيفات',
     'amenity_categories' => 'تصنيفات وسائل الراحة والخدمات',
     'amenity_category' => 'تصنيف وسيلة الراحة',
+    'featured_places' => 'الأماكن المميزة والقريبة',
 
     // General UI
     'logout' => 'تسجيل الخروج',
@@ -88,6 +89,11 @@ return [
     'search_location' => 'ابحث عن موقع...',
     'lat' => 'خط العرض',
     'lng' => 'خط الطول',
+    'select_country' => 'اختر الدولة',
+    'select_region' => 'اختر المحافظة',
+    'select_city' => 'اختر المدينة',
+    'select_district' => 'اختر الحي',
+    'optional' => 'اختياري',
 
     // Validation text
     'confirm_delete' => 'هل أنت متأكد من حذف هذا العنصر؟',
@@ -166,10 +172,6 @@ return [
     'project_location' => 'موقع المشروع',
     'unified_search' => 'بحث موحد',
     'search_placeholder' => 'ابحث عن موقع المشروع (مدينة، حي، مشروع...)',
-    'select_country' => 'اختر الدولة',
-    'select_region' => 'اختر المحافظة',
-    'select_city' => 'اختر المدينة',
-    'select_district' => 'اختر الحي',
     'project_map' => 'خريطة المشروع وحدود الأرض',
     'map_instruction' => 'استخدم أدوات الرسم لتحديد حدود المشروع على الخريطة.',
     'project_map_instruction' => 'استخدم أدوات الرسم لتحديد حدود المشروع على الخريطة.',

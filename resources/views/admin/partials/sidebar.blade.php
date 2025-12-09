@@ -84,6 +84,12 @@
                     'icon' => 'bi-diagram-3',
                     'active' => $matchesRoute(['admin.districts.*']),
                 ],
+                [
+                    'label' => $isRtl ? 'الأماكن المميزة والقريبة' : 'Featured / Nearby Places',
+                    'route' => 'admin.featured-places.index',
+                    'icon' => 'bi-pin-map',
+                    'active' => $matchesRoute(['admin.featured-places.*']),
+                ],
                 ['heading' => $isRtl ? 'التصنيفات وأنواع العقارات' : 'Classifications'],
                 [
                     'label' => $isRtl ? 'الفئات' : 'Categories',
