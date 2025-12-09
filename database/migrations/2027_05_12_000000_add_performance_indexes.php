@@ -5,6 +5,10 @@ use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\DB;
 
+/**
+ * Adds performance indexes to various tables.
+ * See docs/performance-guidelines.md for details on why these indexes were chosen.
+ */
 return new class extends Migration
 {
     /**

@@ -17,6 +17,7 @@ class DeveloperService
     {
         return Cache::remember('developers.active.list', now()->addMinutes(60), function () {
             // Uses developers_active_name_index to fetch active developers sorted by name.
+            // See docs/performance-guidelines.md for indexing details.
             return Developer::where('is_active', true)
                 ->orderBy('name')
                 ->get();
@@ -32,6 +33,7 @@ class DeveloperService
      */
     public function searchActiveDevelopers(?string $query = null, int $limit = 20): Collection
     {
+        // See docs/performance-guidelines.md regarding search strategy (OR LIKE vs Fulltext).
         $dbQuery = Developer::where('is_active', true);
 
         if (!empty($query)) {

@@ -38,6 +38,7 @@ class LocationPolygonController extends Controller
 
         // Helper to apply spatial filter if bounds exist (for Location entities)
         // This spatial query relies on locations_boundary_spatial_index (SPATIAL index on boundary column).
+        // See docs/performance-guidelines.md for details on indexing and query optimization.
         $applySpatialFilter = function($query) use ($hasBounds, $minLat, $maxLat, $minLng, $maxLng) {
             if ($hasBounds) {
                 // Using MBRIntersects for bounding box intersection against the spatial index.
