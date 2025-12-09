@@ -241,6 +241,7 @@
                     inputLngName="lng"
                     inputPolygonName="boundary_geojson"
                     :autoInit="false"
+                    :searchable="false"
                 />
             </div>
 
