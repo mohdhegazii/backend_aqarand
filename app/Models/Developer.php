@@ -26,10 +26,6 @@ class Developer extends Model
         static::deleted(function ($developer) {
             Cache::forget('developers.active.list');
         });
-
-        static::restored(function ($developer) { // In case SoftDeletes is used
-            Cache::forget('developers.active.list');
-        });
     }
 
     protected array $logoResolutionCache = [];
