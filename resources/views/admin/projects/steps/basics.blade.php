@@ -290,9 +290,8 @@
                     option.text = locale === 'ar' ? (item.name_local || item.name_en) : item.name_en;
                     // Ensure lat/lng are not null/undefined (allow 0)
                     if(item.lat != null && item.lng != null) {
-                        // Use setAttribute to be explicit and compatible with getAttribute
-                        option.setAttribute('data-lat', item.lat);
-                        option.setAttribute('data-lng', item.lng);
+                        option.dataset.lat = item.lat;
+                        option.dataset.lng = item.lng;
                     }
                     select.appendChild(option);
                 });
@@ -354,8 +353,8 @@
 
                     // Map Fly To
                     const option = this.options[this.selectedIndex];
-                    const lat = option.getAttribute('data-lat') || option.dataset.lat;
-                    const lng = option.getAttribute('data-lng') || option.dataset.lng;
+                    const lat = option.getAttribute('data-lat');
+                    const lng = option.getAttribute('data-lng');
                     if(lat && lng) {
                         flyToLocation(lat, lng, 6);
                     }
@@ -376,8 +375,8 @@
 
                     // Map Fly To
                     const option = this.options[this.selectedIndex];
-                    const lat = option.getAttribute('data-lat') || option.dataset.lat;
-                    const lng = option.getAttribute('data-lng') || option.dataset.lng;
+                    const lat = option.getAttribute('data-lat');
+                    const lng = option.getAttribute('data-lng');
                     if(lat && lng) {
                         flyToLocation(lat, lng, 9);
                     }
@@ -399,8 +398,8 @@
 
                     // Map Fly To
                     const option = this.options[this.selectedIndex];
-                    const lat = option.getAttribute('data-lat') || option.dataset.lat;
-                    const lng = option.getAttribute('data-lng') || option.dataset.lng;
+                    const lat = option.getAttribute('data-lat');
+                    const lng = option.getAttribute('data-lng');
                     if(lat && lng) {
                         flyToLocation(lat, lng, 11);
                     }
@@ -413,8 +412,8 @@
                 const districtId = this.value;
                 // Map Fly To
                 const option = this.options[this.selectedIndex];
-                const lat = option.getAttribute('data-lat') || option.dataset.lat;
-                const lng = option.getAttribute('data-lng') || option.dataset.lng;
+                const lat = option.getAttribute('data-lat');
+                const lng = option.getAttribute('data-lng');
                 if(lat && lng) {
                     flyToLocation(lat, lng, 13);
                 }
@@ -485,8 +484,8 @@
 
                         if (!projectHasCoords && activeSelect && activeSelect.options[activeSelect.selectedIndex]) {
                              const option = activeSelect.options[activeSelect.selectedIndex];
-                             const lat = option.getAttribute('data-lat') || option.dataset.lat;
-                             const lng = option.getAttribute('data-lng') || option.dataset.lng;
+                             const lat = option.getAttribute('data-lat');
+                             const lng = option.getAttribute('data-lng');
 
                              if (lat && lng) {
                                  flyToLocation(lat, lng, activeZoom);
