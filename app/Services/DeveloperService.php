@@ -16,14 +16,10 @@ class DeveloperService
     public function getActiveDevelopers(): Collection
     {
         return Cache::remember('developers.active.list', now()->addMinutes(60), function () {
-            // Fetch all active developers and sort by the display_name accessor.
-            // sortBy returns a new collection, values() resets the keys.
+            // Uses developers_active_name_index to fetch active developers sorted by name.
             return Developer::where('is_active', true)
-                ->get()
-                ->sortBy(function ($developer) {
-                    return strtolower($developer->display_name);
-                }, SORT_NATURAL | SORT_FLAG_CASE)
-                ->values();
+                ->orderBy('name')
+                ->get();
         });
     }
 
@@ -39,6 +35,7 @@ class DeveloperService
         $dbQuery = Developer::where('is_active', true);
 
         if (!empty($query)) {
+            // Current search uses multi-column OR LIKE; consider migrating to fulltext in the future.
             $dbQuery->where(function($q) use ($query) {
                 $q->where('name', 'like', "%{$query}%")
                   ->orWhere('name_en', 'like', "%{$query}%")
@@ -47,10 +44,10 @@ class DeveloperService
                   ->orWhere('description_en', 'like', "%{$query}%")
                   ->orWhere('description_ar', 'like', "%{$query}%");
             });
-        } else {
-             // If no query, prioritize by name (fallback order)
-             $dbQuery->orderBy('name');
         }
+
+        // Ensure consistent sorting using the index (is_active, name)
+        $dbQuery->orderBy('name');
 
         return $dbQuery->limit($limit)->get();
     }
