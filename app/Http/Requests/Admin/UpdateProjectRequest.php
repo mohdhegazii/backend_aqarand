@@ -48,7 +48,7 @@ class UpdateProjectRequest extends FormRequest
             'country_id' => ['required', Rule::in([$egyptId])],
             'region_id' => 'required|exists:regions,id',
             'city_id' => 'required|exists:cities,id',
-            'district_id' => 'nullable|exists:districts,id',
+            'district_id' => 'required|exists:districts,id', // Changed to required
             'location_project_id' => [
                 'nullable',
                 'exists:projects,id',

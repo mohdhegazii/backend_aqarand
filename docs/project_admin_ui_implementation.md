@@ -52,9 +52,3 @@ The `gallery` column in the `projects` table stores a JSON array of objects:
 - Uses `LocationHelperController` to search for Country/Region/City/District.
 - On selection, populates the hidden IDs and triggers cascading fetches to populate dropdowns.
 - Centers the map on the selected location's coordinates.
-
-## 2024-10 Location Stability Fixes
-- Country is now fixed to the default (Egypt) on the project wizard and hidden from the form to prevent accidental changes.
-- District selection is optional; validation allows null districts while still enforcing hierarchy when provided.
-- Cascading dropdowns were hardened to re-fetch regions/cities/districts on every change, avoiding empty/disabled states after country switches.
-- The map now auto-loads the boundary polygon for the chosen district/city/region (with district > city > region precedence) using the unified location polygon service.

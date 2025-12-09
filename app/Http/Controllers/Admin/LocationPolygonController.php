@@ -23,11 +23,6 @@ class LocationPolygonController extends Controller
         $levelParam = $request->query('level');
         $levels = $levelParam ? explode(',', $levelParam) : [];
 
-        $filterIds = collect(explode(',', (string) $request->query('id')))
-            ->filter()
-            ->map(fn ($id) => (int) $id)
-            ->all();
-
         $includeProjects = $request->boolean('include_projects');
 
         $minLat = $request->query('min_lat');
@@ -66,19 +61,12 @@ class LocationPolygonController extends Controller
 
         $data = [];
 
-        $applyIdFilter = function ($query) use ($filterIds) {
-            if (!empty($filterIds)) {
-                $query->whereIn('id', $filterIds);
-            }
-        };
-
         if ($loadAll || in_array('country', $levels)) {
             $q = Country::query()
                 ->select('id', 'name_en', 'name_local', DB::raw('ST_AsGeoJSON(boundary) as polygon'))
                 ->whereNotNull('boundary');
 
             $applySpatialFilter($q);
-            $applyIdFilter($q);
 
             $data['countries'] = $q->get()
                 ->map(function ($item) {
@@ -97,7 +85,6 @@ class LocationPolygonController extends Controller
                 ->whereNotNull('boundary');
 
             $applySpatialFilter($q);
-            $applyIdFilter($q);
 
             $data['regions'] = $q->get()
                 ->map(function ($item) {
@@ -116,7 +103,6 @@ class LocationPolygonController extends Controller
                 ->whereNotNull('boundary');
 
             $applySpatialFilter($q);
-            $applyIdFilter($q);
 
             $data['cities'] = $q->get()
                 ->map(function ($item) {
@@ -135,7 +121,6 @@ class LocationPolygonController extends Controller
                 ->whereNotNull('boundary');
 
             $applySpatialFilter($q);
-            $applyIdFilter($q);
 
             $data['districts'] = $q->get()
                 ->map(function ($item) {
