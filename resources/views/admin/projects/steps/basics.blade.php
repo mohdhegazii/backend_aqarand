@@ -5,18 +5,6 @@
 @endsection
 
 @section('content')
-
-@if(config('app.debug') || config('app.env') === 'local')
-    <div style="background:#222;color:#0f0;padding:10px;font-size:12px;margin-bottom:10px;border:1px solid #0f0;">
-        <strong>[DEBUG] Location dropdown debug mode is ON.</strong><br>
-        Open your browser console (F12) and check the [DEBUG][locations] logs.<br>
-        If dropdowns are empty, check if:
-        1. AJAX calls are firing in Network tab.
-        2. Console shows errors.
-        3. Backend logs (storage/logs/laravel.log) show activity.
-    </div>
-@endif
-
 <div class="bg-white shadow rounded-lg p-6">
     <!-- Step Indicator -->
     <div class="mb-6">
@@ -280,14 +268,7 @@
 @push('scripts')
     {{-- location-map scripts are included by the component if not already --}}
     <script>
-        // Global Error Handler
-        window.addEventListener('error', function (event) {
-            console.error('[DEBUG][global-js-error]', event.message, 'at', event.filename + ':' + event.lineno + ':' + event.colno);
-        });
-
         document.addEventListener('DOMContentLoaded', function() {
-            console.log('[DEBUG][locations] Project form JS loaded');
-
             // --- CASCADING DROPDOWNS ---
             const countrySelect = document.getElementById('country_id');
             const regionSelect = document.getElementById('region_id');
@@ -298,14 +279,12 @@
             let mapInstance;
             let currentReferenceLayer = null; // Store reference to current boundary layer
 
-            function clearSelect(select, name) {
-                console.log(`[DEBUG][locations] Clearing ${name} select`);
+            function clearSelect(select) {
                 select.innerHTML = '<option value="">{{ __('admin.select_option') }}</option>';
                 select.disabled = true;
             }
 
-            function populateSelect(select, items, name) {
-                console.log(`[DEBUG][locations] Populating ${name} select with ${items.length} items`);
+            function populateSelect(select, items) {
                 select.disabled = false;
                 items.forEach(item => {
                     const option = document.createElement('option');
@@ -335,25 +314,15 @@
                 }
 
                 // Fetch polygon for the selected location
-                const url = `{{ url('admin/location-polygons') }}?level=${level}&id=${id}`;
-                console.log('[DEBUG][locations] Fetching map polygon', { url, level, id });
-
-                fetch(url)
-                    .then(response => {
-                        if (!response.ok) {
-                             console.error('[DEBUG][locations] AJAX error (polygon):', response.status, response.statusText);
-                             return null;
-                        }
-                        return response.json();
-                    })
+                fetch(`{{ url('admin/location-polygons') }}?level=${level}&id=${id}`)
+                    .then(response => response.json())
                     .then(data => {
-                        if (!data) return;
                         // Response structure is { regions: [ ... ] } or { cities: [ ... ] } depending on level
+                        // Since we filtered by ID, we expect one item in the array for that key.
                         const key = level === 'region' ? 'regions' : (level === 'city' ? 'cities' : 'districts');
                         if (data[key] && data[key].length > 0) {
                             const item = data[key][0];
                             if (item.polygon) {
-                                console.log(`[DEBUG][locations] Polygon found for ${level}`, item.polygon);
                                 currentReferenceLayer = L.geoJSON(item.polygon, {
                                     style: {
                                         color: '#3388ff',
@@ -367,162 +336,88 @@
                             }
                         }
                     })
-                    .catch(err => console.error("[DEBUG][locations] Error fetching location polygon:", err));
+                    .catch(err => console.error("Error fetching location polygon:", err));
             }
 
-            console.log('[DEBUG][locations] Binding change handlers for country/region/city dropdowns');
+            countrySelect.addEventListener('change', function() {
+                const countryId = this.value;
+                clearSelect(regionSelect);
+                clearSelect(citySelect);
+                clearSelect(districtSelect);
 
-            if (countrySelect) {
-                countrySelect.addEventListener('change', function() {
-                    const countryId = this.value;
-                    console.log('[DEBUG][locations] Country changed:', countryId);
-
-                    clearSelect(regionSelect, 'Region');
-                    clearSelect(citySelect, 'City');
-                    clearSelect(districtSelect, 'District');
-
-                    if (countryId) {
-                        const url = `{{ url('admin/locations/regions') }}/${countryId}`;
-                        console.log('[DEBUG][locations] Fetching regions', { url, countryId });
-
-                        fetch(url)
-                            .then(response => {
-                                if (!response.ok) {
-                                    console.error('[DEBUG][locations] AJAX error (regions) status:', response.status);
-                                    return response.json().then(err => {
-                                        console.error('[DEBUG][locations] AJAX error (regions) body:', err);
-                                        throw new Error(err.error || 'Network response was not ok');
-                                    });
-                                }
-                                return response.json();
-                            })
-                            .then(data => {
-                                console.log('[DEBUG][locations] AJAX success for regions:', data);
-                                if(data.regions) populateSelect(regionSelect, data.regions, 'Region');
-                            })
-                            .catch(error => {
-                                console.error('[DEBUG][locations] AJAX catch (regions):', error);
-                            });
-
-                        // Map Fly To
-                        const option = this.options[this.selectedIndex];
-                        if(option.dataset.lat && option.dataset.lng) {
-                            flyToLocation(option.dataset.lat, option.dataset.lng, 6);
-                        }
-                    }
-                });
-            } else {
-                console.error('[DEBUG][locations] Country Select element not found!');
-            }
-
-            if (regionSelect) {
-                regionSelect.addEventListener('change', function() {
-                    const regionId = this.value;
-                    console.log('[DEBUG][locations] Region changed:', regionId);
-
-                    clearSelect(citySelect, 'City');
-                    clearSelect(districtSelect, 'District');
-
-                    if (regionId) {
-                        const url = `{{ url('admin/locations/cities') }}/${regionId}`;
-                        console.log('[DEBUG][locations] Fetching cities', { url, regionId });
-
-                        fetch(url)
-                            .then(response => {
-                                if (!response.ok) {
-                                    console.error('[DEBUG][locations] AJAX error (cities) status:', response.status);
-                                    return response.json().then(err => {
-                                        console.error('[DEBUG][locations] AJAX error (cities) body:', err);
-                                        throw new Error(err.error || 'Network response was not ok');
-                                    });
-                                }
-                                return response.json();
-                            })
-                            .then(data => {
-                                console.log('[DEBUG][locations] AJAX success for cities:', data);
-                                if(data.cities) populateSelect(citySelect, data.cities, 'City');
-                            })
-                            .catch(error => {
-                                console.error('[DEBUG][locations] AJAX catch (cities):', error);
-                            });
-
-                        // Map Fly To
-                        const option = this.options[this.selectedIndex];
-                        if(option.dataset.lat && option.dataset.lng) {
-                            flyToLocation(option.dataset.lat, option.dataset.lng, 9);
-                        }
-                        // Update Boundary
-                        updateMapBoundary('region', regionId);
-                    }
-                });
-            } else {
-                console.error('[DEBUG][locations] Region Select element not found!');
-            }
-
-            if (citySelect) {
-                citySelect.addEventListener('change', function() {
-                    const cityId = this.value;
-                    console.log('[DEBUG][locations] City changed:', cityId);
-
-                    clearSelect(districtSelect, 'District');
-
-                    if (cityId) {
-                        const url = `{{ url('admin/locations/districts') }}/${cityId}`;
-                        console.log('[DEBUG][locations] Fetching districts', { url, cityId });
-
-                        fetch(url)
-                            .then(response => {
-                                if (!response.ok) {
-                                    console.error('[DEBUG][locations] AJAX error (districts) status:', response.status);
-                                    return response.json().then(err => {
-                                        console.error('[DEBUG][locations] AJAX error (districts) body:', err);
-                                        throw new Error(err.error || 'Network response was not ok');
-                                    });
-                                }
-                                return response.json();
-                            })
-                            .then(data => {
-                                console.log('[DEBUG][locations] AJAX success for districts:', data);
-                                if(data.districts) populateSelect(districtSelect, data.districts, 'District');
-                            })
-                            .catch(error => {
-                                console.error('[DEBUG][locations] AJAX catch (districts):', error);
-                            });
-
-                        // Map Fly To
-                        const option = this.options[this.selectedIndex];
-                        if(option.dataset.lat && option.dataset.lng) {
-                            flyToLocation(option.dataset.lat, option.dataset.lng, 11);
-                        }
-                        // Update Boundary
-                        updateMapBoundary('city', cityId);
-                    }
-                });
-            } else {
-                console.error('[DEBUG][locations] City Select element not found!');
-            }
-
-            if (districtSelect) {
-                districtSelect.addEventListener('change', function() {
-                    const districtId = this.value;
-                    console.log('[DEBUG][locations] District changed:', districtId);
+                if (countryId) {
+                    fetch(`{{ url('admin/locations/regions') }}/${countryId}`)
+                        .then(response => response.json())
+                        .then(data => {
+                            if(data.regions) populateSelect(regionSelect, data.regions);
+                        });
 
                     // Map Fly To
                     const option = this.options[this.selectedIndex];
                     if(option.dataset.lat && option.dataset.lng) {
-                        flyToLocation(option.dataset.lat, option.dataset.lng, 13);
+                        flyToLocation(option.dataset.lat, option.dataset.lng, 6);
+                    }
+                }
+            });
+
+            regionSelect.addEventListener('change', function() {
+                const regionId = this.value;
+                clearSelect(citySelect);
+                clearSelect(districtSelect);
+
+                if (regionId) {
+                    fetch(`{{ url('admin/locations/cities') }}/${regionId}`)
+                        .then(response => response.json())
+                        .then(data => {
+                            if(data.cities) populateSelect(citySelect, data.cities);
+                        });
+
+                    // Map Fly To
+                    const option = this.options[this.selectedIndex];
+                    if(option.dataset.lat && option.dataset.lng) {
+                        flyToLocation(option.dataset.lat, option.dataset.lng, 9);
                     }
                     // Update Boundary
-                    if (districtId) {
-                        updateMapBoundary('district', districtId);
-                    } else if (citySelect.value) {
-                        // Fallback to city
-                        updateMapBoundary('city', citySelect.value);
+                    updateMapBoundary('region', regionId);
+                }
+            });
+
+            citySelect.addEventListener('change', function() {
+                const cityId = this.value;
+                clearSelect(districtSelect);
+
+                if (cityId) {
+                    fetch(`{{ url('admin/locations/districts') }}/${cityId}`)
+                        .then(response => response.json())
+                        .then(data => {
+                            if(data.districts) populateSelect(districtSelect, data.districts);
+                        });
+
+                    // Map Fly To
+                    const option = this.options[this.selectedIndex];
+                    if(option.dataset.lat && option.dataset.lng) {
+                        flyToLocation(option.dataset.lat, option.dataset.lng, 11);
                     }
-                });
-            } else {
-                console.error('[DEBUG][locations] District Select element not found!');
-            }
+                    // Update Boundary
+                    updateMapBoundary('city', cityId);
+                }
+            });
+
+            districtSelect.addEventListener('change', function() {
+                const districtId = this.value;
+                // Map Fly To
+                const option = this.options[this.selectedIndex];
+                if(option.dataset.lat && option.dataset.lng) {
+                    flyToLocation(option.dataset.lat, option.dataset.lng, 13);
+                }
+                // Update Boundary
+                if (districtId) {
+                    updateMapBoundary('district', districtId);
+                } else if (citySelect.value) {
+                    // Fallback to city
+                    updateMapBoundary('city', citySelect.value);
+                }
+            });
 
             // --- MAP INIT ---
             initLocationMap({
@@ -539,7 +434,6 @@
                 zoom: {{ $project->lat ? 13 : 6 }},
                 lockToEgypt: false,
                 onMapInit: function(map) {
-                    console.log('[DEBUG][locations] Map initialized');
                     mapInstance = map;
 
                     // Initial load logic if editing
