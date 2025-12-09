@@ -8,12 +8,20 @@ use App\Http\Requests\Admin\UpdateProjectRequest;
 use App\Models\Amenity;
 use App\Models\Developer;
 use App\Models\Project;
+use App\Services\AmenityService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 
 class ProjectController extends Controller
 {
+    protected $amenityService;
+
+    public function __construct(AmenityService $amenityService)
+    {
+        $this->amenityService = $amenityService;
+    }
+
     public function index(Request $request)
     {
         $projectsQuery = Project::with(['developer', 'city', 'district'])->latest();
@@ -49,11 +57,7 @@ class ProjectController extends Controller
         $developers = [];
         $defaultCountryId = $this->defaultCountryId();
         // Amenities are fine to load as they are usually limited in number (hundreds max, not thousands like projects/units)
-        $amenities = Amenity::whereIn('amenity_type', ['project', 'both'])
-                            ->orderBy('sort_order')
-                            ->orderBy('name_en')
-                            ->get()
-                            ->groupBy(fn ($amenity) => $amenity->amenity_type ?? 'other');
+        $amenities = $this->amenityService->getAmenitiesGroupedByCategory('project');
 
         // For Master Project Dropdown - Removed full load
         $existingProjects = [];
@@ -140,11 +144,7 @@ class ProjectController extends Controller
 
         $developers = []; // Async load
         $defaultCountryId = $this->defaultCountryId();
-        $amenities = Amenity::whereIn('amenity_type', ['project', 'both'])
-                            ->orderBy('sort_order')
-                            ->orderBy('name_en')
-                            ->get()
-                            ->groupBy(fn ($amenity) => $amenity->amenity_type ?? 'other');
+        $amenities = $this->amenityService->getAmenitiesGroupedByCategory('project');
 
         $existingProjects = []; // Async load
 
