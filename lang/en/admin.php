@@ -82,6 +82,7 @@ return [
     'no' => 'No',
 
     // Location helpers
+    'location' => 'Location',
     'location_on_map' => 'Location on Map',
     'location_search' => 'Location Search',
     'search_location' => 'Search location...',
