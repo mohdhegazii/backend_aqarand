@@ -406,7 +406,7 @@
             editMainCategory(cat) {
                 this.activeTab = 'main-categories';
                 this.mainCatEditMode = true;
-                this.mainCatFormAction = "{{ route('admin.featured-places.main-categories.update', '') }}/" + cat.id;
+                this.mainCatFormAction = "{{ route('admin.featured-places.main-categories.update', '0') }}".replace('/0', '/' + cat.id);
                 this.mainCatData = {
                     id: cat.id,
                     name_ar: cat.name_ar,
@@ -425,7 +425,7 @@
             editSubCategory(sub) {
                 this.activeTab = 'sub-categories';
                 this.subCatEditMode = true;
-                this.subCatFormAction = "{{ route('admin.featured-places.sub-categories.update', '') }}/" + sub.id;
+                this.subCatFormAction = "{{ route('admin.featured-places.sub-categories.update', '0') }}".replace('/0', '/' + sub.id);
                 this.subCatData = {
                     id: sub.id,
                     main_category_id: sub.main_category_id,
@@ -473,7 +473,7 @@
             async editPlace(place) {
                 this.activeTab = 'places';
                 this.placeEditMode = true;
-                this.placeFormAction = "{{ route('admin.featured-places.places.update', '') }}/" + place.id;
+                this.placeFormAction = "{{ route('admin.featured-places.places.update', '0') }}".replace('/0', '/' + place.id);
 
                 this.selectedMainCategory = place.main_category_id;
                 this.filterSubCategories();
