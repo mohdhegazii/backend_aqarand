@@ -18,6 +18,7 @@ return [
     'taxonomies' => 'Taxonomies',
     'amenity_categories' => 'Amenities & Facilities Categories',
     'amenity_category' => 'Amenity Category',
+    'featured_places' => 'Featured / Nearby Places',
 
     // General UI
     'logout' => 'Logout',
@@ -88,6 +89,11 @@ return [
     'search_location' => 'Search location...',
     'lat' => 'Latitude',
     'lng' => 'Longitude',
+    'select_country' => 'Select Country',
+    'select_region' => 'Select Region',
+    'select_city' => 'Select City',
+    'select_district' => 'Select District',
+    'optional' => 'Optional',
 
     // Validation text
     'confirm_delete' => 'Are you sure you want to delete this item?',
@@ -166,10 +172,6 @@ return [
     'project_location' => 'Project Location',
     'unified_search' => 'Unified Search',
     'search_placeholder' => 'Search for project location (city, district, project...)',
-    'select_country' => 'Select Country',
-    'select_region' => 'Select Region',
-    'select_city' => 'Select City',
-    'select_district' => 'Select District',
     'project_map' => 'Project Map & Land Boundaries',
     'map_instruction' => 'Use drawing tools to define the project boundaries on the map.',
     'project_map_instruction' => 'Use drawing tools to define the project boundaries on the map.',
