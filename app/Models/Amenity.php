@@ -46,6 +46,11 @@ class Amenity extends Model
         return $this->belongsToMany(Project::class, 'project_amenity', 'amenity_id', 'project_id');
     }
 
+    public function units()
+    {
+        return $this->belongsToMany(Unit::class, 'unit_amenity', 'amenity_id', 'unit_id');
+    }
+
     /**
      * Get the name based on the locale.
      *

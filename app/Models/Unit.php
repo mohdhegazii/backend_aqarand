@@ -84,6 +84,11 @@ class Unit extends Model
         return $this->hasOne(Listing::class);
     }
 
+    public function amenities()
+    {
+        return $this->belongsToMany(Amenity::class, 'unit_amenity', 'unit_id', 'amenity_id');
+    }
+
     public function getDisplayNameAttribute()
     {
         $locale = app()->getLocale();
