@@ -43,7 +43,7 @@ class StoreProjectRequest extends FormRequest
             'country_id' => ['required', Rule::in([$egyptId])],
             'region_id' => 'required|exists:regions,id',
             'city_id' => 'required|exists:cities,id',
-            'district_id' => 'required|exists:districts,id', // Changed to required as per request
+            'district_id' => 'nullable|exists:districts,id', // Changed to nullable
             'location_project_id' => 'nullable|exists:projects,id',
             'map_lat' => 'nullable|numeric',
             'map_lng' => 'nullable|numeric',
@@ -51,7 +51,7 @@ class StoreProjectRequest extends FormRequest
             'lat' => 'nullable|numeric',
             'lng' => 'nullable|numeric',
             'map_polygon' => 'nullable',
-            'boundary_geojson' => ['nullable', 'string'], // Added
+            'boundary_geojson' => ['nullable', 'string'],
             'address_text' => 'nullable|string|max:255',
 
             // Description
