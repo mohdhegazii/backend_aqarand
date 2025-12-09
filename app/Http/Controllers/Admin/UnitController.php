@@ -9,10 +9,18 @@ use App\Models\PropertyModel;
 use App\Models\UnitType;
 use App\Http\Requests\Admin\Units\StoreUnitRequest;
 use App\Http\Requests\Admin\Units\UpdateUnitRequest;
+use App\Services\AmenityService;
 use Illuminate\Http\Request;
 
 class UnitController extends Controller
 {
+    protected $amenityService;
+
+    public function __construct(AmenityService $amenityService)
+    {
+        $this->amenityService = $amenityService;
+    }
+
     public function index(Request $request)
     {
         $query = Unit::with(['project', 'propertyModel', 'unitType']);
@@ -61,7 +69,9 @@ class UnitController extends Controller
         // Need to provide initial categories list though?
         $categories = \App\Models\Category::orderBy('name_en')->get(); // Categories are usually few.
 
-        return view('admin.units.create', compact('categories', 'unitTypes', 'propertyTypes'));
+        $amenitiesByCategory = $this->amenityService->getAmenitiesGroupedByCategory('unit', true);
+
+        return view('admin.units.create', compact('categories', 'unitTypes', 'propertyTypes', 'amenitiesByCategory'));
     }
 
     public function store(StoreUnitRequest $request)
@@ -74,12 +84,16 @@ class UnitController extends Controller
             $pricePerSqm = $request->price / $request->built_up_area;
         }
 
-        Unit::create($request->except('price_per_sqm') + [
+        $unit = Unit::create($request->except(['price_per_sqm', 'amenities']) + [
             'price_per_sqm' => $pricePerSqm,
             'construction_status' => $request->construction_status ?? 'new_launch',
             'is_corner' => $request->has('is_corner'),
             'is_furnished' => $request->has('is_furnished'),
         ]);
+
+        if ($request->has('amenities')) {
+            $unit->amenities()->sync($request->input('amenities', []));
+        }
 
         return redirect()->route($this->adminRoutePrefix().'units.index')
             ->with('success', __('admin.created_successfully'));
@@ -112,7 +126,10 @@ class UnitController extends Controller
              }
         }
 
-        return view('admin.units.edit', compact('unit', 'categories', 'unitTypes', 'propertyTypes'));
+        $amenitiesByCategory = $this->amenityService->getAmenitiesGroupedByCategory('unit', true);
+        $selectedAmenityIds = $unit->amenities()->pluck('amenities.id')->toArray();
+
+        return view('admin.units.edit', compact('unit', 'categories', 'unitTypes', 'propertyTypes', 'amenitiesByCategory', 'selectedAmenityIds'));
     }
 
     public function update(UpdateUnitRequest $request, Unit $unit)
@@ -124,11 +141,17 @@ class UnitController extends Controller
             $pricePerSqm = $request->price / $request->built_up_area;
         }
 
-        $unit->update($request->except('price_per_sqm') + [
+        $unit->update($request->except(['price_per_sqm', 'amenities']) + [
             'price_per_sqm' => $pricePerSqm,
             'is_corner' => $request->has('is_corner'),
             'is_furnished' => $request->has('is_furnished'),
         ]);
+
+        // Sync amenities. Note: If 'amenities' checkbox array is not present (all unchecked),
+        // standard browser behavior does not send the key.
+        // $request->input('amenities', []) defaults to [] if not present.
+        // So we can just sync that default.
+        $unit->amenities()->sync($request->input('amenities', []));
 
         return redirect()->route($this->adminRoutePrefix().'units.index')
             ->with('success', __('admin.updated_successfully'));
