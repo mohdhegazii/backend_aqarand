@@ -64,6 +64,7 @@ return [
     'location_on_map' => 'الموقع على الخريطة',
     'search_location' => 'البحث عن موقع...',
     'project_location' => 'موقع المشروع',
+    'project_location_unified' => 'موقع المشروع (النظام الموحد)',
     'location_search' => 'بحث عن الموقع',
     'location_search_helper' => 'ابحث باسم مدينة أو حي لملء القوائم تلقائياً.',
     'location_search_placeholder' => 'ابدأ بكتابة اسم مدينة أو حي...',
@@ -75,6 +76,7 @@ return [
     'select_district' => 'اختر الحي',
     'fill_location' => 'يرجى إكمال جميع حقول الموقع.',
     'project_map' => 'خريطة المشروع',
+    'project_map_unified' => 'الموقع على الخريطة (النظام الموحد)',
     'map_instruction' => 'استخدم أدوات الرسم لتحديد حدود المشروع أو انقر على الخريطة لإسقاط دبوس.',
     'searching' => 'جاري البحث...',
     'activate' => 'تفعيل',
@@ -111,6 +113,7 @@ return [
     // Project Wizard
     'project_wizard' => [
         'step_basics' => 'الأساسيات والموقع',
+        'location_section_unified' => 'الموقع (النظام الموحد)',
         'step_1_of_x' => 'الخطوة 1 من المعالج',
         'name_ar' => 'اسم المشروع (عربي)',
         'name_en' => 'اسم المشروع (إنجليزي)',

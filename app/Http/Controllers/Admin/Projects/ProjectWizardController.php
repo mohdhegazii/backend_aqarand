@@ -31,16 +31,25 @@ class ProjectWizardController extends Controller
         $project = $id ? Project::findOrFail($id) : new Project();
         $developers = $this->developerService->getActiveDevelopers();
 
-        // Fetch Egypt ID and Regions
-        $egypt = Country::where('code', 'EG')->orWhere('name_en', 'Egypt')->first();
-        $egyptId = $egypt ? $egypt->id : null;
-        $regions = $egyptId ? \App\Models\Region::where('country_id', $egyptId)->get() : collect();
+        // Fetch all active countries
+        $countries = Country::where('is_active', true)->get();
 
-        // If project exists, we might need pre-loaded cities and districts for the dropdowns
+        // Set default country (Egypt) if new project
+        $defaultCountryCode = 'EG';
+        $defaultCountry = $countries->first(function ($country) use ($defaultCountryCode) {
+            return $country->code === $defaultCountryCode || $country->name_en === 'Egypt';
+        });
+
+        if (!$project->exists && $defaultCountry && !$project->country_id) {
+             $project->country_id = $defaultCountry->id;
+        }
+
+        // Load hierarchy based on project's country (or default)
+        $regions = $project->country_id ? \App\Models\Region::where('country_id', $project->country_id)->get() : collect();
         $cities = $project->region_id ? \App\Models\City::where('region_id', $project->region_id)->get() : collect();
         $districts = $project->city_id ? \App\Models\District::where('city_id', $project->city_id)->get() : collect();
 
-        return view('admin.projects.steps.basics', compact('project', 'developers', 'egyptId', 'regions', 'cities', 'districts'));
+        return view('admin.projects.steps.basics', compact('project', 'developers', 'countries', 'regions', 'cities', 'districts'));
     }
 
     /**
@@ -53,6 +62,7 @@ class ProjectWizardController extends Controller
             'name_en' => 'required|string|max:255',
             'developer_id' => 'required|integer|exists:developers,id',
             'launch_date' => 'nullable|date', // Project Launch Date
+            'country_id' => 'required|exists:countries,id',
             'region_id' => 'required|exists:regions,id',
             'city_id' => 'required|exists:cities,id',
             'district_id' => 'required|exists:districts,id',
@@ -65,17 +75,12 @@ class ProjectWizardController extends Controller
             $project = new Project();
         }
 
-        // Handle implicit Egypt Country ID
-        $egypt = Country::where('code', 'EG')->orWhere('name_en', 'Egypt')->first();
-        if ($egypt) {
-            $project->country_id = $egypt->id;
-        }
-
         $project->name_ar = $validated['name_ar'];
         $project->name_en = $validated['name_en'];
         $project->developer_id = $validated['developer_id'];
         $project->launch_date = $validated['launch_date'] ?? null;
 
+        $project->country_id = $validated['country_id'];
         $project->region_id = $validated['region_id'];
         $project->city_id = $validated['city_id'];
         $project->district_id = $validated['district_id'];
