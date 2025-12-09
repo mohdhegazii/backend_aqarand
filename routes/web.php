@@ -123,6 +123,9 @@ $registerPublicRoutes = function (string $namePrefix = ''): void {
         return view('welcome-public');
     })->name($namePrefix.'home');
 
+    Route::get('/projects/{slug}', [\App\Http\Controllers\Frontend\ProjectController::class, 'show'])->name($namePrefix.'projects.show');
+    Route::get('/units/{id}', [\App\Http\Controllers\Frontend\UnitController::class, 'show'])->name($namePrefix.'units.show');
+
     Route::middleware(['auth'])->group(function () use ($namePrefix) {
         Route::get('/dashboard', function () use ($namePrefix) {
             if (Auth::user()->is_admin) {
