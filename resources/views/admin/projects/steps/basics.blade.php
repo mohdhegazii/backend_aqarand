@@ -226,9 +226,6 @@
 
             <!-- MAP SECTION -->
             <div class="pt-6 border-t border-gray-200">
-                <h3 class="text-lg font-medium text-gray-900 mb-4">{{ __('admin.project_map_unified') }}</h3>
-                <p class="text-sm text-gray-500 mb-2">{{ __('admin.project_map_instruction') }}</p>
-
                 <x-location.map
                     :lat="$project->lat ?? 26.8206"
                     :lng="$project->lng ?? 30.8025"
@@ -241,6 +238,7 @@
                     inputLngName="lng"
                     inputPolygonName="boundary_geojson"
                     :autoInit="false"
+                    :searchable="false"
                 />
             </div>
 
