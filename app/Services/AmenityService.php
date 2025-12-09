@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Models\Amenity;
 use App\Models\AmenityCategory;
+use App\Models\Project;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\Cache;
 
@@ -186,5 +187,97 @@ class AmenityService
                 Cache::forget(self::CACHE_KEY_AMENITIES_GROUPED_PREFIX . $tStr . '.' . $s);
             }
         }
+    }
+
+    /**
+     * Format amenities for display, grouped by category.
+     *
+     * @param Collection $amenities
+     * @return array
+     */
+    public function formatAmenitiesForDisplay(Collection $amenities): array
+    {
+        $locale = app()->getLocale();
+
+        // Ensure category relation is loaded
+        $amenities->loadMissing('category');
+
+        // Group by category_id
+        $grouped = $amenities->groupBy('amenity_category_id');
+
+        $result = [];
+
+        foreach ($grouped as $categoryId => $items) {
+            // Get category from the first item
+            $firstItem = $items->first();
+            $category = $firstItem->category;
+
+            // Prepare Category Display Info
+            if ($category) {
+                $categoryName = $category->getDisplayNameAttribute();
+                $categorySortOrder = $category->sort_order ?? 999;
+                $catId = $category->id;
+            } else {
+                $categoryName = __('Uncategorized');
+                $categorySortOrder = 9999;
+                $catId = 'uncategorized';
+            }
+
+            // Sort items within the group: sort_order asc, then name asc
+            $sortedItems = $items->sortBy([
+                ['sort_order', 'asc'],
+                [function ($amenity) use ($locale) {
+                    return $locale === 'ar' ? ($amenity->name_local ?? $amenity->name_en) : $amenity->name_en;
+                }, 'asc']
+            ]);
+
+            $formattedItems = $sortedItems->map(function ($amenity) {
+                return [
+                    'id' => $amenity->id,
+                    'name' => $amenity->getDisplayNameAttribute(),
+                    'icon_class' => $amenity->icon_class,
+                    'image_url' => $amenity->image_url,
+                ];
+            })->values()->toArray();
+
+            $result[] = [
+                'category_id' => $catId,
+                'category_name' => $categoryName,
+                'category_sort_order' => $categorySortOrder,
+                'items' => $formattedItems,
+            ];
+        }
+
+        // Sort the categories
+        usort($result, function ($a, $b) {
+            return $a['category_sort_order'] <=> $b['category_sort_order'];
+        });
+
+        return $result;
+    }
+
+    /**
+     * Get top amenities for a project (highlight).
+     *
+     * @param Project $project
+     * @param int $limit
+     * @return array
+     */
+    public function getTopAmenitiesForProject(Project $project, int $limit = 3): array
+    {
+        $amenities = $project->amenities()
+            ->where('is_active', true)
+            ->orderBy('sort_order', 'asc')
+            ->take($limit)
+            ->get();
+
+        return $amenities->map(function ($amenity) {
+            return [
+                'id' => $amenity->id,
+                'name' => $amenity->getDisplayNameAttribute(),
+                'icon_class' => $amenity->icon_class,
+                'image_url' => $amenity->image_url,
+            ];
+        })->toArray();
     }
 }
