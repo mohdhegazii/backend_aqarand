@@ -14,7 +14,16 @@ return new class extends Migration
         Schema::table('featured_places', function (Blueprint $table) {
             // Check if column exists first to be safe, though modify requires it
             if (Schema::hasColumn('featured_places', 'sub_category_id')) {
-                $table->foreignId('sub_category_id')->nullable()->change();
+                // MySQL requires dropping the foreign key before altering nullability
+                $table->dropForeign(['sub_category_id']);
+
+                $table->unsignedBigInteger('sub_category_id')->nullable()->default(null)->change();
+
+                // Re-add the constraint with a null-on-delete strategy
+                $table->foreign('sub_category_id')
+                    ->references('id')
+                    ->on('featured_place_sub_categories')
+                    ->nullOnDelete();
             }
         });
     }
@@ -25,9 +34,17 @@ return new class extends Migration
     public function down(): void
     {
         Schema::table('featured_places', function (Blueprint $table) {
-             // We can't easily revert to NOT NULL without ensuring data integrity
-             // So we'll skip strictly enforcing it back or just try
-             $table->foreignId('sub_category_id')->nullable(false)->change();
+            if (Schema::hasColumn('featured_places', 'sub_category_id')) {
+                $table->dropForeign(['sub_category_id']);
+
+                $table->unsignedBigInteger('sub_category_id')->nullable(false)->default(null)->change();
+
+                // Restore the original cascade behavior
+                $table->foreign('sub_category_id')
+                    ->references('id')
+                    ->on('featured_place_sub_categories')
+                    ->onDelete('cascade');
+            }
         });
     }
 };
