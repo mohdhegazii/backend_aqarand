@@ -48,14 +48,14 @@
             <div class="relative flex flex-col items-center flex-1">
                 {{-- Connector Line (Right side) --}}
                 @if(!$loop->last)
-                    <div class="absolute top-[15px] left-[50%] right-[-50%] h-[2px] bg-gray-200 dark:bg-gray-700 -z-10">
+                    <div class="absolute top-[15px] left-[50%] right-[-50%] h-[2px] bg-gray-200 -z-10">
                         <div class="h-full {{ $isCompleted ? 'bg-indigo-600' : 'bg-transparent' }}"></div>
                     </div>
                 @endif
 
                 <a href="{{ $url }}"
                    class="w-8 h-8 flex items-center justify-center rounded-full border-2
-                          {{ $isCompleted || $isCurrent ? 'border-indigo-600 bg-indigo-600 text-white' : 'border-gray-300 bg-white text-gray-500 dark:bg-gray-800 dark:border-gray-600' }}
+                          {{ $isCompleted || $isCurrent ? 'border-indigo-600 bg-indigo-600 text-white' : 'border-gray-300 bg-white text-gray-500' }}
                           {{ $isClickable ? 'cursor-pointer hover:bg-indigo-700 hover:border-indigo-700' : 'cursor-default pointer-events-none' }}
                           transition-colors duration-200 z-10"
                    title="{{ $step['label'] }}">
@@ -66,7 +66,7 @@
                     @endif
                 </a>
 
-                <span class="mt-2 text-xs font-medium {{ $isCurrent ? 'text-indigo-600' : 'text-gray-500 dark:text-gray-400' }} text-center hidden sm:block">
+                <span class="mt-2 text-xs font-medium {{ $isCurrent ? 'text-indigo-600' : 'text-gray-500' }} text-center hidden sm:block">
                     {{ $step['label'] }}
                 </span>
             </div>
