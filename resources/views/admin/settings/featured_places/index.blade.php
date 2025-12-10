@@ -399,15 +399,32 @@
             },
 
             init() {
+                // Initialize active tab from URL query parameter
+                const urlParams = new URLSearchParams(window.location.search);
+                const tab = urlParams.get('tab');
+                const validTabs = ['main-categories', 'sub-categories', 'places'];
+
+                if (tab && validTabs.includes(tab)) {
+                    this.activeTab = tab;
+                }
+
                 this.filterSubCategories();
+
                 this.$watch('activeTab', (value) => {
+                    // Update URL when tab changes
+                    const url = new URL(window.location);
+                    url.searchParams.set('tab', value);
+                    window.history.pushState({}, '', url);
+
                     if (value === 'places') {
                         // Use a slight delay to ensure x-show transition has started/finished rendering
-                        setTimeout(() => {
-                            if (this.map) {
-                                this.map.invalidateSize();
-                            }
-                        }, 200);
+                        this.$nextTick(() => {
+                            setTimeout(() => {
+                                if (this.map) {
+                                    this.map.invalidateSize();
+                                }
+                            }, 200);
+                        });
                     }
                 });
             },
@@ -478,14 +495,12 @@
                 document.getElementById('fp_country_id').dispatchEvent(new Event('change'));
 
                 if(this.map) {
+                    this.map.invalidateSize();
                     // Reset to default Cairo view
                      this.map.setView([30.0444, 31.2357], 6);
                      // Clear drawings
                      if(this.map.drawnItems) this.map.drawnItems.clearLayers();
                      if(this.map.updateBoundaryInput) this.map.updateBoundaryInput();
-                     // We can't easily remove the marker unless we reload map or move it to 0,0
-                     // But we can move it to Cairo or just leave it.
-                     // A clean approach would be to re-init map, but that's heavy.
                 }
             },
             async editPlace(place) {
@@ -502,7 +517,6 @@
                     name_ar: place.name_ar,
                     name_en: place.name_en,
                     is_active: place.is_active
-                    // point_lat/lng removed from here as they are managed via inputs directly mainly
                 };
 
                 // Populate Locations
@@ -530,49 +544,55 @@
                 }
 
                 // Update Map
-                // Ensure map is visible before calling map methods to avoid sizing issues (though invalidateSize handles it)
-                setTimeout(() => {
-                    const mapInstance = this.map;
-                    if(mapInstance && place.point_lat && place.point_lng) {
-                        const lat = parseFloat(place.point_lat);
-                        const lng = parseFloat(place.point_lng);
+                // Ensure map is visible before calling map methods
+                this.$nextTick(() => {
+                    setTimeout(() => {
+                        const mapInstance = this.map;
+                        if(mapInstance) {
+                            // Important: Resize first
+                            mapInstance.invalidateSize();
 
-                        // Move view
-                        mapInstance.setView([lat, lng], 15);
-                        mapInstance.invalidateSize();
+                            if (place.point_lat && place.point_lng) {
+                                const lat = parseFloat(place.point_lat);
+                                const lng = parseFloat(place.point_lng);
 
-                        // Update Marker
-                        if (mapInstance.updateMarker) {
-                            mapInstance.updateMarker(lat, lng);
+                                // Move view
+                                mapInstance.setView([lat, lng], 15);
+
+                                // Update Marker
+                                if (mapInstance.updateMarker) {
+                                    mapInstance.updateMarker(lat, lng);
+                                }
+
+                                // Remove existing layers if any (clearing drawn items)
+                                if (mapInstance.drawnItems) {
+                                    mapInstance.drawnItems.clearLayers();
+                                }
+
+                                // Add Polygon if exists
+                                if (place.polygon_geojson && mapInstance.drawnItems) {
+                                     // Check if it's a string or object
+                                     let geoJson = place.polygon_geojson;
+                                     if (typeof geoJson === 'string') {
+                                         try { geoJson = JSON.parse(geoJson); } catch(e) {}
+                                     }
+
+                                     if (geoJson) {
+                                         const layer = L.geoJSON(geoJson);
+                                         layer.eachLayer(function(l) {
+                                             mapInstance.drawnItems.addLayer(l);
+                                         });
+                                     }
+                                }
+
+                                // Sync boundary input
+                                if (mapInstance.updateBoundaryInput) {
+                                    mapInstance.updateBoundaryInput();
+                                }
+                            }
                         }
-
-                        // Remove existing layers if any (clearing drawn items)
-                        if (mapInstance.drawnItems) {
-                            mapInstance.drawnItems.clearLayers();
-                        }
-
-                        // Add Polygon if exists
-                        if (place.polygon_geojson && mapInstance.drawnItems) {
-                             // Check if it's a string or object
-                             let geoJson = place.polygon_geojson;
-                             if (typeof geoJson === 'string') {
-                                 try { geoJson = JSON.parse(geoJson); } catch(e) {}
-                             }
-
-                             if (geoJson) {
-                                 const layer = L.geoJSON(geoJson);
-                                 layer.eachLayer(function(l) {
-                                     mapInstance.drawnItems.addLayer(l);
-                                 });
-                             }
-                        }
-
-                        // Sync boundary input
-                        if (mapInstance.updateBoundaryInput) {
-                            mapInstance.updateBoundaryInput();
-                        }
-                    }
-                }, 300);
+                    }, 300);
+                });
             }
         }));
     });
