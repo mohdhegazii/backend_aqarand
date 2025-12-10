@@ -283,17 +283,16 @@
                     <label class="block text-sm font-medium text-gray-700 mb-2">{{ app()->getLocale() === 'ar' ? 'الخريطة' : 'Map' }}</label>
 
                     <x-location.map
+                        mapId="featured-places-map"
                         :entityLevel="'project'"
                         :lockToEgypt="true"
                         :readOnly="false"
                         :searchable="true"
                         :autoInit="true"
+                        inputLatName="point_lat"
+                        inputLngName="point_lng"
+                        inputPolygonName="polygon_geojson"
                     />
-
-                    <input type="hidden" name="point_lat" id="lat" x-model="placeData.point_lat" required>
-                    <input type="hidden" name="point_lng" id="lng" x-model="placeData.point_lng" required>
-                    <!-- Usually map component updates ID=boundary_geojson, we rely on standard behavior or we can bind logic -->
-                    <input type="hidden" name="polygon_geojson" id="boundary_geojson">
                 </div>
 
                 <div class="mt-4 flex gap-2">
@@ -392,17 +391,22 @@
                 sub_category_id: '',
                 name_ar: '',
                 name_en: '',
-                point_lat: '',
-                point_lng: '',
                 is_active: true
+            },
+
+            get map() {
+                return window['map_featured-places-map'];
             },
 
             init() {
                 this.filterSubCategories();
                 this.$watch('activeTab', (value) => {
-                    if (value === 'places' && window.adminMap) {
+                    if (value === 'places') {
+                        // Use a slight delay to ensure x-show transition has started/finished rendering
                         setTimeout(() => {
-                            window.adminMap.invalidateSize();
+                            if (this.map) {
+                                this.map.invalidateSize();
+                            }
                         }, 200);
                     }
                 });
@@ -465,8 +469,6 @@
                     sub_category_id: '',
                     name_ar: '',
                     name_en: '',
-                    point_lat: '',
-                    point_lng: '',
                     is_active: true
                 };
 
@@ -475,10 +477,15 @@
                 // Trigger change to reset dependent dropdowns
                 document.getElementById('fp_country_id').dispatchEvent(new Event('change'));
 
-                // Clear map logic if possible
-                if(window.adminMap) {
-                    // This is hacky, but better than nothing
-                    // Ideally call a clearMap() function if exposed
+                if(this.map) {
+                    // Reset to default Cairo view
+                     this.map.setView([30.0444, 31.2357], 6);
+                     // Clear drawings
+                     if(this.map.drawnItems) this.map.drawnItems.clearLayers();
+                     if(this.map.updateBoundaryInput) this.map.updateBoundaryInput();
+                     // We can't easily remove the marker unless we reload map or move it to 0,0
+                     // But we can move it to Cairo or just leave it.
+                     // A clean approach would be to re-init map, but that's heavy.
                 }
             },
             async editPlace(place) {
@@ -494,9 +501,8 @@
                     sub_category_id: place.sub_category_id,
                     name_ar: place.name_ar,
                     name_en: place.name_en,
-                    point_lat: place.point_lat,
-                    point_lng: place.point_lng,
                     is_active: place.is_active
+                    // point_lat/lng removed from here as they are managed via inputs directly mainly
                 };
 
                 // Populate Locations
@@ -524,43 +530,49 @@
                 }
 
                 // Update Map
-                if(window.adminMap && place.point_lat && place.point_lng) {
-                    // Update hidden inputs directly as x-model might not catch programmatic changes if not dispatching input
-                    // But here we use x-model on inputs, so updating placeData should update inputs
-                    // We need to tell the map to show this point/polygon
+                // Ensure map is visible before calling map methods to avoid sizing issues (though invalidateSize handles it)
+                setTimeout(() => {
+                    const mapInstance = this.map;
+                    if(mapInstance && place.point_lat && place.point_lng) {
+                        const lat = parseFloat(place.point_lat);
+                        const lng = parseFloat(place.point_lng);
 
-                    // Construct a fake geojson or trigger map function
-                    // The map component usually reads initial value from DB if it was server rendered.
-                    // But here we are client-side switching.
-                    // We need a JS function to set map state.
+                        // Move view
+                        mapInstance.setView([lat, lng], 15);
+                        mapInstance.invalidateSize();
 
-                    // Assuming location-map.js exposes something or we can leverage Leaflet directly.
-                    // If the map object is window.adminMap
+                        // Update Marker
+                        if (mapInstance.updateMarker) {
+                            mapInstance.updateMarker(lat, lng);
+                        }
 
-                    const lat = parseFloat(place.point_lat);
-                    const lng = parseFloat(place.point_lng);
+                        // Remove existing layers if any (clearing drawn items)
+                        if (mapInstance.drawnItems) {
+                            mapInstance.drawnItems.clearLayers();
+                        }
 
-                    // Move view
-                    window.adminMap.setView([lat, lng], 15);
+                        // Add Polygon if exists
+                        if (place.polygon_geojson && mapInstance.drawnItems) {
+                             // Check if it's a string or object
+                             let geoJson = place.polygon_geojson;
+                             if (typeof geoJson === 'string') {
+                                 try { geoJson = JSON.parse(geoJson); } catch(e) {}
+                             }
 
-                    // Remove existing layers if any (clearing drawn items)
-                    if (window.drawnItems) {
-                        window.drawnItems.clearLayers();
+                             if (geoJson) {
+                                 const layer = L.geoJSON(geoJson);
+                                 layer.eachLayer(function(l) {
+                                     mapInstance.drawnItems.addLayer(l);
+                                 });
+                             }
+                        }
+
+                        // Sync boundary input
+                        if (mapInstance.updateBoundaryInput) {
+                            mapInstance.updateBoundaryInput();
+                        }
                     }
-
-                    // Add Marker
-                    // Check if polygon exists
-                    if (place.polygon_geojson) {
-                         const layer = L.geoJSON(place.polygon_geojson);
-                         layer.eachLayer(function(l) {
-                             window.drawnItems.addLayer(l);
-                         });
-                    } else {
-                         // Add Marker
-                         const marker = L.marker([lat, lng]);
-                         window.drawnItems.addLayer(marker);
-                    }
-                }
+                }, 300);
             }
         }));
     });
@@ -633,9 +645,10 @@
              const selectedOption = selectElement.options[selectElement.selectedIndex];
              const lat = selectedOption.getAttribute('data-lat');
              const lng = selectedOption.getAttribute('data-lng');
+             const mapInstance = window['map_featured-places-map'];
 
-             if (lat && lng && window.adminMap) {
-                 window.adminMap.flyTo([lat, lng], 12);
+             if (lat && lng && mapInstance) {
+                 mapInstance.flyTo([lat, lng], 12);
              }
         }
 
