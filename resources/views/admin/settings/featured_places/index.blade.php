@@ -532,92 +532,110 @@
                 }
             },
             async editPlace(place) {
-                this.activeTab = 'places';
-                this.placeEditMode = true;
-                this.placeFormAction = "{{ route('admin.featured-places.places.update', '__PLACE_ID__') }}".replace('__PLACE_ID__', place.id);
+                try {
+                    this.activeTab = 'places';
+                    this.placeEditMode = true;
+                    this.placeFormAction = "{{ route('admin.featured-places.places.update', '__PLACE_ID__') }}".replace('__PLACE_ID__', place.id);
 
-                this.selectedMainCategory = place.main_category_id;
-                this.filterSubCategories();
+                    this.selectedMainCategory = place.main_category_id;
+                    this.filterSubCategories();
 
-                this.placeData = {
-                    id: place.id,
-                    sub_category_id: place.sub_category_id,
-                    name_ar: place.name_ar,
-                    name_en: place.name_en,
-                    is_active: place.is_active
-                };
+                    this.placeData = {
+                        id: place.id,
+                        sub_category_id: place.sub_category_id || '', // Normalize null to empty string for Select
+                        name_ar: place.name_ar,
+                        name_en: place.name_en,
+                        is_active: place.is_active
+                    };
 
-                // Populate Locations
-                const countryId = place.country_id;
-                const regionId = place.region_id;
-                const cityId = place.city_id;
-                const districtId = place.district_id;
+                    // Populate Locations
+                    const countryId = place.country_id;
+                    const regionId = place.region_id;
+                    const cityId = place.city_id;
+                    const districtId = place.district_id;
 
-                // Set Country
-                const countrySelect = document.getElementById('fp_country_id');
-                countrySelect.value = countryId;
+                    if (countryId) {
+                        const countrySelect = document.getElementById('fp_country_id');
+                        if (countrySelect) {
+                            countrySelect.value = countryId;
+                            // Trigger loading regions
+                            if (window.loadRegions) {
+                                await window.loadRegions(countryId);
+                                const regionSelect = document.getElementById('fp_region_id');
+                                if (regionSelect) regionSelect.value = regionId;
 
-                // Trigger Country Change and wait
-                await window.loadRegions(countryId);
-                document.getElementById('fp_region_id').value = regionId;
+                                // Trigger loading cities
+                                if (window.loadCities && regionId) {
+                                    await window.loadCities(regionId);
+                                    const citySelect = document.getElementById('fp_city_id');
+                                    if (citySelect) citySelect.value = cityId;
 
-                // Trigger Region Change and wait
-                await window.loadCities(regionId);
-                document.getElementById('fp_city_id').value = cityId;
-
-                // Trigger City Change and wait
-                await window.loadDistricts(cityId);
-                if (districtId) {
-                    document.getElementById('fp_district_id').value = districtId;
-                }
-
-                // Update Map
-                // Ensure map is visible before calling map methods
-                this.$nextTick(() => {
-                    setTimeout(() => {
-                        const mapInstance = this.map;
-                        if(mapInstance) {
-                            // Important: Resize first
-                            mapInstance.invalidateSize();
-
-                            if (place.point_lat && place.point_lng) {
-                                const lat = parseFloat(place.point_lat);
-                                const lng = parseFloat(place.point_lng);
-
-                                // Move view
-                                mapInstance.setView([lat, lng], 15);
-
-                                // Update Marker
-                                if (mapInstance.updateMarker) {
-                                    mapInstance.updateMarker(lat, lng);
-                                }
-
-                                // Remove existing layers if any (clearing drawn items)
-                                if (mapInstance.drawnItems) {
-                                    mapInstance.drawnItems.clearLayers();
-                                }
-
-                                // Add Polygon if exists
-                                if (place.polygon_geojson && mapInstance.drawnItems) {
-                                     // Check if it's a string or object
-                                     let geoJson = place.polygon_geojson;
-                                     if (typeof geoJson === 'string') {
-                                         try { geoJson = JSON.parse(geoJson); } catch(e) {}
-                                     }
-
-                                     if (geoJson) {
-                                         const layer = L.geoJSON(geoJson);
-                                         layer.eachLayer(function(l) {
-                                             mapInstance.drawnItems.addLayer(l);
-                                         });
-                                     }
-                                }
-
-                                // Sync boundary input
-                                if (mapInstance.updateBoundaryInput) {
-                                    mapInstance.updateBoundaryInput();
+                                    // Trigger loading districts
+                                    if (window.loadDistricts && cityId) {
+                                        await window.loadDistricts(cityId);
+                                        const districtSelect = document.getElementById('fp_district_id');
+                                        if (districtSelect && districtId) {
+                                            districtSelect.value = districtId;
+                                        }
+                                    }
                                 }
                             }
+                        }
+                    }
+                } catch (e) {
+                    console.error('Error populating edit form:', e);
+                }
+
+                // Update Map (independent of location loading success/fail)
+                this.$nextTick(() => {
+                    setTimeout(() => {
+                        try {
+                            const mapInstance = this.map;
+                            if(mapInstance) {
+                                // Important: Resize first
+                                mapInstance.invalidateSize();
+
+                                if (place.point_lat && place.point_lng) {
+                                    const lat = parseFloat(place.point_lat);
+                                    const lng = parseFloat(place.point_lng);
+
+                                    // Move view
+                                    mapInstance.setView([lat, lng], 15);
+
+                                    // Update Marker
+                                    if (mapInstance.updateMarker) {
+                                        mapInstance.updateMarker(lat, lng);
+                                    }
+
+                                    // Remove existing layers if any (clearing drawn items)
+                                    if (mapInstance.drawnItems) {
+                                        mapInstance.drawnItems.clearLayers();
+                                    }
+
+                                    // Add Polygon if exists
+                                    if (place.polygon_geojson && mapInstance.drawnItems) {
+                                         // Check if it's a string or object
+                                         let geoJson = place.polygon_geojson;
+                                         if (typeof geoJson === 'string') {
+                                             try { geoJson = JSON.parse(geoJson); } catch(e) {}
+                                         }
+
+                                         if (geoJson) {
+                                             const layer = L.geoJSON(geoJson);
+                                             layer.eachLayer(function(l) {
+                                                 mapInstance.drawnItems.addLayer(l);
+                                             });
+                                         }
+                                    }
+
+                                    // Sync boundary input
+                                    if (mapInstance.updateBoundaryInput) {
+                                        mapInstance.updateBoundaryInput();
+                                    }
+                                }
+                            }
+                        } catch(mapError) {
+                            console.error('Error updating map:', mapError);
                         }
                     }, 300);
                 });
