@@ -210,22 +210,28 @@
                                 <option value="{{ $mc->id }}">{{ $mc->name }}</option>
                             @endforeach
                         </select>
+                        @error('main_category_id')
+                            <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                        @enderror
                     </div>
                     <div>
-                        <label class="block text-sm font-medium text-gray-700">{{ app()->getLocale() === 'ar' ? 'التصنيف الفرعي' : 'Sub Category' }} (@lang('admin.optional'))</label>
+                        <label class="block text-sm font-medium text-gray-700">{{ app()->getLocale() === 'ar' ? 'التصنيف الفرعي (اختياري)' : 'Sub Category (Optional)' }}</label>
                         <select name="sub_category_id" x-model="placeData.sub_category_id" :disabled="!selectedMainCategory" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
                             <option value="">{{ app()->getLocale() === 'ar' ? 'اختر...' : 'Select...' }}</option>
                             <template x-for="sub in filteredSubCategories" :key="sub.id">
                                 <option :value="sub.id" x-text="{{ app()->getLocale() === 'ar' ? 'sub.name_ar' : 'sub.name_en' }}" :selected="sub.id == placeData.sub_category_id"></option>
                             </template>
                         </select>
+                        @error('sub_category_id')
+                            <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                        @enderror
                     </div>
                 </div>
 
                 <!-- Location Section -->
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4 border-b border-gray-200 pb-4">
                      <!-- Country -->
-                     <div>
+                    <div>
                         <label class="block text-sm font-medium text-gray-700">@lang('admin.country')</label>
                         <select name="country_id" id="fp_country_id" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" required>
                              <option value="">@lang('admin.select_country')</option>
@@ -233,6 +239,9 @@
                                  <option value="{{ $country->id }}" data-lat="{{ $country->lat }}" data-lng="{{ $country->lng }}">{{ $country->display_name }}</option>
                              @endforeach
                         </select>
+                        @error('country_id')
+                            <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                        @enderror
                      </div>
 
                      <!-- Region -->
@@ -241,6 +250,9 @@
                         <select name="region_id" id="fp_region_id" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" required disabled>
                              <option value="">@lang('admin.select_region')</option>
                         </select>
+                        @error('region_id')
+                            <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                        @enderror
                      </div>
 
                      <!-- City -->
@@ -249,6 +261,9 @@
                         <select name="city_id" id="fp_city_id" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" required disabled>
                              <option value="">@lang('admin.select_city')</option>
                         </select>
+                        @error('city_id')
+                            <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                        @enderror
                      </div>
 
                      <!-- District -->
@@ -257,6 +272,9 @@
                         <select name="district_id" id="fp_district_id" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" disabled>
                              <option value="">@lang('admin.select_district')</option>
                         </select>
+                        @error('district_id')
+                            <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                        @enderror
                      </div>
                 </div>
 
@@ -265,10 +283,16 @@
                     <div>
                         <label class="block text-sm font-medium text-gray-700">@lang('admin.name_ar')</label>
                         <input type="text" name="name_ar" x-model="placeData.name_ar" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
+                        @error('name_ar')
+                            <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                        @enderror
                     </div>
                     <div>
                         <label class="block text-sm font-medium text-gray-700">@lang('admin.name_en')</label>
                         <input type="text" name="name_en" x-model="placeData.name_en" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
+                        @error('name_en')
+                            <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                        @enderror
                     </div>
                     <div>
                         <label class="flex items-center mt-6">
@@ -471,9 +495,13 @@
             filterSubCategories() {
                 if (!this.selectedMainCategory) {
                     this.filteredSubCategories = [];
+                    this.placeData.sub_category_id = '';
                     return;
                 }
                 this.filteredSubCategories = this.allSubCategories.filter(sub => sub.main_category_id == this.selectedMainCategory);
+                if (!this.filteredSubCategories.some(sub => sub.id == this.placeData.sub_category_id)) {
+                    this.placeData.sub_category_id = '';
+                }
                 // Don't reset sub selection here if in edit mode and valid
             },
             resetPlaceForm() {
