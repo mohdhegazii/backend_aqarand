@@ -17,7 +17,7 @@ return new class extends Migration
                 // MySQL requires dropping the foreign key before altering nullability
                 $table->dropForeign(['sub_category_id']);
 
-                $table->unsignedBigInteger('sub_category_id')->nullable()->default(null)->change();
+                $table->foreignId('sub_category_id')->nullable()->change();
 
                 // Re-add the constraint with a null-on-delete strategy
                 $table->foreign('sub_category_id')
@@ -37,7 +37,7 @@ return new class extends Migration
             if (Schema::hasColumn('featured_places', 'sub_category_id')) {
                 $table->dropForeign(['sub_category_id']);
 
-                $table->unsignedBigInteger('sub_category_id')->nullable(false)->default(null)->change();
+                $table->foreignId('sub_category_id')->nullable(false)->change();
 
                 // Restore the original cascade behavior
                 $table->foreign('sub_category_id')
