@@ -11,21 +11,8 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('featured_places', function (Blueprint $table) {
-            // Check if column exists first to be safe, though modify requires it
-            if (Schema::hasColumn('featured_places', 'sub_category_id')) {
-                // MySQL requires dropping the foreign key before altering nullability
-                $table->dropForeign(['sub_category_id']);
-
-                $table->foreignId('sub_category_id')->nullable()->change();
-
-                // Re-add the constraint with a null-on-delete strategy
-                $table->foreign('sub_category_id')
-                    ->references('id')
-                    ->on('featured_place_sub_categories')
-                    ->nullOnDelete();
-            }
-        });
+        // Superseded by 2027_05_28_000000_fix_featured_places_nullable_final.php
+        // This migration originally required doctrine/dbal which might be missing.
     }
 
     /**
@@ -33,18 +20,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::table('featured_places', function (Blueprint $table) {
-            if (Schema::hasColumn('featured_places', 'sub_category_id')) {
-                $table->dropForeign(['sub_category_id']);
-
-                $table->foreignId('sub_category_id')->nullable(false)->change();
-
-                // Restore the original cascade behavior
-                $table->foreign('sub_category_id')
-                    ->references('id')
-                    ->on('featured_place_sub_categories')
-                    ->onDelete('cascade');
-            }
-        });
+        //
     }
 };

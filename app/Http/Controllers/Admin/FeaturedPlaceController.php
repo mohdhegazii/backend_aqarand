@@ -10,6 +10,7 @@ use App\Models\FeaturedPlaceSubCategory;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 use Illuminate\Support\Str;
+use Illuminate\Support\Facades\Log;
 
 class FeaturedPlaceController extends Controller
 {
@@ -163,13 +164,8 @@ class FeaturedPlaceController extends Controller
         try {
             FeaturedPlace::create($data);
         } catch (\Throwable $e) {
-            dd([
-                'ERROR' => 'Failed to create Featured Place',
-                'MESSAGE' => $e->getMessage(),
-                'SUB_CATEGORY_ID' => $data['sub_category_id'] ?? 'NULL/MISSING',
-                'ALL_DATA' => $data,
-                'TRACE' => $e->getTraceAsString()
-            ]);
+            Log::error('FeaturedPlace Creation Error: ' . $e->getMessage());
+            return redirect()->back()->withInput()->with('error', 'Failed to create place: ' . $e->getMessage());
         }
 
         return redirect()->route('admin.featured-places.index', ['tab' => 'places'])
@@ -218,13 +214,8 @@ class FeaturedPlaceController extends Controller
         try {
             $place->update($data);
         } catch (\Throwable $e) {
-            dd([
-                'ERROR' => 'Failed to update Featured Place',
-                'MESSAGE' => $e->getMessage(),
-                'SUB_CATEGORY_ID' => $data['sub_category_id'] ?? 'NULL/MISSING',
-                'ALL_DATA' => $data,
-                'TRACE' => $e->getTraceAsString()
-            ]);
+            Log::error('FeaturedPlace Update Error: ' . $e->getMessage());
+            return redirect()->back()->withInput()->with('error', 'Failed to update place: ' . $e->getMessage());
         }
 
         return redirect()->route('admin.featured-places.index', ['tab' => 'places'])
