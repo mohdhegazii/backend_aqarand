@@ -272,6 +272,9 @@
             }
         }
 
+        // Expose method on map object
+        map.updateMarker = updateMarker;
+
         return {
             updateMarker,
             updateInputs
@@ -592,6 +595,10 @@
             map.on(L.Draw.Event.EDITED, updateBoundaryInput);
             map.on(L.Draw.Event.DELETED, updateBoundaryInput);
         }
+
+        // Expose items on map object
+        map.drawnItems = drawnItems;
+        map.updateBoundaryInput = updateBoundaryInput;
 
         return {
             drawnItems,
