@@ -660,14 +660,66 @@
              populateSelect(districtSelect, response.districts || [], "@lang('admin.select_district')");
         }
 
+        let currentReferenceLayer = null;
+
+        function updateMapBoundary(level, id) {
+            const mapInstance = window['map_featured-places-map'];
+            if (!mapInstance || !id) return;
+
+            // Remove previous reference layer if exists
+            if (currentReferenceLayer) {
+                mapInstance.removeLayer(currentReferenceLayer);
+                currentReferenceLayer = null;
+            }
+
+            // Fetch polygon for the selected location
+            fetch(`{{ url('admin/location-polygons') }}?level=${level}&id=${id}`)
+                .then(response => response.json())
+                .then(data => {
+                    // Response structure: { regions: [ ... ], ... }
+                    const key = level === 'region' ? 'regions' : (level === 'city' ? 'cities' : 'districts');
+                    if (data[key] && data[key].length > 0) {
+                        const item = data[key][0];
+
+                        // Priority 1: If polygon exists, draw it and fit bounds
+                        if (item.polygon) {
+                            currentReferenceLayer = L.geoJSON(item.polygon, {
+                                style: {
+                                    color: '#3388ff',
+                                    weight: 2,
+                                    opacity: 0.6,
+                                    fillOpacity: 0.1,
+                                    dashArray: '5, 5' // Dashed line to indicate reference
+                                },
+                                interactive: false // Don't block clicks
+                            }).addTo(mapInstance);
+
+                            mapInstance.fitBounds(currentReferenceLayer.getBounds());
+                        }
+                        // Priority 2: If no polygon but lat/lng exists, fly to point
+                        else if (item.lat != null && item.lng != null) {
+                            const zoom = level === 'region' ? 9 : (level === 'city' ? 11 : 13);
+                            mapInstance.flyTo([item.lat, item.lng], zoom);
+                        }
+                    }
+                })
+                .catch(err => console.error("Error fetching location polygon:", err));
+        }
+
         // Map Interaction Hook
-        function flyToSelected(selectElement) {
+        function flyToSelected(selectElement, level) {
              const selectedOption = selectElement.options[selectElement.selectedIndex];
              const lat = selectedOption.getAttribute('data-lat');
              const lng = selectedOption.getAttribute('data-lng');
              const mapInstance = window['map_featured-places-map'];
+             const id = selectElement.value;
 
-             if (lat && lng && mapInstance) {
+             // Always try to fetch and show boundary first
+             if (id && level) {
+                 updateMapBoundary(level, id);
+             }
+             // Fallback to simple flyTo if logic requires (though updateMapBoundary handles this too)
+             else if (lat && lng && mapInstance) {
                  mapInstance.flyTo([lat, lng], 12);
              }
         }
@@ -676,7 +728,7 @@
         countrySelect.addEventListener('change', async function() {
             if(this.value) {
                 await window.loadRegions(this.value);
-                flyToSelected(this);
+                flyToSelected(this, null); // Country has no boundary API usually here, or handled differently
             } else {
                 regionSelect.innerHTML = '<option value="">@lang('admin.select_region')</option>'; regionSelect.disabled = true;
                 citySelect.innerHTML = '<option value="">@lang('admin.select_city')</option>'; citySelect.disabled = true;
@@ -687,7 +739,7 @@
         regionSelect.addEventListener('change', async function() {
             if(this.value) {
                 await window.loadCities(this.value);
-                flyToSelected(this);
+                flyToSelected(this, 'region');
             } else {
                 citySelect.innerHTML = '<option value="">@lang('admin.select_city')</option>'; citySelect.disabled = true;
                 districtSelect.innerHTML = '<option value="">@lang('admin.select_district')</option>'; districtSelect.disabled = true;
@@ -697,14 +749,14 @@
         citySelect.addEventListener('change', async function() {
             if(this.value) {
                 await window.loadDistricts(this.value);
-                flyToSelected(this);
+                flyToSelected(this, 'city');
             } else {
                 districtSelect.innerHTML = '<option value="">@lang('admin.select_district')</option>'; districtSelect.disabled = true;
             }
         });
 
         districtSelect.addEventListener('change', function() {
-             flyToSelected(this);
+             flyToSelected(this, 'district');
         });
     });
 </script>
