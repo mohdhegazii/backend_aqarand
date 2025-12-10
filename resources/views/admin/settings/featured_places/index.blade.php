@@ -216,7 +216,7 @@
                     </div>
                     <div>
                         <label class="block text-sm font-medium text-gray-700">{{ app()->getLocale() === 'ar' ? 'التصنيف الفرعي' : 'Sub Category' }}</label>
-                        <select name="sub_category_id" x-model="placeData.sub_category_id" :disabled="!selectedMainCategory" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
+                        <select name="sub_category_id" x-model="placeData.sub_category_id" :disabled="!selectedMainCategory" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
                             <option value="">{{ app()->getLocale() === 'ar' ? 'اختر...' : 'Select...' }}</option>
                             <template x-for="sub in filteredSubCategories" :key="sub.id">
                                 <option :value="sub.id" x-text="{{ app()->getLocale() === 'ar' ? 'sub.name_ar' : 'sub.name_en' }}" :selected="sub.id == placeData.sub_category_id"></option>
@@ -534,7 +534,7 @@
             async editPlace(place) {
                 this.activeTab = 'places';
                 this.placeEditMode = true;
-                this.placeFormAction = "{{ route('admin.featured-places.places.update', '0') }}".replace('/0', '/' + place.id);
+                this.placeFormAction = "{{ route('admin.featured-places.places.update', '__PLACE_ID__') }}".replace('__PLACE_ID__', place.id);
 
                 this.selectedMainCategory = place.main_category_id;
                 this.filterSubCategories();

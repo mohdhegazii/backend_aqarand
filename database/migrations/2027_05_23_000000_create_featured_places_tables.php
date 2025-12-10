@@ -49,7 +49,7 @@ return new class extends Migration
             Schema::create('featured_places', function (Blueprint $table) {
                 $table->id();
                 $table->foreignId('main_category_id')->constrained('featured_place_main_categories')->onDelete('cascade');
-                $table->foreignId('sub_category_id')->constrained('featured_place_sub_categories')->onDelete('cascade');
+                $table->foreignId('sub_category_id')->nullable()->constrained('featured_place_sub_categories')->nullOnDelete();
 
                 // Location Hierarchy
                 $table->foreignId('country_id')->constrained('countries')->onDelete('cascade');
