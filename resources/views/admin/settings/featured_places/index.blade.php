@@ -366,7 +366,7 @@
                                 </span>
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm font-medium flex gap-2">
-                                <button type="button" @click='editPlace(@json($place, JSON_HEX_APOS))' class="text-indigo-600 hover:text-indigo-900">@lang('admin.edit')</button>
+                                <button type="button" @click='editPlace(@json($place->only(["id", "main_category_id", "sub_category_id", "country_id", "region_id", "city_id", "district_id", "name_ar", "name_en", "is_active", "point_lat", "point_lng", "polygon_geojson"]), JSON_HEX_APOS))' class="text-indigo-600 hover:text-indigo-900">@lang('admin.edit')</button>
                                 <form action="{{ route('admin.featured-places.places.destroy', $place->id) }}" method="POST" class="inline-block" onsubmit="return confirm('Are you sure?');">
                                     @csrf
                                     @method('DELETE')
@@ -558,7 +558,6 @@
                     this.placeFormAction = "{{ route('admin.featured-places.places.update', '__PLACE_ID__') }}".replace('__PLACE_ID__', currentPlace.id);
 
                     this.selectedMainCategory = currentPlace.main_category_id;
-                    this.filterSubCategories();
 
                     this.placeData = {
                         id: currentPlace.id,
@@ -567,6 +566,8 @@
                         name_en: currentPlace.name_en,
                         is_active: currentPlace.is_active
                     };
+
+                    this.filterSubCategories();
 
                     // Populate Locations
                     const countryId = currentPlace.country_id;
