@@ -105,7 +105,7 @@
                                 </span>
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm font-medium flex gap-2">
-                                <button type="button" @click='editMainCategory(@json($category))' class="text-indigo-600 hover:text-indigo-900">@lang('admin.edit')</button>
+                                <button type="button" @click='editMainCategory(@json($category, JSON_HEX_APOS))' class="text-indigo-600 hover:text-indigo-900">@lang('admin.edit')</button>
                                 <form action="{{ route('admin.featured-places.main-categories.destroy', $category->id) }}" method="POST" class="inline-block" onsubmit="return confirm('Are you sure?');">
                                     @csrf
                                     @method('DELETE')
@@ -185,7 +185,7 @@
                                 </span>
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm font-medium flex gap-2">
-                                <button type="button" @click='editSubCategory(@json($sub))' class="text-indigo-600 hover:text-indigo-900">@lang('admin.edit')</button>
+                                <button type="button" @click='editSubCategory(@json($sub, JSON_HEX_APOS))' class="text-indigo-600 hover:text-indigo-900">@lang('admin.edit')</button>
                                 <form action="{{ route('admin.featured-places.sub-categories.destroy', $sub->id) }}" method="POST" class="inline-block" onsubmit="return confirm('Are you sure?');">
                                     @csrf
                                     @method('DELETE')
@@ -366,7 +366,7 @@
                                 </span>
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm font-medium flex gap-2">
-                                <button type="button" @click='editPlace(@json($place))' class="text-indigo-600 hover:text-indigo-900">@lang('admin.edit')</button>
+                                <button type="button" @click='editPlace(@json($place, JSON_HEX_APOS))' class="text-indigo-600 hover:text-indigo-900">@lang('admin.edit')</button>
                                 <form action="{{ route('admin.featured-places.places.destroy', $place->id) }}" method="POST" class="inline-block" onsubmit="return confirm('Are you sure?');">
                                     @csrf
                                     @method('DELETE')
