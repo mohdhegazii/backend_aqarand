@@ -212,8 +212,8 @@
                         </select>
                     </div>
                     <div>
-                        <label class="block text-sm font-medium text-gray-700">{{ app()->getLocale() === 'ar' ? 'التصنيف الفرعي' : 'Sub Category' }}</label>
-                        <select name="sub_category_id" x-model="placeData.sub_category_id" :disabled="!selectedMainCategory" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
+                        <label class="block text-sm font-medium text-gray-700">{{ app()->getLocale() === 'ar' ? 'التصنيف الفرعي' : 'Sub Category' }} (@lang('admin.optional'))</label>
+                        <select name="sub_category_id" x-model="placeData.sub_category_id" :disabled="!selectedMainCategory" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
                             <option value="">{{ app()->getLocale() === 'ar' ? 'اختر...' : 'Select...' }}</option>
                             <template x-for="sub in filteredSubCategories" :key="sub.id">
                                 <option :value="sub.id" x-text="{{ app()->getLocale() === 'ar' ? 'sub.name_ar' : 'sub.name_en' }}" :selected="sub.id == placeData.sub_category_id"></option>
@@ -399,15 +399,32 @@
             },
 
             init() {
+                // Initialize active tab from URL query parameter
+                const urlParams = new URLSearchParams(window.location.search);
+                const tab = urlParams.get('tab');
+                const validTabs = ['main-categories', 'sub-categories', 'places'];
+
+                if (tab && validTabs.includes(tab)) {
+                    this.activeTab = tab;
+                }
+
                 this.filterSubCategories();
+
                 this.$watch('activeTab', (value) => {
+                    // Update URL when tab changes
+                    const url = new URL(window.location);
+                    url.searchParams.set('tab', value);
+                    window.history.pushState({}, '', url);
+
                     if (value === 'places') {
                         // Use a slight delay to ensure x-show transition has started/finished rendering
-                        setTimeout(() => {
-                            if (this.map) {
-                                this.map.invalidateSize();
-                            }
-                        }, 200);
+                        this.$nextTick(() => {
+                            setTimeout(() => {
+                                if (this.map) {
+                                    this.map.invalidateSize();
+                                }
+                            }, 200);
+                        });
                     }
                 });
             },
@@ -478,14 +495,12 @@
                 document.getElementById('fp_country_id').dispatchEvent(new Event('change'));
 
                 if(this.map) {
+                    this.map.invalidateSize();
                     // Reset to default Cairo view
                      this.map.setView([30.0444, 31.2357], 6);
                      // Clear drawings
                      if(this.map.drawnItems) this.map.drawnItems.clearLayers();
                      if(this.map.updateBoundaryInput) this.map.updateBoundaryInput();
-                     // We can't easily remove the marker unless we reload map or move it to 0,0
-                     // But we can move it to Cairo or just leave it.
-                     // A clean approach would be to re-init map, but that's heavy.
                 }
             },
             async editPlace(place) {
@@ -502,7 +517,6 @@
                     name_ar: place.name_ar,
                     name_en: place.name_en,
                     is_active: place.is_active
-                    // point_lat/lng removed from here as they are managed via inputs directly mainly
                 };
 
                 // Populate Locations
@@ -530,49 +544,55 @@
                 }
 
                 // Update Map
-                // Ensure map is visible before calling map methods to avoid sizing issues (though invalidateSize handles it)
-                setTimeout(() => {
-                    const mapInstance = this.map;
-                    if(mapInstance && place.point_lat && place.point_lng) {
-                        const lat = parseFloat(place.point_lat);
-                        const lng = parseFloat(place.point_lng);
+                // Ensure map is visible before calling map methods
+                this.$nextTick(() => {
+                    setTimeout(() => {
+                        const mapInstance = this.map;
+                        if(mapInstance) {
+                            // Important: Resize first
+                            mapInstance.invalidateSize();
 
-                        // Move view
-                        mapInstance.setView([lat, lng], 15);
-                        mapInstance.invalidateSize();
+                            if (place.point_lat && place.point_lng) {
+                                const lat = parseFloat(place.point_lat);
+                                const lng = parseFloat(place.point_lng);
 
-                        // Update Marker
-                        if (mapInstance.updateMarker) {
-                            mapInstance.updateMarker(lat, lng);
+                                // Move view
+                                mapInstance.setView([lat, lng], 15);
+
+                                // Update Marker
+                                if (mapInstance.updateMarker) {
+                                    mapInstance.updateMarker(lat, lng);
+                                }
+
+                                // Remove existing layers if any (clearing drawn items)
+                                if (mapInstance.drawnItems) {
+                                    mapInstance.drawnItems.clearLayers();
+                                }
+
+                                // Add Polygon if exists
+                                if (place.polygon_geojson && mapInstance.drawnItems) {
+                                     // Check if it's a string or object
+                                     let geoJson = place.polygon_geojson;
+                                     if (typeof geoJson === 'string') {
+                                         try { geoJson = JSON.parse(geoJson); } catch(e) {}
+                                     }
+
+                                     if (geoJson) {
+                                         const layer = L.geoJSON(geoJson);
+                                         layer.eachLayer(function(l) {
+                                             mapInstance.drawnItems.addLayer(l);
+                                         });
+                                     }
+                                }
+
+                                // Sync boundary input
+                                if (mapInstance.updateBoundaryInput) {
+                                    mapInstance.updateBoundaryInput();
+                                }
+                            }
                         }
-
-                        // Remove existing layers if any (clearing drawn items)
-                        if (mapInstance.drawnItems) {
-                            mapInstance.drawnItems.clearLayers();
-                        }
-
-                        // Add Polygon if exists
-                        if (place.polygon_geojson && mapInstance.drawnItems) {
-                             // Check if it's a string or object
-                             let geoJson = place.polygon_geojson;
-                             if (typeof geoJson === 'string') {
-                                 try { geoJson = JSON.parse(geoJson); } catch(e) {}
-                             }
-
-                             if (geoJson) {
-                                 const layer = L.geoJSON(geoJson);
-                                 layer.eachLayer(function(l) {
-                                     mapInstance.drawnItems.addLayer(l);
-                                 });
-                             }
-                        }
-
-                        // Sync boundary input
-                        if (mapInstance.updateBoundaryInput) {
-                            mapInstance.updateBoundaryInput();
-                        }
-                    }
-                }, 300);
+                    }, 300);
+                });
             }
         }));
     });
@@ -640,14 +660,66 @@
              populateSelect(districtSelect, response.districts || [], "@lang('admin.select_district')");
         }
 
+        let currentReferenceLayer = null;
+
+        function updateMapBoundary(level, id) {
+            const mapInstance = window['map_featured-places-map'];
+            if (!mapInstance || !id) return;
+
+            // Remove previous reference layer if exists
+            if (currentReferenceLayer) {
+                mapInstance.removeLayer(currentReferenceLayer);
+                currentReferenceLayer = null;
+            }
+
+            // Fetch polygon for the selected location
+            fetch(`{{ url('admin/location-polygons') }}?level=${level}&id=${id}`)
+                .then(response => response.json())
+                .then(data => {
+                    // Response structure: { regions: [ ... ], ... }
+                    const key = level === 'region' ? 'regions' : (level === 'city' ? 'cities' : 'districts');
+                    if (data[key] && data[key].length > 0) {
+                        const item = data[key][0];
+
+                        // Priority 1: If polygon exists, draw it and fit bounds
+                        if (item.polygon) {
+                            currentReferenceLayer = L.geoJSON(item.polygon, {
+                                style: {
+                                    color: '#3388ff',
+                                    weight: 2,
+                                    opacity: 0.6,
+                                    fillOpacity: 0.1,
+                                    dashArray: '5, 5' // Dashed line to indicate reference
+                                },
+                                interactive: false // Don't block clicks
+                            }).addTo(mapInstance);
+
+                            mapInstance.fitBounds(currentReferenceLayer.getBounds());
+                        }
+                        // Priority 2: If no polygon but lat/lng exists, fly to point
+                        else if (item.lat != null && item.lng != null) {
+                            const zoom = level === 'region' ? 9 : (level === 'city' ? 11 : 13);
+                            mapInstance.flyTo([item.lat, item.lng], zoom);
+                        }
+                    }
+                })
+                .catch(err => console.error("Error fetching location polygon:", err));
+        }
+
         // Map Interaction Hook
-        function flyToSelected(selectElement) {
+        function flyToSelected(selectElement, level) {
              const selectedOption = selectElement.options[selectElement.selectedIndex];
              const lat = selectedOption.getAttribute('data-lat');
              const lng = selectedOption.getAttribute('data-lng');
              const mapInstance = window['map_featured-places-map'];
+             const id = selectElement.value;
 
-             if (lat && lng && mapInstance) {
+             // Always try to fetch and show boundary first
+             if (id && level) {
+                 updateMapBoundary(level, id);
+             }
+             // Fallback to simple flyTo if logic requires (though updateMapBoundary handles this too)
+             else if (lat && lng && mapInstance) {
                  mapInstance.flyTo([lat, lng], 12);
              }
         }
@@ -656,7 +728,7 @@
         countrySelect.addEventListener('change', async function() {
             if(this.value) {
                 await window.loadRegions(this.value);
-                flyToSelected(this);
+                flyToSelected(this, null); // Country has no boundary API usually here, or handled differently
             } else {
                 regionSelect.innerHTML = '<option value="">@lang('admin.select_region')</option>'; regionSelect.disabled = true;
                 citySelect.innerHTML = '<option value="">@lang('admin.select_city')</option>'; citySelect.disabled = true;
@@ -667,7 +739,7 @@
         regionSelect.addEventListener('change', async function() {
             if(this.value) {
                 await window.loadCities(this.value);
-                flyToSelected(this);
+                flyToSelected(this, 'region');
             } else {
                 citySelect.innerHTML = '<option value="">@lang('admin.select_city')</option>'; citySelect.disabled = true;
                 districtSelect.innerHTML = '<option value="">@lang('admin.select_district')</option>'; districtSelect.disabled = true;
@@ -677,14 +749,14 @@
         citySelect.addEventListener('change', async function() {
             if(this.value) {
                 await window.loadDistricts(this.value);
-                flyToSelected(this);
+                flyToSelected(this, 'city');
             } else {
                 districtSelect.innerHTML = '<option value="">@lang('admin.select_district')</option>'; districtSelect.disabled = true;
             }
         });
 
         districtSelect.addEventListener('change', function() {
-             flyToSelected(this);
+             flyToSelected(this, 'district');
         });
     });
 </script>
