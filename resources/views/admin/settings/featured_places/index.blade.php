@@ -7,6 +7,15 @@
 @section('content')
 <div class="bg-white rounded-lg shadow-sm p-6" x-data="featuredPlacesManager()">
 
+    <!-- Debug Output (Visible for troubleshooting as requested) -->
+    <div class="mb-4 p-4 bg-yellow-50 border border-yellow-200 rounded text-xs font-mono overflow-auto" style="max-height: 200px;">
+        <strong>Debug Info:</strong>
+        <div x-text="'Place SubCat: ' + placeData.sub_category_id"></div>
+        <div x-text="'Selected MainCat: ' + selectedMainCategory"></div>
+        <div x-text="'Filtered SubCats Count: ' + filteredSubCategories.length"></div>
+        <div>Filtered IDs: <span x-text="filteredSubCategories.map(s => s.id).join(', ')"></span></div>
+    </div>
+
     <!-- Tabs Navigation -->
     <div class="border-b border-gray-200 mb-6">
         <nav class="-mb-px flex space-x-8 rtl:space-x-reverse" aria-label="Tabs">
@@ -96,7 +105,7 @@
                                 </span>
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm font-medium flex gap-2">
-                                <button type="button" @click='editMainCategory(@json($category))' class="text-indigo-600 hover:text-indigo-900">@lang('admin.edit')</button>
+                                <button type="button" @click='editMainCategory(@json($category, JSON_HEX_APOS))' class="text-indigo-600 hover:text-indigo-900">@lang('admin.edit')</button>
                                 <form action="{{ route('admin.featured-places.main-categories.destroy', $category->id) }}" method="POST" class="inline-block" onsubmit="return confirm('Are you sure?');">
                                     @csrf
                                     @method('DELETE')
@@ -176,7 +185,7 @@
                                 </span>
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm font-medium flex gap-2">
-                                <button type="button" @click='editSubCategory(@json($sub))' class="text-indigo-600 hover:text-indigo-900">@lang('admin.edit')</button>
+                                <button type="button" @click='editSubCategory(@json($sub, JSON_HEX_APOS))' class="text-indigo-600 hover:text-indigo-900">@lang('admin.edit')</button>
                                 <form action="{{ route('admin.featured-places.sub-categories.destroy', $sub->id) }}" method="POST" class="inline-block" onsubmit="return confirm('Are you sure?');">
                                     @csrf
                                     @method('DELETE')
@@ -219,7 +228,7 @@
                         <select name="sub_category_id" x-model="placeData.sub_category_id" :disabled="!selectedMainCategory" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
                             <option value="">{{ app()->getLocale() === 'ar' ? 'اختر...' : 'Select...' }}</option>
                             <template x-for="sub in filteredSubCategories" :key="sub.id">
-                                <option :value="sub.id" x-text="{{ app()->getLocale() === 'ar' ? 'sub.name_ar' : 'sub.name_en' }}" :selected="sub.id == placeData.sub_category_id"></option>
+                                <option :value="sub.id" x-text="{{ app()->getLocale() === 'ar' ? 'sub.name_ar' : 'sub.name_en' }}"></option>
                             </template>
                         </select>
                         @error('sub_category_id')
@@ -357,7 +366,7 @@
                                 </span>
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm font-medium flex gap-2">
-                                <button type="button" @click='editPlace(@json($place))' class="text-indigo-600 hover:text-indigo-900">@lang('admin.edit')</button>
+                                <button type="button" @click='editPlace(@json($place, JSON_HEX_APOS))' class="text-indigo-600 hover:text-indigo-900">@lang('admin.edit')</button>
                                 <form action="{{ route('admin.featured-places.places.destroy', $place->id) }}" method="POST" class="inline-block" onsubmit="return confirm('Are you sure?');">
                                     @csrf
                                     @method('DELETE')
@@ -499,10 +508,15 @@
                     return;
                 }
                 this.filteredSubCategories = this.allSubCategories.filter(sub => sub.main_category_id == this.selectedMainCategory);
+
+                // Debugging (Console Log)
+                console.log('Filtering SubCategories for MainCat ID:', this.selectedMainCategory);
+                console.log('Found SubCategories:', this.filteredSubCategories);
+
                 if (!this.filteredSubCategories.some(sub => sub.id == this.placeData.sub_category_id)) {
+                    console.warn('Current sub_category_id', this.placeData.sub_category_id, 'not found in filtered list. Resetting.');
                     this.placeData.sub_category_id = '';
                 }
-                // Don't reset sub selection here if in edit mode and valid
             },
             resetPlaceForm() {
                 this.placeEditMode = false;
@@ -532,92 +546,130 @@
                 }
             },
             async editPlace(place) {
-                this.activeTab = 'places';
-                this.placeEditMode = true;
-                this.placeFormAction = "{{ route('admin.featured-places.places.update', '__PLACE_ID__') }}".replace('__PLACE_ID__', place.id);
+                try {
+                    console.group('editPlace Debugger');
+                    console.log('Editing Place:', place);
 
-                this.selectedMainCategory = place.main_category_id;
-                this.filterSubCategories();
+                    this.activeTab = 'places';
+                    this.placeEditMode = true;
+                    this.placeFormAction = "{{ route('admin.featured-places.places.update', '__PLACE_ID__') }}".replace('__PLACE_ID__', place.id);
 
-                this.placeData = {
-                    id: place.id,
-                    sub_category_id: place.sub_category_id,
-                    name_ar: place.name_ar,
-                    name_en: place.name_en,
-                    is_active: place.is_active
-                };
+                    // 1. Set Main Category
+                    this.selectedMainCategory = place.main_category_id;
+                    console.log('Set Selected Main Category:', this.selectedMainCategory);
 
-                // Populate Locations
-                const countryId = place.country_id;
-                const regionId = place.region_id;
-                const cityId = place.city_id;
-                const districtId = place.district_id;
+                    // 2. Filter Sub Categories immediately
+                    // Ensure type consistency (string vs int)
+                    this.filteredSubCategories = this.allSubCategories.filter(sub => sub.main_category_id == this.selectedMainCategory);
+                    console.log('Filtered Sub Categories:', this.filteredSubCategories);
 
-                // Set Country
-                const countrySelect = document.getElementById('fp_country_id');
-                countrySelect.value = countryId;
+                    // 3. Set Place Data
+                    this.placeData = {
+                        id: place.id,
+                        // Force sub_category_id to be set even if it's null (as empty string)
+                        sub_category_id: place.sub_category_id ? place.sub_category_id : '',
+                        name_ar: place.name_ar,
+                        name_en: place.name_en,
+                        is_active: place.is_active
+                    };
+                    console.log('Set Place Data:', this.placeData);
 
-                // Trigger Country Change and wait
-                await window.loadRegions(countryId);
-                document.getElementById('fp_region_id').value = regionId;
+                    // Populate Locations
+                    const countryId = place.country_id;
+                    const regionId = place.region_id;
+                    const cityId = place.city_id;
+                    const districtId = place.district_id;
 
-                // Trigger Region Change and wait
-                await window.loadCities(regionId);
-                document.getElementById('fp_city_id').value = cityId;
+                    console.log('Location IDs:', { countryId, regionId, cityId, districtId });
 
-                // Trigger City Change and wait
-                await window.loadDistricts(cityId);
-                if (districtId) {
-                    document.getElementById('fp_district_id').value = districtId;
-                }
+                    if (countryId) {
+                        const countrySelect = document.getElementById('fp_country_id');
+                        if (countrySelect) {
+                            countrySelect.value = countryId;
+                            // Trigger loading regions
+                            if (window.loadRegions) {
+                                console.log('Loading Regions for:', countryId);
+                                await window.loadRegions(countryId);
+                                const regionSelect = document.getElementById('fp_region_id');
+                                if (regionSelect) regionSelect.value = regionId;
 
-                // Update Map
-                // Ensure map is visible before calling map methods
-                this.$nextTick(() => {
-                    setTimeout(() => {
-                        const mapInstance = this.map;
-                        if(mapInstance) {
-                            // Important: Resize first
-                            mapInstance.invalidateSize();
+                                // Trigger loading cities
+                                if (window.loadCities && regionId) {
+                                    console.log('Loading Cities for:', regionId);
+                                    await window.loadCities(regionId);
+                                    const citySelect = document.getElementById('fp_city_id');
+                                    if (citySelect) citySelect.value = cityId;
 
-                            if (place.point_lat && place.point_lng) {
-                                const lat = parseFloat(place.point_lat);
-                                const lng = parseFloat(place.point_lng);
-
-                                // Move view
-                                mapInstance.setView([lat, lng], 15);
-
-                                // Update Marker
-                                if (mapInstance.updateMarker) {
-                                    mapInstance.updateMarker(lat, lng);
-                                }
-
-                                // Remove existing layers if any (clearing drawn items)
-                                if (mapInstance.drawnItems) {
-                                    mapInstance.drawnItems.clearLayers();
-                                }
-
-                                // Add Polygon if exists
-                                if (place.polygon_geojson && mapInstance.drawnItems) {
-                                     // Check if it's a string or object
-                                     let geoJson = place.polygon_geojson;
-                                     if (typeof geoJson === 'string') {
-                                         try { geoJson = JSON.parse(geoJson); } catch(e) {}
-                                     }
-
-                                     if (geoJson) {
-                                         const layer = L.geoJSON(geoJson);
-                                         layer.eachLayer(function(l) {
-                                             mapInstance.drawnItems.addLayer(l);
-                                         });
-                                     }
-                                }
-
-                                // Sync boundary input
-                                if (mapInstance.updateBoundaryInput) {
-                                    mapInstance.updateBoundaryInput();
+                                    // Trigger loading districts
+                                    if (window.loadDistricts && cityId) {
+                                        console.log('Loading Districts for:', cityId);
+                                        await window.loadDistricts(cityId);
+                                        const districtSelect = document.getElementById('fp_district_id');
+                                        if (districtSelect && districtId) {
+                                            districtSelect.value = districtId;
+                                        }
+                                    }
                                 }
                             }
+                        }
+                    }
+                    console.groupEnd();
+                } catch (e) {
+                    console.error('Error populating edit form:', e);
+                    console.groupEnd();
+                }
+
+                // Update Map (independent of location loading success/fail)
+                this.$nextTick(() => {
+                    setTimeout(() => {
+                        try {
+                            const mapInstance = this.map;
+                            if(mapInstance) {
+                                // Important: Resize first
+                                mapInstance.invalidateSize();
+
+                                if (place.point_lat && place.point_lng) {
+                                    const lat = parseFloat(place.point_lat);
+                                    const lng = parseFloat(place.point_lng);
+
+                                    // Move view
+                                    mapInstance.setView([lat, lng], 15);
+
+                                    // Update Marker
+                                    if (mapInstance.updateMarker) {
+                                        mapInstance.updateMarker(lat, lng);
+                                    }
+
+                                    // Remove existing layers if any (clearing drawn items)
+                                    if (mapInstance.drawnItems) {
+                                        mapInstance.drawnItems.clearLayers();
+                                    }
+
+                                    // Add Polygon if exists
+                                    if (place.polygon_geojson && mapInstance.drawnItems) {
+                                         // Check if it's a string or object
+                                         let geoJson = place.polygon_geojson;
+                                         if (typeof geoJson === 'string') {
+                                             try { geoJson = JSON.parse(geoJson); } catch(e) {}
+                                         }
+
+                                         if (geoJson) {
+                                             const layer = L.geoJSON(geoJson);
+                                             layer.eachLayer(function(l) {
+                                                 mapInstance.drawnItems.addLayer(l);
+                                             });
+                                             mapInstance.fitBounds(layer.getBounds());
+                                         }
+                                    }
+
+                                    // Sync boundary input
+                                    if (mapInstance.updateBoundaryInput) {
+                                        mapInstance.updateBoundaryInput();
+                                    }
+                                }
+                            }
+                        } catch(mapError) {
+                            console.error('Error updating map:', mapError);
                         }
                     }, 300);
                 });
