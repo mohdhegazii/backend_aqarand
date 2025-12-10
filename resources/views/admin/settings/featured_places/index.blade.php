@@ -52,6 +52,7 @@
                     <div>
                         <label class="block text-sm font-medium text-gray-700">{{ app()->getLocale() === 'ar' ? 'اسم الأيقونة (مثال: bi-hospital)' : 'Icon Name (e.g. bi-hospital)' }}</label>
                         <input type="text" name="icon_name" x-model="mainCatData.icon_name" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
+                        <p class="mt-1 text-xs text-gray-500">{{ app()->getLocale() === 'ar' ? 'استخدم فئات Bootstrap Icons' : 'Use Bootstrap Icons classes' }}</p>
                     </div>
                     <div>
                         <label class="flex items-center mt-6">
@@ -85,7 +86,10 @@
                         <tr>
                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ $category->id }}</td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{{ $category->name }}</td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ $category->icon_name }}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                <i class="bi {{ $category->icon_name }} text-xl"></i>
+                                <span class="ml-2 text-xs text-gray-400">{{ $category->icon_name }}</span>
+                            </td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                                 <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full {{ $category->is_active ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800' }}">
                                     {{ $category->is_active ? 'Active' : 'Inactive' }}
@@ -212,7 +216,7 @@
                         <select name="sub_category_id" x-model="placeData.sub_category_id" :disabled="!selectedMainCategory" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
                             <option value="">{{ app()->getLocale() === 'ar' ? 'اختر...' : 'Select...' }}</option>
                             <template x-for="sub in filteredSubCategories" :key="sub.id">
-                                <option :value="sub.id" x-text="sub.name" :selected="sub.id == placeData.sub_category_id"></option>
+                                <option :value="sub.id" x-text="{{ app()->getLocale() === 'ar' ? 'sub.name_ar' : 'sub.name_en' }}" :selected="sub.id == placeData.sub_category_id"></option>
                             </template>
                         </select>
                     </div>
@@ -226,7 +230,7 @@
                         <select name="country_id" id="fp_country_id" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" required>
                              <option value="">@lang('admin.select_country')</option>
                              @foreach($countries as $country)
-                                 <option value="{{ $country->id }}" data-lat="{{ $country->lat }}" data-lng="{{ $country->lng }}">{{ $country->name }}</option>
+                                 <option value="{{ $country->id }}" data-lat="{{ $country->lat }}" data-lng="{{ $country->lng }}">{{ $country->display_name }}</option>
                              @endforeach
                         </select>
                      </div>
@@ -395,6 +399,13 @@
 
             init() {
                 this.filterSubCategories();
+                this.$watch('activeTab', (value) => {
+                    if (value === 'places' && window.adminMap) {
+                        setTimeout(() => {
+                            window.adminMap.invalidateSize();
+                        }, 200);
+                    }
+                });
             },
 
             // Main Category Methods
@@ -580,36 +591,41 @@
 
         function populateSelect(selectElement, items, placeholder) {
             selectElement.innerHTML = `<option value="">${placeholder}</option>`;
-            items.forEach(item => {
-                const option = document.createElement('option');
-                option.value = item.id;
-                option.textContent = item.name_en || item.name_ar || item.name;
-                if(item.lat && item.lng) {
-                     option.setAttribute('data-lat', item.lat);
-                     option.setAttribute('data-lng', item.lng);
-                }
-                selectElement.appendChild(option);
-            });
-            selectElement.disabled = false;
+            if (Array.isArray(items)) {
+                const isAr = {{ app()->getLocale() === 'ar' ? 'true' : 'false' }};
+                items.forEach(item => {
+                    const option = document.createElement('option');
+                    option.value = item.id;
+                    option.textContent = isAr
+                        ? (item.name_local || item.name_ar || item.name_en || item.name)
+                        : (item.name_en || item.name_local || item.name);
+                    if(item.lat && item.lng) {
+                         option.setAttribute('data-lat', item.lat);
+                         option.setAttribute('data-lng', item.lng);
+                    }
+                    selectElement.appendChild(option);
+                });
+                selectElement.disabled = false;
+            }
         }
 
         // Expose loaders to window for Edit Mode
         window.loadRegions = async function(countryId) {
-             const data = await fetchLocations(`/admin/locations/regions/${countryId}`);
-             populateSelect(regionSelect, data, "@lang('admin.select_region')");
+             const response = await fetchLocations(`/admin/locations/regions/${countryId}`);
+             populateSelect(regionSelect, response.regions || [], "@lang('admin.select_region')");
              citySelect.innerHTML = '<option value="">@lang('admin.select_city')</option>'; citySelect.disabled = true;
              districtSelect.innerHTML = '<option value="">@lang('admin.select_district')</option>'; districtSelect.disabled = true;
         }
 
         window.loadCities = async function(regionId) {
-             const data = await fetchLocations(`/admin/locations/cities/${regionId}`);
-             populateSelect(citySelect, data, "@lang('admin.select_city')");
+             const response = await fetchLocations(`/admin/locations/cities/${regionId}`);
+             populateSelect(citySelect, response.cities || [], "@lang('admin.select_city')");
              districtSelect.innerHTML = '<option value="">@lang('admin.select_district')</option>'; districtSelect.disabled = true;
         }
 
         window.loadDistricts = async function(cityId) {
-             const data = await fetchLocations(`/admin/locations/districts/${cityId}`);
-             populateSelect(districtSelect, data, "@lang('admin.select_district')");
+             const response = await fetchLocations(`/admin/locations/districts/${cityId}`);
+             populateSelect(districtSelect, response.districts || [], "@lang('admin.select_district')");
         }
 
         // Map Interaction Hook
