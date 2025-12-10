@@ -160,7 +160,17 @@ class FeaturedPlaceController extends Controller
         $data['sub_category_id'] = $request->input('sub_category_id') ?: null;
         $data['district_id'] = $request->input('district_id') ?: null;
 
-        FeaturedPlace::create($data);
+        try {
+            FeaturedPlace::create($data);
+        } catch (\Throwable $e) {
+            dd([
+                'ERROR' => 'Failed to create Featured Place',
+                'MESSAGE' => $e->getMessage(),
+                'SUB_CATEGORY_ID' => $data['sub_category_id'] ?? 'NULL/MISSING',
+                'ALL_DATA' => $data,
+                'TRACE' => $e->getTraceAsString()
+            ]);
+        }
 
         return redirect()->route('admin.featured-places.index', ['tab' => 'places'])
             ->with('success', __('admin.created_successfully'));
@@ -205,7 +215,17 @@ class FeaturedPlaceController extends Controller
         $data['sub_category_id'] = $request->input('sub_category_id') ?: null;
         $data['district_id'] = $request->input('district_id') ?: null;
 
-        $place->update($data);
+        try {
+            $place->update($data);
+        } catch (\Throwable $e) {
+            dd([
+                'ERROR' => 'Failed to update Featured Place',
+                'MESSAGE' => $e->getMessage(),
+                'SUB_CATEGORY_ID' => $data['sub_category_id'] ?? 'NULL/MISSING',
+                'ALL_DATA' => $data,
+                'TRACE' => $e->getTraceAsString()
+            ]);
+        }
 
         return redirect()->route('admin.featured-places.index', ['tab' => 'places'])
             ->with('success', __('admin.updated_successfully'));
