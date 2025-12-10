@@ -8,6 +8,7 @@ use App\Models\FeaturedPlace;
 use App\Models\FeaturedPlaceMainCategory;
 use App\Models\FeaturedPlaceSubCategory;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 use Illuminate\Support\Str;
 
 class FeaturedPlaceController extends Controller
@@ -131,7 +132,11 @@ class FeaturedPlaceController extends Controller
     {
         $request->validate([
             'main_category_id' => 'required|exists:featured_place_main_categories,id',
-            'sub_category_id' => 'nullable|exists:featured_place_sub_categories,id',
+            'sub_category_id' => [
+                'required',
+                Rule::exists('featured_place_sub_categories', 'id')
+                    ->where('main_category_id', $request->input('main_category_id')),
+            ],
             'country_id' => 'required|exists:countries,id',
             'region_id' => 'required|exists:regions,id',
             'city_id' => 'required|exists:cities,id',
@@ -152,12 +157,13 @@ class FeaturedPlaceController extends Controller
         }
 
         $data['is_active'] = $request->has('is_active');
-        $data['sub_category_id'] = $request->input('sub_category_id') ?: null;
+        $data['sub_category_id'] = $request->input('sub_category_id');
         $data['district_id'] = $request->input('district_id') ?: null;
 
         FeaturedPlace::create($data);
 
-        return redirect()->back()->with('success', __('admin.created_successfully'));
+        return redirect()->route('admin.featured-places.index', ['tab' => 'places'])
+            ->with('success', __('admin.created_successfully'));
     }
 
     public function updatePlace(Request $request, $id)
@@ -166,7 +172,11 @@ class FeaturedPlaceController extends Controller
 
         $request->validate([
             'main_category_id' => 'required|exists:featured_place_main_categories,id',
-            'sub_category_id' => 'nullable|exists:featured_place_sub_categories,id',
+            'sub_category_id' => [
+                'required',
+                Rule::exists('featured_place_sub_categories', 'id')
+                    ->where('main_category_id', $request->input('main_category_id')),
+            ],
             'country_id' => 'required|exists:countries,id',
             'region_id' => 'required|exists:regions,id',
             'city_id' => 'required|exists:cities,id',
@@ -192,18 +202,20 @@ class FeaturedPlaceController extends Controller
         }
 
         $data['is_active'] = $request->has('is_active');
-        $data['sub_category_id'] = $request->input('sub_category_id') ?: null;
+        $data['sub_category_id'] = $request->input('sub_category_id');
         $data['district_id'] = $request->input('district_id') ?: null;
 
         $place->update($data);
 
-        return redirect()->back()->with('success', __('admin.updated_successfully'));
+        return redirect()->route('admin.featured-places.index', ['tab' => 'places'])
+            ->with('success', __('admin.updated_successfully'));
     }
 
     public function destroyPlace($id)
     {
         $place = FeaturedPlace::findOrFail($id);
         $place->delete();
-        return redirect()->back()->with('success', __('admin.deleted_successfully'));
+        return redirect()->route('admin.featured-places.index', ['tab' => 'places'])
+            ->with('success', __('admin.deleted_successfully'));
     }
 }
