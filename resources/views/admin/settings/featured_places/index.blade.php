@@ -534,7 +534,7 @@
             async editPlace(place) {
                 this.activeTab = 'places';
                 this.placeEditMode = true;
-                this.placeFormAction = "{{ route('admin.featured-places.places.update', '0') }}".replace('/0', '/' + place.id);
+                this.placeFormAction = "{{ route('admin.featured-places.places.update', '__PLACE_ID__') }}".replace('__PLACE_ID__', place.id);
 
                 this.selectedMainCategory = place.main_category_id;
                 this.filterSubCategories();
