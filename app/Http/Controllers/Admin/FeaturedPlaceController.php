@@ -133,7 +133,7 @@ class FeaturedPlaceController extends Controller
         $request->validate([
             'main_category_id' => 'required|exists:featured_place_main_categories,id',
             'sub_category_id' => [
-                'required',
+                'nullable',
                 Rule::exists('featured_place_sub_categories', 'id')
                     ->where('main_category_id', $request->input('main_category_id')),
             ],
@@ -157,7 +157,7 @@ class FeaturedPlaceController extends Controller
         }
 
         $data['is_active'] = $request->has('is_active');
-        $data['sub_category_id'] = $request->input('sub_category_id');
+        $data['sub_category_id'] = $request->input('sub_category_id') ?: null;
         $data['district_id'] = $request->input('district_id') ?: null;
 
         FeaturedPlace::create($data);
@@ -173,7 +173,7 @@ class FeaturedPlaceController extends Controller
         $request->validate([
             'main_category_id' => 'required|exists:featured_place_main_categories,id',
             'sub_category_id' => [
-                'required',
+                'nullable',
                 Rule::exists('featured_place_sub_categories', 'id')
                     ->where('main_category_id', $request->input('main_category_id')),
             ],
@@ -202,7 +202,7 @@ class FeaturedPlaceController extends Controller
         }
 
         $data['is_active'] = $request->has('is_active');
-        $data['sub_category_id'] = $request->input('sub_category_id');
+        $data['sub_category_id'] = $request->input('sub_category_id') ?: null;
         $data['district_id'] = $request->input('district_id') ?: null;
 
         $place->update($data);
