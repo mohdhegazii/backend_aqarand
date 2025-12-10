@@ -7,6 +7,15 @@
 @section('content')
 <div class="bg-white rounded-lg shadow-sm p-6" x-data="featuredPlacesManager()">
 
+    <!-- Debug Output (Visible for troubleshooting as requested) -->
+    <div class="mb-4 p-4 bg-yellow-50 border border-yellow-200 rounded text-xs font-mono overflow-auto" style="max-height: 200px;">
+        <strong>Debug Info:</strong>
+        <div x-text="'Place SubCat: ' + placeData.sub_category_id"></div>
+        <div x-text="'Selected MainCat: ' + selectedMainCategory"></div>
+        <div x-text="'Filtered SubCats Count: ' + filteredSubCategories.length"></div>
+        <div>Filtered IDs: <span x-text="filteredSubCategories.map(s => s.id).join(', ')"></span></div>
+    </div>
+
     <!-- Tabs Navigation -->
     <div class="border-b border-gray-200 mb-6">
         <nav class="-mb-px flex space-x-8 rtl:space-x-reverse" aria-label="Tabs">
@@ -499,10 +508,15 @@
                     return;
                 }
                 this.filteredSubCategories = this.allSubCategories.filter(sub => sub.main_category_id == this.selectedMainCategory);
+
+                // Debugging (Console Log)
+                console.log('Filtering SubCategories for MainCat ID:', this.selectedMainCategory);
+                console.log('Found SubCategories:', this.filteredSubCategories);
+
                 if (!this.filteredSubCategories.some(sub => sub.id == this.placeData.sub_category_id)) {
+                    console.warn('Current sub_category_id', this.placeData.sub_category_id, 'not found in filtered list. Resetting.');
                     this.placeData.sub_category_id = '';
                 }
-                // Don't reset sub selection here if in edit mode and valid
             },
             resetPlaceForm() {
                 this.placeEditMode = false;
