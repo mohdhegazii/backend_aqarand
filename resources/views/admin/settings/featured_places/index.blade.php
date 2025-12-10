@@ -546,27 +546,33 @@
                 }
             },
             async editPlace(place) {
+                if (!place) {
+                    console.error('editPlace called with undefined place');
+                    return;
+                }
+                const currentPlace = place;
+
                 try {
                     this.activeTab = 'places';
                     this.placeEditMode = true;
-                    this.placeFormAction = "{{ route('admin.featured-places.places.update', '__PLACE_ID__') }}".replace('__PLACE_ID__', place.id);
+                    this.placeFormAction = "{{ route('admin.featured-places.places.update', '__PLACE_ID__') }}".replace('__PLACE_ID__', currentPlace.id);
 
-                    this.selectedMainCategory = place.main_category_id;
+                    this.selectedMainCategory = currentPlace.main_category_id;
                     this.filterSubCategories();
 
                     this.placeData = {
-                        id: place.id,
-                        sub_category_id: place.sub_category_id || '', // Normalize null to empty string for Select
-                        name_ar: place.name_ar,
-                        name_en: place.name_en,
-                        is_active: place.is_active
+                        id: currentPlace.id,
+                        sub_category_id: currentPlace.sub_category_id || '', // Normalize null to empty string for Select
+                        name_ar: currentPlace.name_ar,
+                        name_en: currentPlace.name_en,
+                        is_active: currentPlace.is_active
                     };
 
                     // Populate Locations
-                    const countryId = place.country_id;
-                    const regionId = place.region_id;
-                    const cityId = place.city_id;
-                    const districtId = place.district_id;
+                    const countryId = currentPlace.country_id;
+                    const regionId = currentPlace.region_id;
+                    const cityId = currentPlace.city_id;
+                    const districtId = currentPlace.district_id;
 
                     if (countryId) {
                         const countrySelect = document.getElementById('fp_country_id');
@@ -609,9 +615,9 @@
                                 // Important: Resize first
                                 mapInstance.invalidateSize();
 
-                                if (place.point_lat && place.point_lng) {
-                                    const lat = parseFloat(place.point_lat);
-                                    const lng = parseFloat(place.point_lng);
+                                if (currentPlace && currentPlace.point_lat && currentPlace.point_lng) {
+                                    const lat = parseFloat(currentPlace.point_lat);
+                                    const lng = parseFloat(currentPlace.point_lng);
 
                                     // Move view
                                     mapInstance.setView([lat, lng], 15);
@@ -627,9 +633,9 @@
                                     }
 
                                     // Add Polygon if exists
-                                    if (place.polygon_geojson && mapInstance.drawnItems) {
+                                    if (currentPlace.polygon_geojson && mapInstance.drawnItems) {
                                          // Check if it's a string or object
-                                         let geoJson = place.polygon_geojson;
+                                         let geoJson = currentPlace.polygon_geojson;
                                          if (typeof geoJson === 'string') {
                                              try { geoJson = JSON.parse(geoJson); } catch(e) {}
                                          }
@@ -686,6 +692,7 @@
             if (Array.isArray(items)) {
                 const isAr = {{ app()->getLocale() === 'ar' ? 'true' : 'false' }};
                 items.forEach(item => {
+                    if (!item) return;
                     const option = document.createElement('option');
                     option.value = item.id;
                     option.textContent = isAr
