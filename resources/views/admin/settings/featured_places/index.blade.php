@@ -366,7 +366,10 @@
                                 </span>
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm font-medium flex gap-2">
-                                <button type="button" @click='editPlace(@json($place->only(["id", "main_category_id", "sub_category_id", "country_id", "region_id", "city_id", "district_id", "name_ar", "name_en", "is_active", "point_lat", "point_lng", "polygon_geojson"]), JSON_HEX_APOS))' class="text-indigo-600 hover:text-indigo-900">@lang('admin.edit')</button>
+                                @php
+                                    $placeData = $place->only(["id", "main_category_id", "sub_category_id", "country_id", "region_id", "city_id", "district_id", "name_ar", "name_en", "is_active", "point_lat", "point_lng", "polygon_geojson"]);
+                                @endphp
+                                <button type="button" @click='editPlace(@json($placeData, JSON_HEX_APOS))' class="text-indigo-600 hover:text-indigo-900">@lang('admin.edit')</button>
                                 <form action="{{ route('admin.featured-places.places.destroy', $place->id) }}" method="POST" class="inline-block" onsubmit="return confirm('Are you sure?');">
                                     @csrf
                                     @method('DELETE')
