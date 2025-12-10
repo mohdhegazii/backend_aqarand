@@ -547,32 +547,20 @@
             },
             async editPlace(place) {
                 try {
-                    console.group('editPlace Debugger');
-                    console.log('Editing Place:', place);
-
                     this.activeTab = 'places';
                     this.placeEditMode = true;
                     this.placeFormAction = "{{ route('admin.featured-places.places.update', '__PLACE_ID__') }}".replace('__PLACE_ID__', place.id);
 
-                    // 1. Set Main Category
                     this.selectedMainCategory = place.main_category_id;
-                    console.log('Set Selected Main Category:', this.selectedMainCategory);
+                    this.filterSubCategories();
 
-                    // 2. Filter Sub Categories immediately
-                    // Ensure type consistency (string vs int)
-                    this.filteredSubCategories = this.allSubCategories.filter(sub => sub.main_category_id == this.selectedMainCategory);
-                    console.log('Filtered Sub Categories:', this.filteredSubCategories);
-
-                    // 3. Set Place Data
                     this.placeData = {
                         id: place.id,
-                        // Force sub_category_id to be set even if it's null (as empty string)
-                        sub_category_id: place.sub_category_id ? place.sub_category_id : '',
+                        sub_category_id: place.sub_category_id || '', // Normalize null to empty string for Select
                         name_ar: place.name_ar,
                         name_en: place.name_en,
                         is_active: place.is_active
                     };
-                    console.log('Set Place Data:', this.placeData);
 
                     // Populate Locations
                     const countryId = place.country_id;
@@ -580,29 +568,24 @@
                     const cityId = place.city_id;
                     const districtId = place.district_id;
 
-                    console.log('Location IDs:', { countryId, regionId, cityId, districtId });
-
                     if (countryId) {
                         const countrySelect = document.getElementById('fp_country_id');
                         if (countrySelect) {
                             countrySelect.value = countryId;
                             // Trigger loading regions
                             if (window.loadRegions) {
-                                console.log('Loading Regions for:', countryId);
                                 await window.loadRegions(countryId);
                                 const regionSelect = document.getElementById('fp_region_id');
                                 if (regionSelect) regionSelect.value = regionId;
 
                                 // Trigger loading cities
                                 if (window.loadCities && regionId) {
-                                    console.log('Loading Cities for:', regionId);
                                     await window.loadCities(regionId);
                                     const citySelect = document.getElementById('fp_city_id');
                                     if (citySelect) citySelect.value = cityId;
 
                                     // Trigger loading districts
                                     if (window.loadDistricts && cityId) {
-                                        console.log('Loading Districts for:', cityId);
                                         await window.loadDistricts(cityId);
                                         const districtSelect = document.getElementById('fp_district_id');
                                         if (districtSelect && districtId) {
@@ -613,10 +596,8 @@
                             }
                         }
                     }
-                    console.groupEnd();
                 } catch (e) {
                     console.error('Error populating edit form:', e);
-                    console.groupEnd();
                 }
 
                 // Update Map (independent of location loading success/fail)
@@ -658,7 +639,6 @@
                                              layer.eachLayer(function(l) {
                                                  mapInstance.drawnItems.addLayer(l);
                                              });
-                                             mapInstance.fitBounds(layer.getBounds());
                                          }
                                     }
 
