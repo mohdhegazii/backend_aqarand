@@ -538,8 +538,7 @@
                     this.placeFormAction = "{{ route('admin.featured-places.places.update', '__PLACE_ID__') }}".replace('__PLACE_ID__', place.id);
 
                     this.selectedMainCategory = place.main_category_id;
-                    // Directly filter without calling the helper which resets placeData
-                    this.filteredSubCategories = this.allSubCategories.filter(sub => sub.main_category_id == this.selectedMainCategory);
+                    this.filterSubCategories();
 
                     this.placeData = {
                         id: place.id,
@@ -626,7 +625,6 @@
                                              layer.eachLayer(function(l) {
                                                  mapInstance.drawnItems.addLayer(l);
                                              });
-                                             mapInstance.fitBounds(layer.getBounds());
                                          }
                                     }
 
