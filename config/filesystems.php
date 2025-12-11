@@ -47,6 +47,25 @@ return [
             'report' => false,
         ],
 
+        // local_work = main application storage (public files)
+        'local_work' => [
+            'driver' => 'local',
+            'root' => storage_path('app/public'),
+            'url' => env('APP_URL').'/storage',
+            'visibility' => 'public',
+            'throw' => false,
+        ],
+
+        // s3_media_local = local mock that simulates AWS S3 bucket for development
+        // In production, this can be replaced by a real 's3' driver disk
+        's3_media_local' => [
+            'driver' => 'local',
+            'root' => storage_path('app/s3_media_local'),
+            'url' => env('APP_URL').'/s3_media_local', // Simulated URL
+            'visibility' => 'public',
+            'throw' => false,
+        ],
+
         's3' => [
             'driver' => 's3',
             'key' => env('AWS_ACCESS_KEY_ID'),
