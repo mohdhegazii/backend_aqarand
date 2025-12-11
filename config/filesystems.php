@@ -66,6 +66,15 @@ return [
             'throw' => false,
         ],
 
+        // media_tmp = Temporary storage for raw uploaded files before processing.
+        // Files here should be cleaned up after processing (not permanent storage).
+        'media_tmp' => [
+            'driver' => 'local',
+            'root' => storage_path('app/media_tmp'),
+            'throw' => false,
+            'report' => false,
+        ],
+
         's3' => [
             'driver' => 's3',
             'key' => env('AWS_ACCESS_KEY_ID'),

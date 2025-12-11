@@ -67,3 +67,17 @@
     *   Models implemented.
     *   Seeder for default settings created.
     *   **Existing functionality (Logo upload, Project gallery, etc.) REMAINS UNCHANGED and utilizes the old logic for now.** The new tables are currently parallel structures waiting for Phase 2 integration.
+
+## Phase 2 – Core Media Services & Processing
+*   **Services Implemented**:
+    *   `MediaDiskResolver`: Resolves storage disks (Default, System, Tmp) based on `MediaSetting`.
+    *   `MediaPathGenerator`: Generates consistent, SEO-friendly paths (e.g., `projects/egypt/cairo/slug/file.jpg`) for files and conversions.
+    *   `MediaProcessingService`: Handles image resizing/optimization (using Intervention Image) and PDF processing (placeholder). It writes processed files to `media_tmp` disk first.
+    *   `MediaStorageService`: Persists processed variants from `media_tmp` to the final disk (e.g., `s3_media_local`) and updates the database (`MediaFile` and `MediaConversion`).
+*   **Jobs**:
+    *   `ProcessMediaFileJob`: Queued job to orchestrate the pipeline (Load -> Process -> Store -> Update).
+*   **Infrastructure**:
+    *   Added `media_tmp` disk to `config/filesystems.php` for safe temporary processing.
+*   **Status**:
+    *   Core pipeline logic is ready.
+    *   **Integration Pending**: These services are not yet wired into the Admin Upload UI. Existing upload forms (Developer Logo, Project Media) continue to work using legacy code.
