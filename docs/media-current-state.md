@@ -27,7 +27,7 @@
 
 ## Admin File Manager (/admin/file-manager)
 *   **Route**: `/admin/file-manager` -> `admin.file_manager`
-*   **Controller**: `App\Http\Controllers\Admin\MediaController@index`
+*   **Controller**: `App\Http\Controllers\Admin\MediaController@index` (Legacy Controller logic)
 *   **View**: `resources/views/admin/media/index.blade.php`
 *   **Current Capabilities**:
     *   Lists `MediaFile` records (from `media_files` table).
@@ -36,6 +36,14 @@
     *   Actions: View (show), Delete (destroy).
     *   **Note**: This seems to be a read-only view of a "MediaFile" entity, which suggests there is already a `MediaFile` model and table, possibly part of a previous incomplete implementation or the one we are refactoring.
     *   It does *not* seem to provide a general file system browser (like a traditional file manager), but rather a database-driven list of media assets.
+
+### file_manager vs Media Manager
+*   `/admin/file-manager` is the existing legacy file management page, served by `Admin\MediaController`.
+*   New JSON endpoints `/admin/media` and `/admin/media/upload` (Phase 3) are served by `Admin\MediaApiController` to power the future central Media Manager UI.
+*   In a future phase, we will either:
+    *   Migrate `/admin/file-manager` to use the new media tables and APIs, or
+    *   Replace it with a new Media Manager screen that relies entirely on the new module.
+*   **Important**: The new API routes (`/admin/media/*`) are designed to coexist with legacy routes for now.
 
 ## Media-Related Dependencies
 *   **intervention/image**: `^2.7` (Added to `composer.json` for later installation)
@@ -81,3 +89,19 @@
 *   **Status**:
     *   Core pipeline logic is ready.
     *   **Integration Pending**: These services are not yet wired into the Admin Upload UI. Existing upload forms (Developer Logo, Project Media) continue to work using legacy code.
+
+## Phase 3 – Admin Media Upload & Library API
+*   **New Endpoints**:
+    *   `POST /admin/media/upload`: Uploads raw file to `media_tmp` and dispatches processing job.
+    *   `GET /admin/media`: Returns paginated list of media files with filters.
+    *   `GET /admin/media/{id}`: Returns details of a specific media file.
+    *   `DELETE /admin/media/{id}`: Soft deletes a media file.
+*   **Validation**: `MediaUploadRequest` uses `MediaSetting` to dynamically enforce constraints (max size for images/PDFs).
+*   **Logic**:
+    *   The Upload endpoint is non-blocking: it returns 'processing' status immediately.
+    *   Library API returns standard JSON structure for future Vue/React/Alpine UI.
+*   **Architecture**:
+    *   Implemented `MediaUploadRequest` and `Admin\MediaApiController` (using new name to avoid conflict with legacy `MediaController`).
+    *   Legacy `Admin\MediaController` is preserved to keep `/admin/file-manager` operational.
+    *   Registered routes in `routes/admin.php` under `media.*` namespace.
+    *   Verified existing `file_manager` routes are untouched.

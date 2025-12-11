@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Admin\Projects\ProjectWizardController;
+use App\Http\Controllers\Admin\MediaApiController;
 use Illuminate\Support\Facades\Route;
 
 Route::group(['prefix' => 'projects'], function () {
@@ -24,3 +25,11 @@ Route::get('lookups/property-types', [\App\Http\Controllers\Admin\LookupHierarch
 
 Route::get('lookups/unit-types', [\App\Http\Controllers\Admin\LookupHierarchyController::class, 'unitTypes'])
     ->name('lookups.unit_types');
+
+// Media Manager API (Phase 3)
+Route::prefix('media')->name('media.')->group(function () {
+    Route::get('/', [MediaApiController::class, 'index'])->name('index');
+    Route::post('upload', [MediaApiController::class, 'upload'])->name('upload');
+    Route::get('{id}', [MediaApiController::class, 'show'])->name('show');
+    Route::delete('{id}', [MediaApiController::class, 'destroy'])->name('destroy');
+});
