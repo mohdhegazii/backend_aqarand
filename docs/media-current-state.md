@@ -52,3 +52,18 @@
 *   **Analysis Completed**: Existing media flows (Developer Logo, Project Media, Admin File Manager) have been documented.
 *   **Environment Ready**: `composer.json` updated with `intervention/image` and `flysystem-s3` dependencies. `.env.example` updated with S3 placeholders and instructions for local simulation.
 *   **Documentation**: Created `docs/media-current-state.md` to serve as the baseline for the upcoming Media Manager refactoring.
+
+## Phase 1 – Media Schema & Models
+*   **New Database Tables**:
+    *   `media_files` (Augmented): Added `type`, `alt_text`, `title`, `caption`, `seo_slug`, `uploaded_by_id`, `is_system_asset`, `deleted_at`.
+    *   `media_conversions`: Stores info about file variants (thumbs, resized).
+    *   `media_links`: Replaces/Standardizes polymorphic associations (`model_type`, `model_id`, `role`).
+    *   `media_tags` & `media_file_tag`: For categorizing media.
+    *   `media_settings`: Single-row config table for defaults (disk, quality, sizes).
+*   **New Models**: `MediaFile`, `MediaConversion`, `MediaLink`, `MediaTag`, `MediaSetting`.
+*   **Traits**: `HasMedia` trait introduced for future domain model integration (e.g., Projects, Units).
+*   **Status**:
+    *   Database schema migrations created.
+    *   Models implemented.
+    *   Seeder for default settings created.
+    *   **Existing functionality (Logo upload, Project gallery, etc.) REMAINS UNCHANGED and utilizes the old logic for now.** The new tables are currently parallel structures waiting for Phase 2 integration.
