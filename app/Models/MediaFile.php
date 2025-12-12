@@ -75,7 +75,7 @@ class MediaFile extends Model
     /**
      * Get the URL of the file.
      */
-    public function getUrlAttribute()
+    public function getUrlAttribute(): string
     {
         // Preserve legacy private file logic
         if ($this->is_private) {
@@ -85,9 +85,10 @@ class MediaFile extends Model
         }
 
         // Default behavior (updated to handle potentially empty path gracefully)
-        if (empty($this->path)) {
+        if (empty($this->path) || empty($this->disk)) {
             return '';
         }
+
         return Storage::disk($this->disk)->url($this->path);
     }
 
