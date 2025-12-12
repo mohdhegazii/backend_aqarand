@@ -1,0 +1,80 @@
+"A datetime string with format `Y-m-d H:i:s`, e.g. `2018-05-23 13:43:32`."
+scalar DateTime @scalar(class: "Nuwave\\Lighthouse\\Schema\\Types\\Scalars\\DateTime")
+
+"A date string with format `Y-m-d`, e.g. `2011-05-23`."
+scalar Date @scalar(class: "Nuwave\\Lighthouse\\Schema\\Types\\Scalars\\Date")
+
+type Query {
+    "Get the current user."
+    me: User @auth
+
+    "Get a project by ID."
+    project(id: ID! @eq): Project @find
+
+    "Get list of projects."
+    projects(
+        name: String @where(operator: "like")
+    ): [Project!]! @paginate
+
+    "Get media files with pagination and filters."
+    mediaLibrary(
+        type: String @where(operator: "like")
+        search: String @scope(name: "search")
+        page: Int
+        perPage: Int
+    ): [MediaFile!]! @paginate
+}
+
+type User {
+    id: ID!
+    name: String!
+    email: String!
+    created_at: DateTime!
+    updated_at: DateTime!
+}
+
+"A specific variant/conversion of a media file."
+type MediaVariant {
+    name: String!
+    url: String!
+    width: Int
+    height: Int
+    sizeBytes: Int @rename(attribute: "size_bytes")
+}
+
+"A media file object."
+type MediaFile {
+    id: ID!
+    type: String
+    url: String!
+    altText: String @rename(attribute: "alt_text")
+    title: String
+    caption: String
+    mimeType: String @rename(attribute: "mime_type")
+    seoSlug: String @rename(attribute: "seo_slug")
+    variants: [MediaVariant!]! @method(name: "getVariantsAttribute")
+    createdAt: DateTime! @rename(attribute: "created_at")
+}
+
+type Project {
+    id: ID!
+    name: String
+    slug: String
+
+    "Featured image for the project."
+    featuredMediaLink: MediaLink @hasOne(relation: "featuredMediaLink")
+
+    "Gallery images for the project."
+    galleryMediaLinks: [MediaLink!]! @hasMany(relation: "galleryMediaLinks")
+
+    "Brochure PDF for the project (if available)."
+    brochureMediaLink: MediaLink @hasOne(relation: "brochureMediaLink")
+}
+
+"Link between a model and a media file."
+type MediaLink {
+    id: ID!
+    role: String!
+    ordering: Int!
+    mediaFile: MediaFile! @belongsTo(relation: "mediaFile")
+}

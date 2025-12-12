@@ -7,6 +7,8 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Str;
 use App\Models\Traits\HasMedia;
+use Illuminate\Database\Eloquent\Relations\MorphOne;
+use Illuminate\Database\Eloquent\Relations\MorphMany;
 
 class Project extends Model
 {
@@ -163,6 +165,28 @@ class Project extends Model
     public function propertyModels()
     {
         return $this->hasMany(PropertyModel::class);
+    }
+
+    // GraphQL Media Relations (Explicit for Eager Loading)
+
+    public function featuredMediaLink(): MorphOne
+    {
+        return $this->morphOne(MediaLink::class, 'model')
+            ->where('role', 'featured')
+            ->orderBy('ordering');
+    }
+
+    public function galleryMediaLinks(): MorphMany
+    {
+        return $this->morphMany(MediaLink::class, 'model')
+            ->where('role', 'gallery')
+            ->orderBy('ordering');
+    }
+
+    public function brochureMediaLink(): MorphOne
+    {
+        return $this->morphOne(MediaLink::class, 'model')
+            ->where('role', 'brochure');
     }
 
     // Scopes
