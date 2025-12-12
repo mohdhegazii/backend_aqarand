@@ -51,7 +51,8 @@ class DeveloperController extends Controller
             'name_ar' => 'required_without:name|string|max:150',
             'description_en' => 'nullable|string',
             'description_ar' => 'nullable|string',
-            'logo' => 'nullable|mimes:jpeg,png,jpg,webp,gif,svg|max:2048',
+            'logo' => 'nullable|mimes:jpeg,png,jpg,webp,gif,svg|max:2048', // Legacy input
+            'logo_media_id' => 'nullable|integer|exists:media_files,id', // New Media Manager input
             'website_url' => 'nullable|url|max:255',
             'is_active' => 'boolean',
             'seo_meta.focus_keyphrase' => 'nullable|string|max:255',
@@ -68,6 +69,7 @@ class DeveloperController extends Controller
              $validated['slug'] .= '-' . uniqid();
         }
 
+        // Legacy Logo Handling
         if ($request->hasFile('logo')) {
             // Store in 'developers' folder on 'public' disk
             // resulting path will be like 'developers/filename.png'
@@ -80,12 +82,28 @@ class DeveloperController extends Controller
         // Always unset 'logo' to prevent SQL error if the column does not exist
         unset($validated['logo']);
 
+        // Remove media_id from validated before create to avoid 'unknown column' error
+        $logoMediaId = $validated['logo_media_id'] ?? null;
+        unset($validated['logo_media_id']);
+
         if (isset($validated['website_url'])) {
             $validated['website'] = $validated['website_url'];
             unset($validated['website_url']);
         }
 
         $developer = Developer::create($validated);
+
+        // Attach Media (Logo)
+        if ($logoMediaId) {
+            $developer->syncMedia($logoMediaId, 'logo');
+        } elseif ($request->hasFile('logo')) {
+            // If user used legacy upload, we could ideally create a media entry for it too
+            // but for now, we just rely on legacy columns, OR we could migrate it immediately.
+            // Let's stick to user request: "If not present but legacy logo column exists: Keep legacy behavior unchanged."
+            // So we don't do anything extra here.
+            // But if user removed logo, we should check logic.
+            // Here it's create, so we are good.
+        }
 
         if ($request->has('seo_meta')) {
             $developer->seoMeta()->create($request->input('seo_meta'));
@@ -108,7 +126,8 @@ class DeveloperController extends Controller
             'name_ar' => 'required_without:name|string|max:150',
             'description_en' => 'nullable|string',
             'description_ar' => 'nullable|string',
-            'logo' => 'nullable|mimes:jpeg,png,jpg,webp,gif,svg|max:2048',
+            'logo' => 'nullable|mimes:jpeg,png,jpg,webp,gif,svg|max:2048', // Legacy
+            'logo_media_id' => 'nullable|integer|exists:media_files,id', // New
             'website_url' => 'nullable|url|max:255',
             'is_active' => 'boolean',
             'seo_meta.focus_keyphrase' => 'nullable|string|max:255',
@@ -128,6 +147,33 @@ class DeveloperController extends Controller
              $validated['slug'] = $slug;
         }
 
+        // Handle Media Manager Logo
+        if ($request->has('logo_media_id')) {
+            $logoMediaId = $request->input('logo_media_id');
+            if ($logoMediaId) {
+                $developer->syncMedia($logoMediaId, 'logo');
+            } else {
+                // If explicitly cleared (sent as null), detach
+                // BUT we must be careful: if user didn't touch the media picker, does it send null?
+                // The media picker component sends empty string or null if cleared.
+                // If the user wants to keep existing logo, the form should be pre-filled.
+                // If it is pre-filled, we get the ID.
+                // If user removes it, we get null.
+                // So yes, syncMedia handles single ID or empty array.
+                // But wait, syncMedia([], 'logo') clears it.
+                // syncMedia(null, 'logo') -> mediaIds = [null] -> loop -> if(mediaId) -> attach.
+                // So syncMedia(null) effectively clears it because detach happens first.
+                // Wait, let's check syncMedia implementation again.
+                // $mediaIds = is_array($media) ? $media : [$media];
+                // if media is null, $mediaIds = [null].
+                // Loop: foreach([null] as $id) -> if(null) false.
+                // So detach happens, but no attach. Correct.
+                $developer->syncMedia($logoMediaId, 'logo');
+            }
+        }
+
+        // Legacy Logo Handling
+        // Only process legacy logo if user uploaded a file via legacy input
         if ($request->hasFile('logo')) {
             // Delete old logo if it exists
             $oldLogo = $developer->logo_path ?? $developer->logo ?? $developer->logo_url;
@@ -141,10 +187,18 @@ class DeveloperController extends Controller
             // Store new logo
             $path = $request->file('logo')->store('developers', 'public');
             $validated['logo_path'] = $path;
+
+            // If we have a legacy file upload, we should probably clear the media link 'logo'
+            // to favor the new file? Or let them coexist?
+            // The model resolution logic prioritizes Media Manager.
+            // So if user uploads legacy file but keeps old media link, the media link wins.
+            // So we should detach media link if legacy file is uploaded.
+            $developer->detachMedia('logo');
         }
 
-        // Always unset 'logo' to prevent SQL error if the column does not exist
+        // Always unset 'logo' and 'logo_media_id' to prevent SQL error
         unset($validated['logo']);
+        unset($validated['logo_media_id']);
 
         if (isset($validated['website_url'])) {
             $validated['website'] = $validated['website_url'];
