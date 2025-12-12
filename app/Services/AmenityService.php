@@ -21,6 +21,11 @@ class AmenityService
     const CACHE_KEY_AMENITIES_GROUPED_PREFIX = 'amenities.grouped.';
 
     /**
+     * Cache key prefix for typed amenities list.
+     */
+    const CACHE_KEY_AMENITIES_TYPE_PREFIX = 'amenities.type.';
+
+    /**
      * Get all amenity categories.
      *
      * @param bool $onlyActive
@@ -51,34 +56,38 @@ class AmenityService
      */
     public function getAmenitiesByType(string $type = null, bool $onlyActive = true): Collection
     {
-        $query = Amenity::query();
+        $cacheKey = self::CACHE_KEY_AMENITIES_TYPE_PREFIX . ($type ?? 'all') . '.' . ($onlyActive ? 'active' : 'all');
 
-        if ($type) {
-            // If type is 'project', we usually want 'project' AND 'both' amenities.
-            // If type is 'unit', we want 'unit' AND 'both'.
-            // However, the specific requirement might be strict filtering.
-            // Based on ProjectController usage: whereIn('amenity_type', ['project', 'both'])
+        return Cache::remember($cacheKey, 3600, function () use ($type, $onlyActive) {
+            $query = Amenity::query();
 
-            if ($type === 'project') {
-                $query->whereIn('amenity_type', ['project', 'both']);
-            } elseif ($type === 'unit') {
-                $query->whereIn('amenity_type', ['unit', 'both']);
-            } elseif ($type === 'both') {
-                $query->where('amenity_type', 'both');
-            } else {
-                 // If exact match is needed or if $type matches DB column value exactly
-                 // But strictly speaking, 'project' usually implies project-compatible amenities.
+            if ($type) {
+                // If type is 'project', we usually want 'project' AND 'both' amenities.
+                // If type is 'unit', we want 'unit' AND 'both'.
+                // However, the specific requirement might be strict filtering.
+                // Based on ProjectController usage: whereIn('amenity_type', ['project', 'both'])
+
+                if ($type === 'project') {
+                    $query->whereIn('amenity_type', ['project', 'both']);
+                } elseif ($type === 'unit') {
+                    $query->whereIn('amenity_type', ['unit', 'both']);
+                } elseif ($type === 'both') {
+                    $query->where('amenity_type', 'both');
+                } else {
+                     // If exact match is needed or if $type matches DB column value exactly
+                     // But strictly speaking, 'project' usually implies project-compatible amenities.
+                }
             }
-        }
 
-        if ($onlyActive) {
-            $query->where('is_active', true);
-        }
+            if ($onlyActive) {
+                $query->where('is_active', true);
+            }
 
-        return $query->with('category')
-            ->orderBy('sort_order')
-            ->orderBy('name_en')
-            ->get();
+            return $query->with('category')
+                ->orderBy('sort_order')
+                ->orderBy('name_en')
+                ->get();
+        });
     }
 
     /**
@@ -185,6 +194,7 @@ class AmenityService
             $tStr = $t ?? 'all';
             foreach ($states as $s) {
                 Cache::forget(self::CACHE_KEY_AMENITIES_GROUPED_PREFIX . $tStr . '.' . $s);
+                Cache::forget(self::CACHE_KEY_AMENITIES_TYPE_PREFIX . $tStr . '.' . $s);
             }
         }
     }
