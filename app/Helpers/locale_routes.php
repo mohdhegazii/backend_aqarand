@@ -11,12 +11,36 @@ if (! function_exists('localized_route')) {
      * - For English (or other non-default locales): use locale in URL if the route group expects it.
      *
      * @param string $name The base route name (e.g., 'admin.projects.index')
-     * @param array $parameters Route parameters
+     * @param mixed $parameters Route parameters (array, string, null)
      * @param bool $absolute Whether to generate an absolute URL
      * @return string
      */
-    function localized_route(string $name, array $parameters = [], bool $absolute = true): string
+    function localized_route(string $name, $parameters = [], bool $absolute = true): string
     {
+        // Harden parameters against non-array types
+        if (is_string($parameters)) {
+             // If it looks like a query string (e.g., "a=1&b=2"), try to parse it
+             if (str_contains($parameters, '=') && !str_contains($parameters, '/')) {
+                 parse_str(ltrim($parameters, '?'), $parsed);
+                 $parameters = is_array($parsed) ? $parsed : [];
+             } else {
+                 // Treat as empty array to avoid TypeError, but log warning in debug mode
+                 // We do not assume it's a single ID parameter because we don't know the key.
+                 if (config('app.debug')) {
+                     logger()->warning("localized_route received string parameters that could not be parsed: {$parameters}");
+                 }
+                 $parameters = [];
+             }
+        } elseif (is_null($parameters)) {
+            $parameters = [];
+        } elseif (!is_array($parameters)) {
+            // Boolean, integer, object, etc.
+            if (config('app.debug')) {
+                 logger()->warning("localized_route received invalid parameters type: " . gettype($parameters));
+            }
+            $parameters = [];
+        }
+
         $locale = App::getLocale();
 
         // Default locale (Arabic) - Use the route as is (assuming it's the base name)
