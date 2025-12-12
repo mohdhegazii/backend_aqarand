@@ -46,6 +46,11 @@ The Media Module is being implemented in phases to replace legacy file handling.
 - **Legacy Flows**:
   - `/admin/file-manager`: Deprecated.
 
+## Phase 6 – GraphQL & Next.js Plan
+- **GraphQL Library**: `nuwave/lighthouse` is used to expose the API.
+- **Schema Location**: `graphql/schema.graphql`.
+- **Media Types**: `MediaFile` and `MediaVariant` exposed with `url` resolving to signed/public URLs.
+- **Project Integration**: `featuredMedia`, `galleryMedia`, `brochure` fields added to `Project` type.
+
 ## Next Steps (Future Phases)
-- Expose Media via GraphQL/API for Frontend (Next.js).
-- SEO + GEO structured data.
+- SEO + GEO structured data (Frontend implementation).
