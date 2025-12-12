@@ -167,28 +167,6 @@ class Project extends Model
         return $this->hasMany(PropertyModel::class);
     }
 
-    // GraphQL Media Relations (Explicit for Eager Loading)
-
-    public function featuredMediaLink(): MorphOne
-    {
-        return $this->morphOne(MediaLink::class, 'model')
-            ->where('role', 'featured')
-            ->orderBy('ordering');
-    }
-
-    public function galleryMediaLinks(): MorphMany
-    {
-        return $this->morphMany(MediaLink::class, 'model')
-            ->where('role', 'gallery')
-            ->orderBy('ordering');
-    }
-
-    public function brochureMediaLink(): MorphOne
-    {
-        return $this->morphOne(MediaLink::class, 'model')
-            ->where('role', 'brochure');
-    }
-
     // Scopes
 
     public function scopePublished($query)
