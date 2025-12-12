@@ -9,68 +9,127 @@ use App\Models\MediaFile;
 use App\Services\Media\MediaDiskResolver;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Log;
 
 class MediaApiController extends Controller
 {
     public function upload(MediaUploadRequest $request, MediaDiskResolver $diskResolver)
     {
-        $file = $request->file('file');
-
-        // Determine type
-        $mime = $file->getMimeType();
-        $type = 'other';
-        if (str_starts_with($mime, 'image/')) {
-            $type = 'image';
-        } elseif ($mime === 'application/pdf') {
-            $type = 'pdf';
+        // Gather files (normalize to array)
+        $files = [];
+        if ($request->hasFile('files')) {
+            $files = $request->file('files');
+        } elseif ($request->hasFile('file')) {
+            $files = [$request->file('file')];
         }
 
-        // Generate base SEO slug
-        $nameWithoutExt = pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME);
-        $slugBase = $nameWithoutExt;
+        $uploadedMedia = [];
+        $disk = config('filesystems.default', 'public');
 
-        if ($request->filled('slug')) {
-            $slugBase .= '-' . $request->input('slug');
+        // Ensure we are not using 'local' (private) if public is intended
+        // If config is 'local' (private), but we are uploading public media, prefer 'public'
+        if ($disk === 'local' && $request->input('is_private') != '1') {
+             $disk = 'public';
         }
-        $seoSlug = Str::slug($slugBase);
 
-        // Store temporarily
-        $tempDisk = 'media_tmp';
+        foreach ($files as $file) {
+            // Determine type
+            $mime = $file->getMimeType();
+            $type = 'other';
+            if (str_starts_with($mime, 'image/')) {
+                $type = 'image';
+            } elseif ($mime === 'application/pdf') {
+                $type = 'pdf';
+            } elseif (str_starts_with($mime, 'video/')) {
+                $type = 'video';
+            }
 
-        $tempFilename = uniqid('upload_') . '.' . $file->getClientOriginalExtension();
-        $tempPath = $file->storeAs('', $tempFilename, ['disk' => $tempDisk]);
+            // Generate base SEO slug
+            $nameWithoutExt = pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME);
+            $slugBase = $nameWithoutExt;
 
-        // Create MediaFile record
-        $mediaFile = MediaFile::create([
-            'original_name' => $file->getClientOriginalName(),
-            'extension' => $file->getClientOriginalExtension(),
-            'mime_type' => $mime,
-            'type' => $type,
-            'seo_slug' => $seoSlug,
-            'uploaded_by_id' => auth()->id(),
-            'alt_text' => $request->input('alt_text'),
-            'disk' => null,
-            'path' => null,
-        ]);
+            if ($request->filled('slug') && count($files) === 1) {
+                // Only apply explicit slug if single file, otherwise use filename
+                $slugBase .= '-' . $request->input('slug');
+            }
+            $seoSlug = Str::slug($slugBase);
 
-        // Context for processing
-        $context = [
-            'entity' => $request->input('entity_type'),
-            'entity_id' => $request->input('entity_id'),
-            'country' => $request->input('country'),
-            'city' => $request->input('city'),
-            'slug' => $request->input('slug'),
-        ];
+            // Store directly to permanent disk
+            $uploadPath = 'media/' . date('Y/m');
+            try {
+                $path = $file->store($uploadPath, ['disk' => $disk]);
 
-        // Dispatch Job
-        ProcessMediaFileJob::dispatch($mediaFile->id, $tempPath, $context);
+                if (!$path) {
+                    throw new \Exception("Failed to store file on disk: $disk");
+                }
 
+                // Create MediaFile record with populated disk/path
+                $mediaFile = MediaFile::create([
+                    'original_name' => $file->getClientOriginalName(),
+                    'extension' => $file->getClientOriginalExtension(),
+                    'mime_type' => $mime,
+                    'type' => $type,
+                    'seo_slug' => $seoSlug,
+                    'uploaded_by_id' => auth()->id(),
+                    'alt_text' => $request->input('alt_text'), // Will apply to all if multiple
+                    'disk' => $disk,
+                    'path' => $path,
+                    'size_bytes' => $file->getSize(),
+                    'is_private' => $request->input('is_private') == '1'
+                ]);
+
+                // Context for processing
+                $context = [
+                    'entity' => $request->input('entity_type'),
+                    'entity_id' => $request->input('entity_id'),
+                    'country' => $request->input('country'),
+                    'city' => $request->input('city'),
+                    'slug' => $request->input('slug'),
+                ];
+
+                // Dispatch Job with a COPY of the file in media_tmp
+                // ProcessMediaFileJob expects the file in media_tmp to process it (e.g. create thumbnails)
+                // We copy it so the job can work as designed without messing with our permanent file
+                $tempDisk = 'media_tmp';
+                $tempFilename = uniqid('proc_') . '.' . $file->getClientOriginalExtension();
+
+                // Copy from disk to media_tmp
+                $content = Storage::disk($disk)->get($path);
+                Storage::disk($tempDisk)->put($tempFilename, $content);
+
+                // Dispatch with the temp path
+                ProcessMediaFileJob::dispatch($mediaFile->id, $tempFilename, $context);
+
+                $uploadedMedia[] = [
+                    'id' => $mediaFile->id,
+                    'status' => 'uploaded',
+                    'type' => $type,
+                    'original_name' => $mediaFile->original_name,
+                    'seo_slug' => $mediaFile->seo_slug,
+                    'url' => $mediaFile->url,
+                    'thumb_url' => $mediaFile->url,
+                ];
+
+            } catch (\Exception $e) {
+                Log::error('Media Upload Error: ' . $e->getMessage());
+                // Continue with next file
+            }
+        }
+
+        if (empty($uploadedMedia) && count($files) > 0) {
+            return response()->json(['message' => 'Upload failed for all files'], 500);
+        }
+
+        // Return standardized JSON response
         return response()->json([
-            'media_id' => $mediaFile->id,
-            'status' => 'processing',
-            'type' => $type,
-            'original_name' => $mediaFile->original_name,
-            'seo_slug' => $mediaFile->seo_slug,
+            'uploaded' => $uploadedMedia,
+            // Legacy single-file response support
+            'media_id' => $uploadedMedia[0]['id'] ?? null,
+            'status' => 'uploaded',
+            'type' => $uploadedMedia[0]['type'] ?? 'other',
+            'original_name' => $uploadedMedia[0]['original_name'] ?? '',
+            'seo_slug' => $uploadedMedia[0]['seo_slug'] ?? '',
         ]);
     }
 
@@ -119,7 +178,7 @@ class MediaApiController extends Controller
         $query = MediaFile::query();
 
         // Type filter
-        if ($request->filled('type')) {
+        if ($request->filled('type') && $request->input('type') !== 'all') {
             $query->where('type', $request->input('type'));
         }
 
