@@ -67,4 +67,36 @@ trait HasMedia
             'ordering' => $ordering,
         ]);
     }
+
+    /**
+     * Detach media files with a specific role.
+     *
+     * @param string $role
+     * @return void
+     */
+    public function detachMedia(string $role): void
+    {
+        $this->mediaLinks()->where('role', $role)->delete();
+    }
+
+    /**
+     * Sync media files for a specific role.
+     * Detaches existing media for the role and attaches new ones in the given order.
+     *
+     * @param array|int|MediaFile $media
+     * @param string $role
+     * @return void
+     */
+    public function syncMedia($media, string $role = 'gallery'): void
+    {
+        $this->detachMedia($role);
+
+        $mediaIds = is_array($media) ? $media : [$media];
+
+        foreach ($mediaIds as $index => $mediaId) {
+            if ($mediaId) {
+                $this->attachMedia($mediaId, $role, $index);
+            }
+        }
+    }
 }

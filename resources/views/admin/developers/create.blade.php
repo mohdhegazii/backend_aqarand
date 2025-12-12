@@ -74,7 +74,29 @@
                 <div class="mt-6 border-t pt-6">
                     <div class="mb-4">
                         <label class="block text-gray-700 text-sm font-bold mb-2">@lang('admin.logo')</label>
-                        <input id="logo-input" type="file" name="logo" accept="image/*" class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100">
+                        <div class="space-y-4">
+                            <!-- New Media Manager Picker -->
+                            <div>
+                                <label class="block text-xs text-gray-500 mb-1">@lang('admin.media_manager') (@lang('admin.recommended'))</label>
+                                <x-admin.media-picker
+                                    name="logo_media_id"
+                                    :value="old('logo_media_id')"
+                                    :multiple="false"
+                                />
+                            </div>
+
+                            <!-- Legacy File Input (Hidden/Deprecated) -->
+                            <div x-data="{ showLegacy: false }" class="border-t border-gray-100 pt-2">
+                                <button type="button" @click="showLegacy = !showLegacy" class="text-xs text-gray-400 hover:text-gray-600 underline">
+                                    <span x-text="showLegacy ? 'Hide Legacy Upload' : 'Show Legacy Upload (Deprecated)'"></span>
+                                </button>
+                                <div x-show="showLegacy" class="mt-2 p-2 bg-yellow-50 border border-yellow-100 rounded">
+                                    <label class="block text-xs text-gray-600 mb-1">Legacy File Upload</label>
+                                    <input id="logo-input" type="file" name="logo" accept="image/*" class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100">
+                                    <p class="text-xs text-yellow-600 mt-1">Note: Using this will override any Media Manager selection.</p>
+                                </div>
+                            </div>
+                        </div>
                     </div>
 
                     <div class="mb-4">
@@ -153,17 +175,23 @@
                 logoPlaceholder.classList.remove('hidden');
             };
 
+            // Legacy logo input handling (optional visual feedback)
             const handleLogoChange = (event) => {
                 const file = event.target.files?.[0];
                 if (!file) {
-                    resetLogoPreview();
+                    // Don't reset if we have a media picker value (hard to track here without Alpine/Vue)
+                    // Just reset local preview
+                    // resetLogoPreview();
                     return;
                 }
 
+                // Simple local preview for legacy input
                 const objectUrl = URL.createObjectURL(file);
-                logoPreview.src = objectUrl;
-                logoPreview.classList.remove('hidden');
-                logoPlaceholder.classList.add('hidden');
+                if (logoPreview) {
+                     logoPreview.src = objectUrl;
+                     logoPreview.classList.remove('hidden');
+                     logoPlaceholder?.classList.add('hidden');
+                }
             };
 
             nameEnInput?.addEventListener('input', updateTextPreview);

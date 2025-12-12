@@ -7,10 +7,12 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Str;
+use App\Models\Traits\HasMedia;
 
 class Developer extends Model
 {
     use HasFactory;
+    use HasMedia;
 
     /**
      * The "booted" method of the model.
@@ -104,6 +106,16 @@ class Developer extends Model
     {
         if (!empty($this->logoResolutionCache)) {
             return $this->logoResolutionCache;
+        }
+
+        // Check Media Manager first
+        $mediaLink = $this->mediaLinks()->where('role', 'logo')->with('mediaFile')->first();
+        if ($mediaLink && $mediaLink->mediaFile) {
+            $url = $mediaLink->mediaFile->url;
+            return $this->logoResolutionCache = [
+                'url' => $url,
+                'debug' => ['source' => 'media_manager', 'media_id' => $mediaLink->media_file_id],
+            ];
         }
 
         // Check all possible columns

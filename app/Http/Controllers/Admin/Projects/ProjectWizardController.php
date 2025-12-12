@@ -164,14 +164,94 @@ class ProjectWizardController extends Controller
         // Sync amenities
         $project->amenities()->sync($request->input('amenities', []));
 
-        // For now, redirect back or to index if it's the last step.
-        // Assuming there will be more steps later, but for now let's redirect back with success.
-        // Or if this is the last implemented step, maybe to index?
-        // Let's redirect to the same step for now to allow review, or maybe back to index if done.
-        // The user requirement said: "Make sure the new Amenities tab/step integrates smoothly... next/previous buttons".
-        // The view has "Save" button.
+        // Redirect to next step: Marketing (Step 3) - which needs to be defined,
+        // but for now we might route to Media (Step 4) if Marketing is not yet implemented,
+        // or just stay on amenities.
+        // Since Marketing is step 3 and Media is step 4, let's assume we implement Media now
+        // and add a placeholder/redirect for Marketing later.
+        // For this task, we will redirect to Media Step for now to facilitate flow testing,
+        // OR stick to the current flow.
+        // User requested "Step 3: Marketing" in wizard_steps, but we are only implementing Media now.
+        // So we can keep it as is or redirect to Media if Marketing is skipped.
+        // Let's redirect to Media directly for now as Marketing is not part of this task scope,
+        // but ideally we should have a Marketing step.
+        // I'll stick to redirecting to self for now, or maybe the next implemented step.
 
-        return redirect()->route('admin.projects.steps.amenities', ['project' => $project->id])
+        // Redirect to Step 4 (Media) directly, skipping Marketing (Step 3) for now.
+        return redirect()->route('admin.projects.steps.media', ['project' => $project->id])
+                         ->with('success', __('admin.saved_successfully'));
+    }
+
+    /**
+     * Show Step 4: Media
+     */
+    public function showMediaStep($id)
+    {
+        $project = Project::findOrFail($id);
+
+        // Fetch attached media
+        // Gallery
+        $galleryMedia = $project->mediaLinks()
+            ->where('role', 'gallery')
+            ->orderBy('ordering')
+            ->with('mediaFile')
+            ->get()
+            ->pluck('mediaFile');
+
+        // Brochure
+        $brochureMedia = $project->mediaLinks()
+            ->where('role', 'brochure')
+            ->with('mediaFile')
+            ->first();
+        $brochureMediaFile = $brochureMedia ? $brochureMedia->mediaFile : null;
+
+        return view('admin.projects.steps.media', compact('project', 'galleryMedia', 'brochureMediaFile'));
+    }
+
+    /**
+     * Store/Update Step 4: Media
+     */
+    public function storeMediaStep(Request $request, $id)
+    {
+        $project = Project::findOrFail($id);
+
+        $request->validate([
+            'gallery_media_ids' => 'nullable|array',
+            'gallery_media_ids.*' => 'integer|exists:media_files,id',
+            'brochure_media_id' => 'nullable|integer|exists:media_files,id',
+        ]);
+
+        // Sync Gallery
+        // The input 'gallery_media_ids' should contain IDs in the desired order.
+        // If empty or null, clear gallery.
+        if ($request->has('gallery_media_ids')) {
+             $project->syncMedia($request->input('gallery_media_ids', []), 'gallery');
+        } else {
+             // If field is missing, it might mean no changes or clear all?
+             // Usually form submission includes the field if it's there.
+             // If we use a multi-select, empty selection sends empty array or nothing.
+             // We should check if the field was present in the request to decide.
+             // For now, let's assume if the key is present (even if null/empty), we sync.
+             // But if we want to support partial updates we should be careful.
+             // However, wizard steps usually submit the full state of that step.
+             if ($request->has('gallery_media_ids')) {
+                 $project->syncMedia([], 'gallery');
+             }
+        }
+
+        // Sync Brochure
+        if ($request->has('brochure_media_id')) {
+            $brochureId = $request->input('brochure_media_id');
+            if ($brochureId) {
+                $project->syncMedia($brochureId, 'brochure');
+            } else {
+                $project->detachMedia('brochure');
+            }
+        }
+
+        // Redirect to Index or Next Step (Financials - Step 5).
+        // Since Financials is not implemented, we go to Index.
+        return redirect()->route('admin.projects.index')
                          ->with('success', __('admin.saved_successfully'));
     }
 

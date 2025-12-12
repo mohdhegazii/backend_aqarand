@@ -23,19 +23,29 @@ The Media Module is being implemented in phases to replace legacy file handling.
 - **Reusable Modal**: `<x-admin.media-manager-modal>` for selecting media in forms.
 - **Form Component**: `<x-admin.media-picker>` for easy integration.
 - **Project Integration**: Added "Featured Image (New)" field to Project Wizard (Step 1).
-  - Uses `HasMedia` trait.
-  - Role: `featured`.
-  - Legacy image fields (`hero_image_url`, `gallery`) remain untouched for now.
+
+## Phase 5: Legacy Migration & Extended Integration
+- **Project Gallery & Brochure**:
+  - Implemented Project Wizard Step 4 (Media).
+  - Supports multiple image selection for Gallery (role: `gallery`) via Media Manager.
+  - Supports PDF selection for Brochure (role: `brochure`).
+- **Logo Migration**:
+  - `Developer` model now supports `HasMedia` (role: `logo`).
+  - Admin Developer Form updated with Media Picker for Logo.
+  - Legacy file input retained (hidden) for backward compatibility.
+  - `Developer::resolveLogo()` prioritizes Media Manager links.
+- **File Manager Refactor**:
+  - Legacy `/admin/file-manager` marked as deprecated with banner.
+  - Now strictly reads from `media_files` table (read-only view for legacy references).
+- **Default Enforcement**:
+  - Media Manager is now the primary upload mechanism for Projects and Developers.
 
 ### Current Integration Status
-- **Projects**: Now have a **new optional featured image** powered by the Media Manager (Media module).
+- **Projects**: Fully integrated (Featured, Gallery, Brochure) with Media Manager.
+- **Developers**: Logo integrated with Media Manager (Legacy fallback available).
 - **Legacy Flows**:
-  - **Logo Upload**: Still uses the existing legacy implementation (direct file upload to storage).
-  - **File Manager**: The existing `/admin/file-manager` section is untouched and remains available as a legacy tool.
-  - **Project Gallery/Hero**: Existing fields in Step 4 (Media) are still using the legacy logic.
+  - `/admin/file-manager`: Deprecated.
 
 ## Next Steps (Future Phases)
-- Migrate Developer Logo to use Media Manager.
-- Migrate Project Gallery and Hero Image to Media Manager.
-- Replace `/admin/file-manager` with the new Media Manager page entirely.
 - Expose Media via GraphQL/API for Frontend (Next.js).
+- SEO + GEO structured data.
