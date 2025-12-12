@@ -1,83 +1,87 @@
 @props([
-    'lat' => null,
-    'lng' => null,
-    'zoom' => null,
+    'lat' => 30.0444,
+    'lng' => 31.2357,
+    'zoom' => 6,
+    'mapId' => 'map',
+    'entityLevel' => null, // 'country', 'region', 'city', 'district', 'project'
+    'entityId' => null,
     'polygon' => null,
     'readOnly' => false,
-    'entityLevel' => null,
-    'entityId' => null,
     'lockToEgypt' => true,
-    'searchable' => true,
-    'mapId' => 'map-' . uniqid(),
     'inputLatName' => 'lat',
     'inputLngName' => 'lng',
-    'inputPolygonName' => 'boundary_geojson',
-    'showDisplayValues' => true,
+    'inputPolygonName' => 'polygon',
     'autoInit' => true,
+    'searchable' => true,
+    'useViewportLoading' => false,
+    'onMapInit' => null, // Optional JS callback name
+    'debug' => config('app.debug'),
+    'apiPolygonUrl' => null // Optional override
 ])
 
-<div class="mb-4 location-map-component">
-    <label class="block font-medium text-sm text-gray-700 mb-2">@lang('admin.location_on_map')</label>
+@php
+    // Determine the polygon API URL if not provided
+    // We use the raw URL path because the JS append parameters manually.
+    // Using route() ensures we respect the current domain/scheme.
+    // Since we need to support both localized and non-localized, and the JS appends query params,
+    // we should provide the base endpoint.
+    // The route 'admin.location-polygons' is defined in admin.php
+    $defaultPolygonUrl = route('admin.location-polygons');
+    $finalPolygonUrl = $apiPolygonUrl ?? $defaultPolygonUrl;
+@endphp
 
-    @if($searchable && !$readOnly)
-        <div class="flex space-x-2 mb-2 rtl:space-x-reverse">
-            <input type="text" id="map-search-{{ $mapId }}" placeholder="@lang('admin.search_location')" class="border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm w-full p-2">
-            <button type="button" id="map-search-btn-{{ $mapId }}" class="bg-gray-200 hover:bg-gray-300 text-gray-700 font-bold py-2 px-4 rounded">
-                @lang('admin.search')
-            </button>
-        </div>
-    @endif
+<div id="{{ $mapId }}" class="w-full h-96 rounded-lg border border-gray-300 shadow-sm z-0"></div>
 
-    <div id="{{ $mapId }}" style="height: 400px; width: 100%; border-radius: 0.5rem; z-index: 1;"></div>
+{{-- Hidden Inputs for Form Submission --}}
+@if(!$readOnly)
+    <input type="hidden" name="{{ $inputLatName }}" id="lat-{{ $mapId }}" value="{{ $lat }}">
+    <input type="hidden" name="{{ $inputLngName }}" id="lng-{{ $mapId }}" value="{{ $lng }}">
+    <input type="hidden" name="{{ $inputPolygonName }}" id="boundary-{{ $mapId }}" value="{{ is_array($polygon) ? json_encode($polygon) : $polygon }}">
+@endif
 
-    @if(!$readOnly)
-        <input type="hidden" name="{{ $inputLatName }}" id="lat-{{ $mapId }}" value="{{ $lat ? number_format($lat, 7, '.', '') : '' }}">
-        <input type="hidden" name="{{ $inputLngName }}" id="lng-{{ $mapId }}" value="{{ $lng ? number_format($lng, 7, '.', '') : '' }}">
+{{-- Legacy Search Input (Optional) --}}
+@if($searchable && !$readOnly)
+    <div class="mt-2 flex">
+        <input type="text" id="map-search-{{ $mapId }}" class="flex-1 rounded-l-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" placeholder="{{ __('admin.search_location') }}">
+        <button type="button" id="map-search-btn-{{ $mapId }}" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-r-md text-white bg-indigo-600 hover:bg-indigo-700">
+            {{ __('admin.search') }}
+        </button>
+    </div>
+@endif
 
-        {{-- For Polygon, value must be encoded if it's an array/object --}}
-        @php
-            $polygonValue = is_array($polygon) || is_object($polygon) ? json_encode($polygon) : $polygon;
-        @endphp
-        <input type="hidden" name="{{ $inputPolygonName }}" id="boundary-{{ $mapId }}" value="{{ $polygonValue }}">
-    @endif
+{{-- Push Scripts --}}
+@once
+    @push('scripts')
+        <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+        <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
 
-    @if($showDisplayValues)
-        <div class="mt-2 text-sm text-gray-500">
-            @lang('admin.lat'): <span id="display-lat-{{ $mapId }}">{{ $lat ?? '-' }}</span>,
-            @lang('admin.lng'): <span id="display-lng-{{ $mapId }}">{{ $lng ?? '-' }}</span>
-        </div>
-    @endif
-</div>
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.css" />
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.js"></script>
 
-@push('styles')
-    @once
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.css"/>
-    @endonce
-@endpush
+        <script src="{{ asset('js/admin/location-map.js') }}"></script>
+    @endpush
+@endonce
 
-@push('scripts')
-    @once
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.js"></script>
-    <script src="/js/admin/location-map.js"></script>
-    @endonce
-
-    @if($autoInit)
-    <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            initLocationMap({
-                elementId: "{{ $mapId }}",
-                entityLevel: "{{ $entityLevel }}",
-                entityId: {{ $entityId ?? 'null' }},
-                polygonFieldSelector: "#boundary-{{ $mapId }}",
-                latFieldSelector: "#lat-{{ $mapId }}",
-                lngFieldSelector: "#lng-{{ $mapId }}",
-                lat: {{ number_format($lat ?? 30.0444, 7, '.', '') }},
-                lng: {{ number_format($lng ?? 31.2357, 7, '.', '') }},
-                zoom: {{ $zoom ?? ($lat ? 13 : 6) }},
-                readOnly: {{ $readOnly ? 'true' : 'false' }},
-                lockToEgypt: {{ $lockToEgypt ? 'true' : 'false' }},
-            });
-        });
-    </script>
-    @endif
-@endpush
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        if ({{ $autoInit ? 'true' : 'false' }}) {
+             initLocationMap({
+                 elementId: '{{ $mapId }}',
+                 entityLevel: '{{ $entityLevel }}',
+                 entityId: '{{ $entityId }}',
+                 lat: {{ $lat ?? 30.0444 }},
+                 lng: {{ $lng ?? 31.2357 }},
+                 zoom: {{ $zoom ?? 6 }},
+                 readOnly: {{ $readOnly ? 'true' : 'false' }},
+                 lockToEgypt: {{ $lockToEgypt ? 'true' : 'false' }},
+                 polygonFieldSelector: '#boundary-{{ $mapId }}',
+                 latFieldSelector: '#lat-{{ $mapId }}',
+                 lngFieldSelector: '#lng-{{ $mapId }}',
+                 useViewportLoading: {{ $useViewportLoading ? 'true' : 'false' }},
+                 onMapInit: {{ $onMapInit ?? 'null' }},
+                 debug: {{ $debug ? 'true' : 'false' }},
+                 apiPolygonUrl: '{{ $finalPolygonUrl }}'
+             });
+        }
+    });
+</script>
