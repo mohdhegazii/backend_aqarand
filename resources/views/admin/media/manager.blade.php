@@ -253,7 +253,7 @@
                     const token = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
                     try {
                         // We use a placeholder '0' and replace it with the item ID
-                        const url = '{{ localized_route('admin.media.destroy', '0') }}'.replace('/0', '/' + item.id);
+                        const url = '{{ localized_route('admin.media.destroy', ['mediaFile' => '0']) }}'.replace('/0', '/' + item.id);
 
                         const response = await fetch(url, {
                             method: 'DELETE',
