@@ -328,6 +328,7 @@
                         inputLngName="point_lng"
                         inputPolygonName="polygon_geojson"
                         :apiPolygonUrl="route('admin.location-polygons')"
+                        onMapInit="setupFeaturedPlacesMap"
                     />
                 </div>
 
@@ -393,6 +394,19 @@
 
 @push('scripts')
 <script>
+    // Define the map initialization callback globally
+    window.setupFeaturedPlacesMap = function(map) {
+        if (!map) return;
+
+        // Use the centralized logic to bind dropdowns to map
+        map.setupLocationDropdowns({
+            country: '#fp_country_id',
+            region: '#fp_region_id',
+            city: '#fp_city_id',
+            district: '#fp_district_id'
+        });
+    };
+
     document.addEventListener('alpine:init', () => {
         Alpine.data('featuredPlacesManager', () => ({
             activeTab: 'main-categories',
@@ -450,7 +464,7 @@
                     this.map.invalidateSize();
                     this.map.setView([30.0444, 31.2357], 6);
                     if(this.map.setPolygon) this.map.setPolygon(null);
-                    if(this.map.updateMarker) this.map.updateMarker(30.0444, 31.2357); // Reset marker to center? Or remove?
+                    if(this.map.updateMarker) this.map.updateMarker(30.0444, 31.2357);
                 }
             },
             async editPlace(place) {
@@ -507,6 +521,7 @@
                                     const lng = parseFloat(currentPlace.point_lng);
                                     if(mapInstance.flyToLocation) mapInstance.flyToLocation(lat, lng, 15);
                                     else mapInstance.setView([lat, lng], 15);
+                                    // Update marker
                                     if (mapInstance.updateMarker) mapInstance.updateMarker(lat, lng);
                                 }
                                 let geoJson = currentPlace.polygon_geojson;
@@ -545,6 +560,7 @@
                     const option = document.createElement('option');
                     option.value = item.id;
                     option.textContent = isAr ? (item.name_local || item.name_ar || item.name_en) : (item.name_en || item.name_local);
+                    // Add data-lat/lng so map.setupLocationDropdowns can use them
                     if(item.lat && item.lng) { option.setAttribute('data-lat', item.lat); option.setAttribute('data-lng', item.lng); }
                     selectElement.appendChild(option);
                 });
@@ -556,47 +572,10 @@
         window.loadCities = async function(regionId) { const response = await fetchLocations(`{{ url('admin/locations/cities') }}/${regionId}`); populateSelect(citySelect, response.cities || [], "@lang('admin.select_city')"); districtSelect.innerHTML = '<option value="">@lang('admin.select_district')</option>'; districtSelect.disabled = true; }
         window.loadDistricts = async function(cityId) { const response = await fetchLocations(`{{ url('admin/locations/districts') }}/${cityId}`); populateSelect(districtSelect, response.districts || [], "@lang('admin.select_district')"); }
 
-        function updateMapBoundary(level, id) {
-            const mapInstance = window['map_featured-places-map'];
-            if (!mapInstance || !id) return;
-
-            // Use apiPolygonUrl from config if possible, but here we construct it manually
-            // relying on the component logic to expose map.setPolygon and map.showReferenceBoundary
-            fetch(`{{ route('admin.location-polygons') }}?level=${level}&id=${id}`)
-                .then(response => response.json())
-                .then(data => {
-                    const key = level === 'region' ? 'regions' : (level === 'city' ? 'cities' : 'districts');
-                    if (data[key] && data[key].length > 0) {
-                        const item = data[key][0];
-                        if (item.polygon && mapInstance.showReferenceBoundary) {
-                            mapInstance.showReferenceBoundary(item.polygon);
-                        } else if (item.lat != null && item.lng != null) {
-                            const zoom = level === 'region' ? 9 : (level === 'city' ? 11 : 13);
-                            if(mapInstance.flyToLocation) mapInstance.flyToLocation(item.lat, item.lng, zoom);
-                            else mapInstance.flyTo([item.lat, item.lng], zoom);
-                        }
-                    }
-                })
-                .catch(err => console.error("Error fetching location polygon:", err));
-        }
-
-        function flyToSelected(selectElement, level) {
-             const selectedOption = selectElement.options[selectElement.selectedIndex];
-             const lat = selectedOption.getAttribute('data-lat');
-             const lng = selectedOption.getAttribute('data-lng');
-             const mapInstance = window['map_featured-places-map'];
-             const id = selectElement.value;
-             if (id && level) { updateMapBoundary(level, id); }
-             else if (lat && lng && mapInstance) {
-                 if(mapInstance.flyToLocation) mapInstance.flyToLocation(lat, lng, 12);
-                 else mapInstance.flyTo([lat, lng], 12);
-             }
-        }
-
-        countrySelect.addEventListener('change', async function() { if(this.value) { await window.loadRegions(this.value); flyToSelected(this, null); } else { regionSelect.innerHTML = '<option value="">@lang('admin.select_region')</option>'; regionSelect.disabled = true; citySelect.innerHTML = '<option value="">@lang('admin.select_city')</option>'; citySelect.disabled = true; districtSelect.innerHTML = '<option value="">@lang('admin.select_district')</option>'; districtSelect.disabled = true; } });
-        regionSelect.addEventListener('change', async function() { if(this.value) { await window.loadCities(this.value); flyToSelected(this, 'region'); } else { citySelect.innerHTML = '<option value="">@lang('admin.select_city')</option>'; citySelect.disabled = true; districtSelect.innerHTML = '<option value="">@lang('admin.select_district')</option>'; districtSelect.disabled = true; } });
-        citySelect.addEventListener('change', async function() { if(this.value) { await window.loadDistricts(this.value); flyToSelected(this, 'city'); } else { districtSelect.innerHTML = '<option value="">@lang('admin.select_district')</option>'; districtSelect.disabled = true; } });
-        districtSelect.addEventListener('change', function() { flyToSelected(this, 'district'); });
+        // Event listeners for cascading loading (Map sync is handled by setupLocationDropdowns)
+        countrySelect.addEventListener('change', async function() { if(this.value) { await window.loadRegions(this.value); } else { regionSelect.innerHTML = '<option value="">@lang('admin.select_region')</option>'; regionSelect.disabled = true; citySelect.innerHTML = '<option value="">@lang('admin.select_city')</option>'; citySelect.disabled = true; districtSelect.innerHTML = '<option value="">@lang('admin.select_district')</option>'; districtSelect.disabled = true; } });
+        regionSelect.addEventListener('change', async function() { if(this.value) { await window.loadCities(this.value); } else { citySelect.innerHTML = '<option value="">@lang('admin.select_city')</option>'; citySelect.disabled = true; districtSelect.innerHTML = '<option value="">@lang('admin.select_district')</option>'; districtSelect.disabled = true; } });
+        citySelect.addEventListener('change', async function() { if(this.value) { await window.loadDistricts(this.value); } else { districtSelect.innerHTML = '<option value="">@lang('admin.select_district')</option>'; districtSelect.disabled = true; } });
     });
 </script>
 @endpush

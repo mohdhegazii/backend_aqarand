@@ -103,12 +103,21 @@
              if (!isNaN(safeLat) && !isNaN(safeLng)) {
                  log(config, 'flyToLocation', safeLat, safeLng, safeZoom);
                  map.flyTo([safeLat, safeLng], safeZoom);
+                 // Also move the marker if one exists
+                 if(map.updateMarker) map.updateMarker(safeLat, safeLng);
              }
         };
 
         map.fetchAndShowBoundary = function(level, id) {
              if (!id) return;
-             const url = resolveApiPath(config) + (resolveApiPath(config).includes('?') ? '&' : '?') + `level=${level}&id=${id}`;
+             // Construct URL properly
+             let url = resolveApiPath(config);
+             // Ensure we append query params correctly
+             const separator = url.includes('?') ? '&' : '?';
+             url = `${url}${separator}level=${level}&id=${id}`;
+
+             log(config, 'Fetching boundary', url);
+
              fetch(url)
                  .then(r => r.json())
                  .then(data => {
@@ -131,18 +140,24 @@
 
         /**
          * Centralized Dropdown Sync Logic
-         * @param {Object} selectors { country: '#id', region: '#id', city: '#id', district: '#id' }
+         * @param {Object} selectors { country: '#id'|Element, region: '#id'|Element, city: '#id'|Element, district: '#id'|Element }
          */
         map.setupLocationDropdowns = function(selectors) {
-            const countryEl = document.querySelector(selectors.country);
-            const regionEl = document.querySelector(selectors.region);
-            const cityEl = document.querySelector(selectors.city);
-            const districtEl = document.querySelector(selectors.district);
+            log(config, 'setupLocationDropdowns', selectors);
+
+            const getEl = (sel) => (typeof sel === 'string' ? document.querySelector(sel) : sel);
+
+            const countryEl = getEl(selectors.country);
+            const regionEl = getEl(selectors.region);
+            const cityEl = getEl(selectors.city);
+            const districtEl = getEl(selectors.district);
 
             function handleSelection(el, level) {
                 if (!el) return;
                 const id = el.value;
                 if (!id) return;
+
+                log(config, `Selection changed: ${level}=${id}`);
 
                 // Priority 1: Check if option has data-lat/lng (fastest)
                 const option = el.options[el.selectedIndex];
@@ -159,6 +174,7 @@
                 }
 
                 // Priority 2: Fetch boundary to show context
+                // We only do this for region/city/district to show boundaries
                 if (['region', 'city', 'district'].includes(level)) {
                     map.fetchAndShowBoundary(level, id);
                 }
@@ -219,16 +235,34 @@
 
         const SATELLITE_ZOOM_THRESHOLD = 15;
         let userManuallySwitchedLayer = false;
+
         map.on('baselayerchange', (e) => {
-            if (e.layer !== ((map.getZoom() >= SATELLITE_ZOOM_THRESHOLD) ? satelliteLayer : osmLayer)) userManuallySwitchedLayer = true;
+            // If the user manually clicks the layer control, this flag becomes true
+            // Logic: If the new layer is NOT what the auto-logic would have chosen, it's a manual override.
+            const shouldBeSatellite = map.getZoom() >= SATELLITE_ZOOM_THRESHOLD;
+            const isSatellite = e.layer === satelliteLayer;
+
+            if (shouldBeSatellite !== isSatellite) {
+                userManuallySwitchedLayer = true;
+                log(config, 'User manually switched layer');
+            }
         });
+
         map.on('zoomend', () => {
             if (userManuallySwitchedLayer) return;
             const currentZoom = map.getZoom();
             if (currentZoom >= SATELLITE_ZOOM_THRESHOLD) {
-                if (!map.hasLayer(satelliteLayer)) { map.removeLayer(osmLayer); map.addLayer(satelliteLayer); }
+                if (!map.hasLayer(satelliteLayer)) {
+                    log(config, 'Auto-switching to Satellite');
+                    map.removeLayer(osmLayer);
+                    map.addLayer(satelliteLayer);
+                }
             } else {
-                if (!map.hasLayer(osmLayer)) { map.removeLayer(satelliteLayer); map.addLayer(osmLayer); }
+                if (!map.hasLayer(osmLayer)) {
+                    log(config, 'Auto-switching to OSM');
+                    map.removeLayer(satelliteLayer);
+                    map.addLayer(osmLayer);
+                }
             }
         });
         return map;
@@ -247,6 +281,7 @@
                 marker = L.marker([safeLat, safeLng], {draggable: !config.readOnly}).addTo(map);
                 if (!config.readOnly) marker.on('dragend', () => { const pos = marker.getLatLng(); updateInputs(pos.lat, pos.lng); });
             }
+            // If we are updating the marker programmatically (e.g. from dropdown), we should also update inputs
             updateInputs(safeLat, safeLng);
         }
 
@@ -268,21 +303,25 @@
 
     function resolveApiPath(config) {
         if (config.apiPolygonUrl) {
-            let url = config.apiPolygonUrl;
-            if (config.entityLevel) url += (url.includes('?') ? '&' : '?') + `level=${encodeURIComponent(config.entityLevel)}`;
-            return url;
+            return config.apiPolygonUrl;
         }
+
+        // Fallback (try to construct from current location if not provided)
         let apiPath = '/admin/location-polygons';
+        // Try to handle localized prefixes like /en/admin, /ar/admin
+        // pathParts[1] is usually the locale
         const pathParts = window.location.pathname.split('/');
-        if (pathParts[1] && pathParts[1].length === 2 && pathParts[1] !== 'admin') apiPath = '/' + pathParts[1] + apiPath;
-        const params = [];
-        if (config.entityLevel) params.push('level=' + encodeURIComponent(config.entityLevel));
-        if (params.length > 0) apiPath += '?' + params.join('&');
+        if (pathParts[1] && pathParts[1].length === 2 && pathParts[1] !== 'admin') {
+            apiPath = '/' + pathParts[1] + apiPath;
+        }
+
         return apiPath;
     }
 
     function loadContextLayers(map, config, contextLayers) {
-        const apiPath = resolveApiPath(config);
+        let apiPath = resolveApiPath(config);
+        if (config.entityLevel) apiPath += (apiPath.includes('?') ? '&' : '?') + `level=${encodeURIComponent(config.entityLevel)}`;
+
         log(config, 'Loading context layers', apiPath);
         if (!_polygonCache[apiPath]) _polygonCache[apiPath] = fetch(apiPath).then(r => { if(!r.ok) throw new Error('Network error'); return r.json(); });
         _polygonCache[apiPath].then(data => {
