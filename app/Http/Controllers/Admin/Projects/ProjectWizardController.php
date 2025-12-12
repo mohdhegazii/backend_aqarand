@@ -69,6 +69,7 @@ class ProjectWizardController extends Controller
             'boundary_geojson' => 'nullable|json',
             'lat' => 'nullable|numeric',
             'lng' => 'nullable|numeric',
+            'featured_media_id' => 'nullable|integer|exists:media_files,id',
         ]);
 
         if ($id) {
@@ -114,6 +115,19 @@ class ProjectWizardController extends Controller
         }
 
         $project->save();
+
+        // Handle Featured Media
+        if ($request->has('featured_media_id')) {
+            $mediaId = $request->input('featured_media_id');
+            // Check if HasMedia trait is used
+            if (in_array(\App\Models\Traits\HasMedia::class, class_uses($project))) {
+                if ($mediaId) {
+                    $project->syncMedia($mediaId, 'featured');
+                } else {
+                    $project->detachMedia('featured');
+                }
+            }
+        }
 
         return redirect()->route('admin.projects.steps.amenities', ['project' => $project->id])
                          ->with('success', __('admin.saved_successfully'));

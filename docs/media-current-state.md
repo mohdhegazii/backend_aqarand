@@ -1,107 +1,41 @@
-# Existing Media & File Features
+# Media Module - Current State
 
-## Upload Logo
-*   **Controller**: `App\Http\Controllers\Admin\DeveloperController`
-*   **Methods**: `store`, `update`
-*   **Route**: `admin.developers.store`, `admin.developers.update` (Resource routes)
-*   **Storage Path**: `storage/app/public/developers/` (via `public` disk)
-*   **Database Column**: `logo_path` (Also checks `logo` and `logo_url` for legacy/fallback).
-*   **Validation**: `mimes:jpeg,png,jpg,webp,gif,svg|max:2048`
-*   **Logic**:
-    *   Uses `Request::file('logo')->store('developers', 'public')`.
-    *   Manually deletes old file if exists using `Storage::disk('public')->delete($oldLogo)`.
-    *   Unsets `logo` key before saving to model to avoid column errors.
+## Overview
+The Media Module is being implemented in phases to replace legacy file handling.
 
-## Project Media Upload
-*   **Controller**: `App\Http\Controllers\Admin\ProjectController`
-*   **Method**: `uploadMedia` (Route: `projects.media.store`)
-*   **Route**: `POST /admin/projects/{project}/media`
-*   **Storage Path**: Likely `projects/{id}/gallery` (Need to confirm in ProjectController code).
-*   **Database Columns**:
-    *   `gallery`: JSON array of objects (`{path, name, alt, is_hero_candidate}`).
-    *   `hero_image_url`: Relative path.
-    *   `brochure_url`: Relative path.
-    *   `map_polygon`: JSON.
-    *   `video_urls`: JSON.
-*   **Validation**: Custom per-method.
+## Phase 1: Database Schema
+- Tables: `media_files`, `media_links`, `media_conversions`, `media_tags`, `media_settings`.
+- Models: `MediaFile`, `MediaLink`, `MediaConversion`, `MediaTag`, `MediaSetting`.
+- Trait: `HasMedia` (for attachable models).
 
-## Admin File Manager (/admin/file-manager)
-*   **Route**: `/admin/file-manager` -> `admin.file_manager`
-*   **Controller**: `App\Http\Controllers\Admin\MediaController@index` (Legacy Controller logic)
-*   **View**: `resources/views/admin/media/index.blade.php`
-*   **Current Capabilities**:
-    *   Lists `MediaFile` records (from `media_files` table).
-    *   Filters by `search`, `context_type`, `variant_role`.
-    *   Displays image preview, details (size, dim), context (Project/Unit), SEO Alt text.
-    *   Actions: View (show), Delete (destroy).
-    *   **Note**: This seems to be a read-only view of a "MediaFile" entity, which suggests there is already a `MediaFile` model and table, possibly part of a previous incomplete implementation or the one we are refactoring.
-    *   It does *not* seem to provide a general file system browser (like a traditional file manager), but rather a database-driven list of media assets.
+## Phase 2: Core Services
+- Disk Resolver: `MediaDiskResolver` (handles `local_work`, `s3_media_local`, etc.).
+- Path Generator: `MediaPathGenerator` (SEO-friendly paths).
+- Processing: `MediaProcessingService` (image optimization, resizing).
+- Jobs: `ProcessMediaFileJob`.
 
-### file_manager vs Media Manager
-*   `/admin/file-manager` is the existing legacy file management page, served by `Admin\MediaController`.
-*   New JSON endpoints `/admin/media` and `/admin/media/upload` (Phase 3) are served by `Admin\MediaApiController` to power the future central Media Manager UI.
-*   In a future phase, we will either:
-    *   Migrate `/admin/file-manager` to use the new media tables and APIs, or
-    *   Replace it with a new Media Manager screen that relies entirely on the new module.
-*   **Important**: The new API routes (`/admin/media/*`) are designed to coexist with legacy routes for now.
+## Phase 3: Admin APIs
+- Endpoints: `POST /admin/media/upload`, `GET /admin/media`, `GET /admin/media/{id}`, `DELETE /admin/media/{id}`.
+- Controller: `Admin\MediaApiController`.
 
-## Media-Related Dependencies
-*   **intervention/image**: `^2.7` (Added to `composer.json` for later installation)
-*   **league/flysystem-aws-s3-v3**: `^3.0` (Added to `composer.json` for later installation)
+## Phase 4: Admin Media Manager UI & Project Integration
+- **New Admin Page**: `/admin/media-manager` (List, Filter, Upload, Delete).
+- **Reusable Modal**: `<x-admin.media-manager-modal>` for selecting media in forms.
+- **Form Component**: `<x-admin.media-picker>` for easy integration.
+- **Project Integration**: Added "Featured Image (New)" field to Project Wizard (Step 1).
+  - Uses `HasMedia` trait.
+  - Role: `featured`.
+  - Legacy image fields (`hero_image_url`, `gallery`) remain untouched for now.
 
-## Known Problems / Limitations
-*   **Fragmentation**: Developer logos use raw file paths in `developers` table. Projects use `gallery` JSON column. A separate `media_files` table exists but isn't used everywhere (e.g. Developer logo).
-*   **Manual Handling**: Controllers manually handle `store`, `delete` of files (e.g. `DeveloperController`).
-*   **No Central Config**: Storage paths are hardcoded strings ('developers', 'projects').
-*   **Dual Storage**: Need to support S3 migration without breaking local dev.
+### Current Integration Status
+- **Projects**: Now have a **new optional featured image** powered by the Media Manager (Media module).
+- **Legacy Flows**:
+  - **Logo Upload**: Still uses the existing legacy implementation (direct file upload to storage).
+  - **File Manager**: The existing `/admin/file-manager` section is untouched and remains available as a legacy tool.
+  - **Project Gallery/Hero**: Existing fields in Step 4 (Media) are still using the legacy logic.
 
-## Phase 0 Summary
-*   **Dual Storage Concept**: Configured `local_work` (app/public) and `s3_media_local` (app/s3_media_local) disks in `config/filesystems.php`.
-*   **Analysis Completed**: Existing media flows (Developer Logo, Project Media, Admin File Manager) have been documented.
-*   **Environment Ready**: `composer.json` updated with `intervention/image` and `flysystem-s3` dependencies. `.env.example` updated with S3 placeholders and instructions for local simulation.
-*   **Documentation**: Created `docs/media-current-state.md` to serve as the baseline for the upcoming Media Manager refactoring.
-
-## Phase 1 – Media Schema & Models
-*   **New Database Tables**:
-    *   `media_files` (Augmented): Added `type`, `alt_text`, `title`, `caption`, `seo_slug`, `uploaded_by_id`, `is_system_asset`, `deleted_at`.
-    *   `media_conversions`: Stores info about file variants (thumbs, resized).
-    *   `media_links`: Replaces/Standardizes polymorphic associations (`model_type`, `model_id`, `role`).
-    *   `media_tags` & `media_file_tag`: For categorizing media.
-    *   `media_settings`: Single-row config table for defaults (disk, quality, sizes).
-*   **New Models**: `MediaFile`, `MediaConversion`, `MediaLink`, `MediaTag`, `MediaSetting`.
-*   **Traits**: `HasMedia` trait introduced for future domain model integration (e.g., Projects, Units).
-*   **Status**:
-    *   Database schema migrations created.
-    *   Models implemented.
-    *   Seeder for default settings created.
-    *   **Existing functionality (Logo upload, Project gallery, etc.) REMAINS UNCHANGED and utilizes the old logic for now.** The new tables are currently parallel structures waiting for Phase 2 integration.
-
-## Phase 2 – Core Media Services & Processing
-*   **Services Implemented**:
-    *   `MediaDiskResolver`: Resolves storage disks (Default, System, Tmp) based on `MediaSetting`.
-    *   `MediaPathGenerator`: Generates consistent, SEO-friendly paths (e.g., `projects/egypt/cairo/slug/file.jpg`) for files and conversions.
-    *   `MediaProcessingService`: Handles image resizing/optimization (using Intervention Image) and PDF processing (placeholder). It writes processed files to `media_tmp` disk first.
-    *   `MediaStorageService`: Persists processed variants from `media_tmp` to the final disk (e.g., `s3_media_local`) and updates the database (`MediaFile` and `MediaConversion`).
-*   **Jobs**:
-    *   `ProcessMediaFileJob`: Queued job to orchestrate the pipeline (Load -> Process -> Store -> Update).
-*   **Infrastructure**:
-    *   Added `media_tmp` disk to `config/filesystems.php` for safe temporary processing.
-*   **Status**:
-    *   Core pipeline logic is ready.
-    *   **Integration Pending**: These services are not yet wired into the Admin Upload UI. Existing upload forms (Developer Logo, Project Media) continue to work using legacy code.
-
-## Phase 3 – Admin Media Upload & Library API
-*   **New Endpoints**:
-    *   `POST /admin/media/upload`: Uploads raw file to `media_tmp` and dispatches processing job.
-    *   `GET /admin/media`: Returns paginated list of media files with filters.
-    *   `GET /admin/media/{id}`: Returns details of a specific media file.
-    *   `DELETE /admin/media/{id}`: Soft deletes a media file.
-*   **Validation**: `MediaUploadRequest` uses `MediaSetting` to dynamically enforce constraints (max size for images/PDFs).
-*   **Logic**:
-    *   The Upload endpoint is non-blocking: it returns 'processing' status immediately.
-    *   Library API returns standard JSON structure for future Vue/React/Alpine UI.
-*   **Architecture**:
-    *   Implemented `MediaUploadRequest` and `Admin\MediaApiController` (using new name to avoid conflict with legacy `MediaController`).
-    *   Legacy `Admin\MediaController` is preserved to keep `/admin/file-manager` operational.
-    *   Registered routes in `routes/admin.php` under `media.*` namespace.
-    *   Verified existing `file_manager` routes are untouched.
+## Next Steps (Future Phases)
+- Migrate Developer Logo to use Media Manager.
+- Migrate Project Gallery and Hero Image to Media Manager.
+- Replace `/admin/file-manager` with the new Media Manager page entirely.
+- Expose Media via GraphQL/API for Frontend (Next.js).

@@ -57,6 +57,46 @@
                 @enderror
             </div>
 
+            <!-- Featured Image (Media Manager) -->
+            <div>
+                @php
+                    // Try to resolve featured media ID
+                    // Option A: If HasMedia trait is used, we can get first 'featured' media
+                    // Option B: If column 'featured_media_id' exists
+                    // For now, assuming we use a relationship or just passing current value if we had it
+                    // Since it's new, it will be null unless saved.
+                    // But wait, the controller needs to handle this.
+                    // I will check if I can get it from media_links
+                    $featuredMediaId = null;
+                    if ($project->exists) {
+                         // Check for media link
+                         // Assuming 'featured' collection or role.
+                         // $project->getMedia('featured')->first()?->id ?? null
+                         // But I need to ensure HasMedia is on model.
+                         // If I use the helper method from trait: $project->getFirstMediaId('featured')?
+                         // I will implement helper in trait later if needed, or just manual check here.
+                         // Since I haven't modified model yet, I will do it in next steps.
+                         // For now, I will assume $project->featured_media_id if I added a column, OR
+                         // use the relationship.
+                         // I'll use a variable passed from controller OR logic here.
+                         // Let's assume the controller passes it or I access relation.
+                         // Relation: $project->media()->where('role', 'featured')->first()?->media_file_id
+                         // But media() is morphMany on MediaLink.
+                         // MediaLink has media_file_id.
+                         // So: $project->mediaLinks()->where('role', 'featured')->first()?->media_file_id
+                         if(method_exists($project, 'mediaLinks')) {
+                             $featuredMediaId = $project->mediaLinks()->where('role', 'featured')->first()?->media_file_id;
+                         }
+                    }
+                @endphp
+
+                <x-admin.media-picker
+                    name="featured_media_id"
+                    label="{{ __('Featured Image (New)') }}"
+                    :value="old('featured_media_id', $featuredMediaId)"
+                />
+            </div>
+
             <!-- Launch Date Row -->
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <!-- Launch Date -->

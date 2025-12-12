@@ -23,6 +23,12 @@
                     'icon' => 'bi-folder2-open',
                     'active' => $matchesRoute(['admin.file_manager']),
                 ],
+                [
+                    'label' => $isRtl ? 'مكتبة الوسائط (جديد)' : 'Media Manager (New)',
+                    'route' => 'admin.media-manager.index',
+                    'icon' => 'bi-images',
+                    'active' => $matchesRoute(['admin.media-manager.index']),
+                ],
             ],
         ],
         [

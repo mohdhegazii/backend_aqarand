@@ -6,10 +6,12 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Str;
+use App\Models\Traits\HasMedia;
 
 class Project extends Model
 {
     use HasFactory;
+    use HasMedia;
     // use SoftDeletes; // Schema does not show deleted_at, assuming is_active usage instead or standard deletion
 
     protected $table = 'projects';
