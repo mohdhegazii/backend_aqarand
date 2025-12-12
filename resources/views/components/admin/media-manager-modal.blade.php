@@ -94,7 +94,6 @@
                         this.lastPage = result.meta.last_page;
                     } catch (error) {
                         console.error('Error fetching media:', error);
-                        // Optionally show error toast
                     } finally {
                         this.isLoading = false;
                     }
@@ -107,21 +106,16 @@
                 confirmSelection() {
                     if (!this.selectedItem || !this.targetInputName) return;
 
-                    // Update hidden input
-                    const input = document.querySelector(`input[name="${this.targetInputName}"]`);
-                    if (input) {
-                        input.value = this.selectedItem.id;
-                        // Dispatch change event manually
-                        input.dispatchEvent(new Event('change', { bubbles: true }));
+                    // Note: We don't update input value here because media-picker listens to the event
+                    // and handles the value update (supporting both single and multiple selection)
 
-                        // Also dispatch a custom event for other listeners (like preview components)
-                        window.dispatchEvent(new CustomEvent('media-selected', {
-                            detail: {
-                                inputName: this.targetInputName,
-                                media: this.selectedItem
-                            }
-                        }));
-                    }
+                    // Dispatch a custom event for other listeners
+                    window.dispatchEvent(new CustomEvent('media-selected', {
+                        detail: {
+                            inputName: this.targetInputName,
+                            media: this.selectedItem
+                        }
+                    }));
 
                     this.closeModal();
                 },
@@ -186,13 +180,32 @@
                         }
 
                         // Success
-                        this.resetUpload();
-                        this.activeTab = 'library';
-                        this.fetchMedia(1); // Refresh library
+                        // Do NOT close modal, but switch to library and select the item
 
-                        // Optional: Auto-select uploaded item (if result contains full object or we fetch it)
-                        // result usually contains media_id
-                        // We might want to just let user see it in list
+                        this.activeTab = 'library';
+                        this.resetUpload(); // clears file input but we want to reload library
+
+                        // Refresh library
+                        await this.fetchMedia(1);
+
+                        // If the uploaded item is in the list (it should be if order by created_desc), select it.
+                        if (result.media_id) {
+                            // Find it in mediaItems
+                            const uploadedItem = this.mediaItems.find(i => i.id === result.media_id);
+                            if (uploadedItem) {
+                                this.selectedItem = uploadedItem;
+                            }
+
+                            // Auto-add to gallery (dispatch event immediately)
+                            if (uploadedItem) {
+                                window.dispatchEvent(new CustomEvent('media-selected', {
+                                    detail: {
+                                        inputName: this.targetInputName,
+                                        media: uploadedItem
+                                    }
+                                }));
+                            }
+                        }
 
                     } catch (error) {
                         console.error('Upload error:', error);
@@ -207,12 +220,7 @@
                     if (item.type !== 'image') {
                          return null; // Return generic icon in template
                     }
-                    // Try to find a thumb variant
                     if (item.variants && item.variants.thumb) {
-                        // variants is usually a path or url
-                        // Check if variants is object or array. API says 'variants' => $item->variants (JSON)
-                        // Need to verify API response structure for variants.
-                        // Assuming variants object with keys like 'thumb', 'medium'
                         return item.variants.thumb.url || item.variants.thumb;
                     }
                     return item.url;
@@ -267,7 +275,7 @@
                         <h3 class="text-lg leading-6 font-medium text-gray-900" id="modal-title">
                             {{ __('Media Manager') }}
                         </h3>
-                        <button @click="closeModal" type="button" class="text-gray-400 hover:text-gray-500 focus:outline-none">
+                        <button type="button" @click="closeModal" class="text-gray-400 hover:text-gray-500 focus:outline-none">
                             <span class="sr-only">Close</span>
                             <i class="bi bi-x-lg text-xl"></i>
                         </button>
@@ -276,12 +284,12 @@
                     {{-- Tabs --}}
                     <div class="mt-4 border-b border-gray-200">
                         <nav class="-mb-px flex space-x-8" aria-label="Tabs">
-                            <button @click="setTab('library')"
+                            <button type="button" @click="setTab('library')"
                                     :class="activeTab === 'library' ? 'border-indigo-500 text-indigo-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'"
                                     class="whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm">
                                 {{ __('Media Library') }}
                             </button>
-                            <button @click="setTab('upload')"
+                            <button type="button" @click="setTab('upload')"
                                     :class="activeTab === 'upload' ? 'border-indigo-500 text-indigo-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'"
                                     class="whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm">
                                 {{ __('Upload New') }}
@@ -352,13 +360,13 @@
 
                         {{-- Pagination --}}
                         <div class="mt-4 flex items-center justify-between" x-show="!isLoading && mediaItems.length > 0">
-                            <button @click="fetchMedia(currentPage - 1)" :disabled="currentPage <= 1" class="text-sm text-gray-600 hover:text-indigo-600 disabled:opacity-50 disabled:cursor-not-allowed">
+                            <button type="button" @click="fetchMedia(currentPage - 1)" :disabled="currentPage <= 1" class="text-sm text-gray-600 hover:text-indigo-600 disabled:opacity-50 disabled:cursor-not-allowed">
                                 &laquo; {{ __('Previous') }}
                             </button>
                             <span class="text-sm text-gray-500">
                                 {{ __('Page') }} <span x-text="currentPage"></span> / <span x-text="lastPage"></span>
                             </span>
-                            <button @click="fetchMedia(currentPage + 1)" :disabled="currentPage >= lastPage" class="text-sm text-gray-600 hover:text-indigo-600 disabled:opacity-50 disabled:cursor-not-allowed">
+                            <button type="button" @click="fetchMedia(currentPage + 1)" :disabled="currentPage >= lastPage" class="text-sm text-gray-600 hover:text-indigo-600 disabled:opacity-50 disabled:cursor-not-allowed">
                                 {{ __('Next') }} &raquo;
                             </button>
                         </div>
@@ -370,12 +378,24 @@
 
                             {{-- Drop Zone / File Input --}}
                             <div class="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-indigo-500 transition-colors bg-white">
-                                <input type="file" x-ref="fileInput" @change="handleFileSelect" class="hidden" :accept="allowedType === 'image' ? 'image/*' : (allowedType === 'pdf' ? 'application/pdf' : '*/*')">
+                                <input type="file"
+                                       x-ref="fileInput"
+                                       @change="handleFileSelect"
+                                       class="hidden"
+                                       :accept="allowedType === 'image' ? 'image/*' : (allowedType === 'pdf' ? 'application/pdf' : '*/*')">
+
                                 <div class="cursor-pointer" @click="$refs.fileInput.click()">
                                     <i class="bi bi-cloud-upload text-4xl text-gray-400"></i>
                                     <p class="mt-2 text-sm text-gray-600" x-show="!uploadFile">{{ __('Click to select a file') }}</p>
-                                    <p class="mt-2 text-sm text-indigo-600 font-semibold" x-show="uploadFile" x-text="uploadFile.name"></p>
+
+                                    {{-- Safe guard for uploadFile name --}}
+                                    <template x-if="uploadFile">
+                                        <p class="mt-2 text-sm text-indigo-600 font-semibold" x-text="uploadFile.name"></p>
+                                    </template>
                                 </div>
+                                <button type="button" @click="$refs.fileInput.click()" class="mt-3 inline-flex items-center px-3 py-1 bg-gray-100 border border-gray-300 rounded-md font-semibold text-xs text-gray-700 uppercase tracking-widest hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 disabled:opacity-25 transition ease-in-out duration-150">
+                                    {{ __('Choose File') }}
+                                </button>
                             </div>
 
                             {{-- Alt Text --}}
@@ -391,7 +411,8 @@
                             </div>
 
                             {{-- Upload Button --}}
-                            <button @click="uploadMedia"
+                            <button type="button"
+                                    @click="uploadMedia"
                                     :disabled="!uploadFile || isUploading"
                                     class="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50">
                                 <span x-show="isUploading" class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>

@@ -164,19 +164,6 @@ class ProjectWizardController extends Controller
         // Sync amenities
         $project->amenities()->sync($request->input('amenities', []));
 
-        // Redirect to next step: Marketing (Step 3) - which needs to be defined,
-        // but for now we might route to Media (Step 4) if Marketing is not yet implemented,
-        // or just stay on amenities.
-        // Since Marketing is step 3 and Media is step 4, let's assume we implement Media now
-        // and add a placeholder/redirect for Marketing later.
-        // For this task, we will redirect to Media Step for now to facilitate flow testing,
-        // OR stick to the current flow.
-        // User requested "Step 3: Marketing" in wizard_steps, but we are only implementing Media now.
-        // So we can keep it as is or redirect to Media if Marketing is skipped.
-        // Let's redirect to Media directly for now as Marketing is not part of this task scope,
-        // but ideally we should have a Marketing step.
-        // I'll stick to redirecting to self for now, or maybe the next implemented step.
-
         // Redirect to Step 4 (Media) directly, skipping Marketing (Step 3) for now.
         return redirect()->route('admin.projects.steps.media', ['project' => $project->id])
                          ->with('success', __('admin.saved_successfully'));
@@ -215,6 +202,15 @@ class ProjectWizardController extends Controller
     {
         $project = Project::findOrFail($id);
 
+        // Pre-processing: Decode JSON string for gallery_media_ids if necessary
+        // This addresses the issue where the frontend might send a JSON string instead of an array
+        if ($request->has('gallery_media_ids') && is_string($request->input('gallery_media_ids'))) {
+            $decoded = json_decode($request->input('gallery_media_ids'), true);
+            if (is_array($decoded)) {
+                $request->merge(['gallery_media_ids' => $decoded]);
+            }
+        }
+
         $request->validate([
             'gallery_media_ids' => 'nullable|array',
             'gallery_media_ids.*' => 'integer|exists:media_files,id',
@@ -223,20 +219,8 @@ class ProjectWizardController extends Controller
 
         // Sync Gallery
         // The input 'gallery_media_ids' should contain IDs in the desired order.
-        // If empty or null, clear gallery.
         if ($request->has('gallery_media_ids')) {
              $project->syncMedia($request->input('gallery_media_ids', []), 'gallery');
-        } else {
-             // If field is missing, it might mean no changes or clear all?
-             // Usually form submission includes the field if it's there.
-             // If we use a multi-select, empty selection sends empty array or nothing.
-             // We should check if the field was present in the request to decide.
-             // For now, let's assume if the key is present (even if null/empty), we sync.
-             // But if we want to support partial updates we should be careful.
-             // However, wizard steps usually submit the full state of that step.
-             if ($request->has('gallery_media_ids')) {
-                 $project->syncMedia([], 'gallery');
-             }
         }
 
         // Sync Brochure
@@ -250,7 +234,6 @@ class ProjectWizardController extends Controller
         }
 
         // Redirect to Index or Next Step (Financials - Step 5).
-        // Since Financials is not implemented, we go to Index.
         return redirect()->route('admin.projects.index')
                          ->with('success', __('admin.saved_successfully'));
     }

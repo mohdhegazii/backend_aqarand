@@ -35,11 +35,6 @@ class MediaApiController extends Controller
         $seoSlug = Str::slug($slugBase);
 
         // Store temporarily
-        // Use MediaDiskResolver to get the temporary disk name
-        // Although Phase 2 instructions mentioned 'media_tmp' explicitly, let's try to follow best practice if resolver provides it.
-        // But since resolver usually returns destination disk, and 'media_tmp' is specific for processing, I will stick to 'media_tmp' as per Phase 3 prompt instructions ("Use MediaDiskResolver to get the temporary disk name: media_tmp").
-        // This phrasing suggests I should just use 'media_tmp' but maybe call resolver?
-        // For now, I will stick to 'media_tmp' string as per specific instruction.
         $tempDisk = 'media_tmp';
 
         $tempFilename = uniqid('upload_') . '.' . $file->getClientOriginalExtension();
@@ -81,6 +76,46 @@ class MediaApiController extends Controller
 
     public function index(Request $request)
     {
+        // Handle explicit ID fetching for previews
+        if ($request->has('ids')) {
+            $idsParam = $request->input('ids');
+
+            if (!$idsParam) {
+                return response()->json([]);
+            }
+
+            $ids = collect(explode(',', $idsParam))
+                ->filter()
+                ->map(fn($id) => (int) $id);
+
+            if ($ids->isEmpty()) {
+                return response()->json([]);
+            }
+
+            $mediaFiles = MediaFile::whereIn('id', $ids)
+                ->with('conversions')
+                ->orderByRaw('FIELD(id, ' . implode(',', $ids->toArray()) . ')')
+                ->get();
+
+            // Transform collection
+            $data = $mediaFiles->map(function ($item) {
+                return [
+                    'id' => $item->id,
+                    'type' => $item->type,
+                    'original_name' => $item->original_name,
+                    'seo_slug' => $item->seo_slug,
+                    'alt_text' => $item->alt_text,
+                    'disk' => $item->disk,
+                    'path' => $item->path,
+                    'url' => $item->url,
+                    'created_at' => $item->created_at->toIso8601String(),
+                    'variants' => $item->variants,
+                ];
+            });
+
+            return response()->json($data);
+        }
+
         $query = MediaFile::query();
 
         // Type filter
