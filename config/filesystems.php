@@ -41,7 +41,7 @@ return [
         'public' => [
             'driver' => 'local',
             'root' => storage_path('app/public'),
-            'url' => env('APP_URL').'/storage',
+            'url' => '/storage',
             'visibility' => 'public',
             'throw' => false,
             'report' => false,
@@ -51,7 +51,7 @@ return [
         'local_work' => [
             'driver' => 'local',
             'root' => storage_path('app/public'),
-            'url' => env('APP_URL').'/storage',
+            'url' => '/storage',
             'visibility' => 'public',
             'throw' => false,
         ],
@@ -61,7 +61,7 @@ return [
         's3_media_local' => [
             'driver' => 'local',
             'root' => storage_path('app/s3_media_local'),
-            'url' => env('APP_URL').'/s3_media_local', // Simulated URL
+            'url' => '/s3_media_local', // Simulated URL relative to root
             'visibility' => 'public',
             'throw' => false,
         ],
