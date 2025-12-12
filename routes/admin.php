@@ -33,3 +33,6 @@ Route::prefix('media')->name('media.')->group(function () {
     Route::get('{id}', [MediaApiController::class, 'show'])->name('show');
     Route::delete('{id}', [MediaApiController::class, 'destroy'])->name('destroy');
 });
+
+// Media Manager UI (Phase 4)
+Route::get('media-manager', [\App\Http\Controllers\Admin\MediaManagerController::class, 'index'])->name('media-manager.index');
