@@ -8,6 +8,7 @@
 <div class="bg-white rounded-lg shadow-sm p-6" x-data="featuredPlacesManager()">
 
     <!-- Debug Output (Visible for troubleshooting as requested) -->
+    @if(config('app.debug'))
     <div class="mb-4 p-4 bg-yellow-50 border border-yellow-200 rounded text-xs font-mono overflow-auto" style="max-height: 200px;">
         <strong>Debug Info:</strong>
         <div x-text="'Place SubCat: ' + placeData.sub_category_id"></div>
@@ -15,6 +16,7 @@
         <div x-text="'Filtered SubCats Count: ' + filteredSubCategories.length"></div>
         <div>Filtered IDs: <span x-text="filteredSubCategories.map(s => s.id).join(', ')"></span></div>
     </div>
+    @endif
 
     <!-- Tabs Navigation -->
     <div class="border-b border-gray-200 mb-6">
@@ -325,6 +327,7 @@
                         inputLatName="point_lat"
                         inputLngName="point_lng"
                         inputPolygonName="polygon_geojson"
+                        :apiPolygonUrl="route('admin.location-polygons')"
                     />
                 </div>
 
@@ -393,186 +396,80 @@
     document.addEventListener('alpine:init', () => {
         Alpine.data('featuredPlacesManager', () => ({
             activeTab: 'main-categories',
-
-            // Main Category Data
             mainCatEditMode: false,
             mainCatFormAction: "{{ route('admin.featured-places.main-categories.store') }}",
-            mainCatData: {
-                id: null,
-                name_ar: '',
-                name_en: '',
-                icon_name: '',
-                is_active: true
-            },
-
-            // Sub Category Data
+            mainCatData: { id: null, name_ar: '', name_en: '', icon_name: '', is_active: true },
             subCatEditMode: false,
             subCatFormAction: "{{ route('admin.featured-places.sub-categories.store') }}",
-            subCatData: {
-                id: null,
-                main_category_id: '',
-                name_ar: '',
-                name_en: '',
-                is_active: true
-            },
-
-            // Place Data
+            subCatData: { id: null, main_category_id: '', name_ar: '', name_en: '', is_active: true },
             placeEditMode: false,
             placeFormAction: "{{ route('admin.featured-places.places.store') }}",
             selectedMainCategory: '',
             allSubCategories: @json($subCategories),
             filteredSubCategories: [],
-            placeData: {
-                id: null,
-                sub_category_id: '',
-                name_ar: '',
-                name_en: '',
-                is_active: true
-            },
+            placeData: { id: null, sub_category_id: '', name_ar: '', name_en: '', is_active: true },
 
-            get map() {
-                return window['map_featured-places-map'];
-            },
+            get map() { return window['map_featured-places-map']; },
 
             init() {
-                // Initialize active tab from URL query parameter
                 const urlParams = new URLSearchParams(window.location.search);
                 const tab = urlParams.get('tab');
-                const validTabs = ['main-categories', 'sub-categories', 'places'];
-
-                if (tab && validTabs.includes(tab)) {
-                    this.activeTab = tab;
-                }
-
+                if (tab && ['main-categories', 'sub-categories', 'places'].includes(tab)) this.activeTab = tab;
                 this.filterSubCategories();
-
                 this.$watch('activeTab', (value) => {
-                    // Update URL when tab changes
                     const url = new URL(window.location);
                     url.searchParams.set('tab', value);
                     window.history.pushState({}, '', url);
-
                     if (value === 'places') {
-                        // Use a slight delay to ensure x-show transition has started/finished rendering
                         this.$nextTick(() => {
-                            setTimeout(() => {
-                                if (this.map) {
-                                    this.map.invalidateSize();
-                                }
-                            }, 200);
+                            setTimeout(() => { if (this.map) this.map.invalidateSize(); }, 200);
                         });
                     }
                 });
             },
 
-            // Main Category Methods
-            resetMainCatForm() {
-                this.mainCatEditMode = false;
-                this.mainCatFormAction = "{{ route('admin.featured-places.main-categories.store') }}";
-                this.mainCatData = { id: null, name_ar: '', name_en: '', icon_name: '', is_active: true };
-            },
-            editMainCategory(cat) {
-                this.activeTab = 'main-categories';
-                this.mainCatEditMode = true;
-                this.mainCatFormAction = "{{ route('admin.featured-places.main-categories.update', '0') }}".replace('/0', '/' + cat.id);
-                this.mainCatData = {
-                    id: cat.id,
-                    name_ar: cat.name_ar,
-                    name_en: cat.name_en,
-                    icon_name: cat.icon_name,
-                    is_active: cat.is_active
-                };
-            },
+            resetMainCatForm() { this.mainCatEditMode = false; this.mainCatFormAction = "{{ route('admin.featured-places.main-categories.store') }}"; this.mainCatData = { id: null, name_ar: '', name_en: '', icon_name: '', is_active: true }; },
+            editMainCategory(cat) { this.activeTab = 'main-categories'; this.mainCatEditMode = true; this.mainCatFormAction = "{{ route('admin.featured-places.main-categories.update', '0') }}".replace('/0', '/' + cat.id); this.mainCatData = { id: cat.id, name_ar: cat.name_ar, name_en: cat.name_en, icon_name: cat.icon_name, is_active: cat.is_active }; },
+            resetSubCatForm() { this.subCatEditMode = false; this.subCatFormAction = "{{ route('admin.featured-places.sub-categories.store') }}"; this.subCatData = { id: null, main_category_id: '', name_ar: '', name_en: '', is_active: true }; },
+            editSubCategory(sub) { this.activeTab = 'sub-categories'; this.subCatEditMode = true; this.subCatFormAction = "{{ route('admin.featured-places.sub-categories.update', '0') }}".replace('/0', '/' + sub.id); this.subCatData = { id: sub.id, main_category_id: sub.main_category_id, name_ar: sub.name_ar, name_en: sub.name_en, is_active: sub.is_active }; },
 
-            // Sub Category Methods
-            resetSubCatForm() {
-                this.subCatEditMode = false;
-                this.subCatFormAction = "{{ route('admin.featured-places.sub-categories.store') }}";
-                this.subCatData = { id: null, main_category_id: '', name_ar: '', name_en: '', is_active: true };
-            },
-            editSubCategory(sub) {
-                this.activeTab = 'sub-categories';
-                this.subCatEditMode = true;
-                this.subCatFormAction = "{{ route('admin.featured-places.sub-categories.update', '0') }}".replace('/0', '/' + sub.id);
-                this.subCatData = {
-                    id: sub.id,
-                    main_category_id: sub.main_category_id,
-                    name_ar: sub.name_ar,
-                    name_en: sub.name_en,
-                    is_active: sub.is_active
-                };
-            },
-
-            // Featured Place Methods
             filterSubCategories() {
-                if (!this.selectedMainCategory) {
-                    this.filteredSubCategories = [];
-                    this.placeData.sub_category_id = '';
-                    return;
-                }
+                if (!this.selectedMainCategory) { this.filteredSubCategories = []; this.placeData.sub_category_id = ''; return; }
                 this.filteredSubCategories = this.allSubCategories.filter(sub => sub.main_category_id == this.selectedMainCategory);
-
-                // Debugging (Console Log)
-                console.log('Filtering SubCategories for MainCat ID:', this.selectedMainCategory);
-                console.log('Found SubCategories:', this.filteredSubCategories);
-
-                if (!this.filteredSubCategories.some(sub => sub.id == this.placeData.sub_category_id)) {
-                    console.warn('Current sub_category_id', this.placeData.sub_category_id, 'not found in filtered list. Resetting.');
-                    this.placeData.sub_category_id = '';
-                }
+                if (!this.filteredSubCategories.some(sub => sub.id == this.placeData.sub_category_id)) this.placeData.sub_category_id = '';
             },
             resetPlaceForm() {
                 this.placeEditMode = false;
                 this.placeFormAction = "{{ route('admin.featured-places.places.store') }}";
                 this.selectedMainCategory = '';
                 this.filterSubCategories();
-                this.placeData = {
-                    id: null,
-                    sub_category_id: '',
-                    name_ar: '',
-                    name_en: '',
-                    is_active: true
-                };
-
-                // Reset location dropdowns
+                this.placeData = { id: null, sub_category_id: '', name_ar: '', name_en: '', is_active: true };
                 document.getElementById('fp_country_id').value = '';
-                // Trigger change to reset dependent dropdowns
                 document.getElementById('fp_country_id').dispatchEvent(new Event('change'));
-
                 if(this.map) {
                     this.map.invalidateSize();
-                    // Reset to default Cairo view
-                     this.map.setView([30.0444, 31.2357], 6);
-                     // Clear drawings
-                     if(this.map.drawnItems) this.map.drawnItems.clearLayers();
-                     if(this.map.updateBoundaryInput) this.map.updateBoundaryInput();
+                    this.map.setView([30.0444, 31.2357], 6);
+                    if(this.map.setPolygon) this.map.setPolygon(null);
+                    if(this.map.updateMarker) this.map.updateMarker(30.0444, 31.2357); // Reset marker to center? Or remove?
                 }
             },
             async editPlace(place) {
-                if (!place) {
-                    console.error('editPlace called with undefined place');
-                    return;
-                }
+                if (!place) return;
                 const currentPlace = place;
-
                 try {
                     this.activeTab = 'places';
                     this.placeEditMode = true;
                     this.placeFormAction = "{{ route('admin.featured-places.places.update', '__PLACE_ID__') }}".replace('__PLACE_ID__', currentPlace.id);
-
                     this.selectedMainCategory = currentPlace.main_category_id;
-
                     this.placeData = {
                         id: currentPlace.id,
-                        sub_category_id: currentPlace.sub_category_id || '', // Normalize null to empty string for Select
+                        sub_category_id: currentPlace.sub_category_id || '',
                         name_ar: currentPlace.name_ar,
                         name_en: currentPlace.name_en,
                         is_active: currentPlace.is_active
                     };
-
                     this.filterSubCategories();
 
-                    // Populate Locations
                     const countryId = currentPlace.country_id;
                     const regionId = currentPlace.region_id;
                     const cityId = currentPlace.city_id;
@@ -582,113 +479,61 @@
                         const countrySelect = document.getElementById('fp_country_id');
                         if (countrySelect) {
                             countrySelect.value = countryId;
-                            // Trigger loading regions
-                            if (window.loadRegions) {
-                                await window.loadRegions(countryId);
-                                const regionSelect = document.getElementById('fp_region_id');
-                                if (regionSelect) regionSelect.value = regionId;
-
-                                // Trigger loading cities
-                                if (window.loadCities && regionId) {
-                                    await window.loadCities(regionId);
-                                    const citySelect = document.getElementById('fp_city_id');
-                                    if (citySelect) citySelect.value = cityId;
-
-                                    // Trigger loading districts
-                                    if (window.loadDistricts && cityId) {
-                                        await window.loadDistricts(cityId);
-                                        const districtSelect = document.getElementById('fp_district_id');
-                                        if (districtSelect && districtId) {
-                                            districtSelect.value = districtId;
-                                        }
-                                    }
+                            if (window.loadRegions) await window.loadRegions(countryId);
+                            const regionSelect = document.getElementById('fp_region_id');
+                            if (regionSelect) {
+                                regionSelect.value = regionId;
+                                if (window.loadCities && regionId) await window.loadCities(regionId);
+                                const citySelect = document.getElementById('fp_city_id');
+                                if (citySelect) {
+                                    citySelect.value = cityId;
+                                    if (window.loadDistricts && cityId) await window.loadDistricts(cityId);
+                                    const districtSelect = document.getElementById('fp_district_id');
+                                    if (districtSelect && districtId) districtSelect.value = districtId;
                                 }
                             }
                         }
                     }
-                } catch (e) {
-                    console.error('Error populating edit form:', e);
-                }
+                } catch (e) { console.error('Error populating edit form:', e); }
 
-                // Update Map (independent of location loading success/fail)
                 this.$nextTick(() => {
                     setTimeout(() => {
                         try {
                             const mapInstance = this.map;
                             if(mapInstance) {
-                                // Important: Resize first
                                 mapInstance.invalidateSize();
-
-                                if (currentPlace && currentPlace.point_lat && currentPlace.point_lng) {
+                                if (currentPlace.point_lat && currentPlace.point_lng) {
                                     const lat = parseFloat(currentPlace.point_lat);
                                     const lng = parseFloat(currentPlace.point_lng);
-
-                                    // Move view
-                                    mapInstance.setView([lat, lng], 15);
-
-                                    // Update Marker
-                                    if (mapInstance.updateMarker) {
-                                        mapInstance.updateMarker(lat, lng);
-                                    }
-
-                                    // Remove existing layers if any (clearing drawn items)
-                                    if (mapInstance.drawnItems) {
-                                        mapInstance.drawnItems.clearLayers();
-                                    }
-
-                                    // Add Polygon if exists
-                                    if (currentPlace.polygon_geojson && mapInstance.drawnItems) {
-                                         // Check if it's a string or object
-                                         let geoJson = currentPlace.polygon_geojson;
-                                         if (typeof geoJson === 'string') {
-                                             try { geoJson = JSON.parse(geoJson); } catch(e) {}
-                                         }
-
-                                         if (geoJson) {
-                                             const layer = L.geoJSON(geoJson);
-                                             layer.eachLayer(function(l) {
-                                                 mapInstance.drawnItems.addLayer(l);
-                                             });
-                                         }
-                                    }
-
-                                    // Sync boundary input
-                                    if (mapInstance.updateBoundaryInput) {
-                                        mapInstance.updateBoundaryInput();
-                                    }
+                                    if(mapInstance.flyToLocation) mapInstance.flyToLocation(lat, lng, 15);
+                                    else mapInstance.setView([lat, lng], 15);
+                                    if (mapInstance.updateMarker) mapInstance.updateMarker(lat, lng);
                                 }
+                                let geoJson = currentPlace.polygon_geojson;
+                                if (typeof geoJson === 'string' && geoJson.trim() !== '') {
+                                     try { geoJson = JSON.parse(geoJson); } catch(e) {}
+                                }
+                                if(mapInstance.setPolygon) mapInstance.setPolygon(geoJson);
                             }
-                        } catch(mapError) {
-                            console.error('Error updating map:', mapError);
-                        }
+                        } catch(mapError) { console.error('Error updating map:', mapError); }
                     }, 300);
                 });
             }
         }));
     });
 
-    // Plain JS for Location Cascading (Refactored to be accessible)
     document.addEventListener('DOMContentLoaded', function() {
         const countrySelect = document.getElementById('fp_country_id');
         const regionSelect = document.getElementById('fp_region_id');
         const citySelect = document.getElementById('fp_city_id');
         const districtSelect = document.getElementById('fp_district_id');
 
-        // Helper to fetch data
         async function fetchLocations(url) {
             try {
-                const response = await fetch(url, {
-                    headers: {
-                        'Accept': 'application/json',
-                        'X-Requested-With': 'XMLHttpRequest'
-                    }
-                });
-                if (!response.ok) throw new Error('Network response was not ok');
+                const response = await fetch(url, { headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' } });
+                if (!response.ok) throw new Error('Network response');
                 return await response.json();
-            } catch (error) {
-                console.error('Error fetching locations:', error);
-                return [];
-            }
+            } catch (error) { console.error('Error fetching locations:', error); return []; }
         }
 
         function populateSelect(selectElement, items, placeholder) {
@@ -699,136 +544,59 @@
                     if (!item) return;
                     const option = document.createElement('option');
                     option.value = item.id;
-                    option.textContent = isAr
-                        ? (item.name_local || item.name_ar || item.name_en || item.name)
-                        : (item.name_en || item.name_local || item.name);
-                    if(item.lat && item.lng) {
-                         option.setAttribute('data-lat', item.lat);
-                         option.setAttribute('data-lng', item.lng);
-                    }
+                    option.textContent = isAr ? (item.name_local || item.name_ar || item.name_en) : (item.name_en || item.name_local);
+                    if(item.lat && item.lng) { option.setAttribute('data-lat', item.lat); option.setAttribute('data-lng', item.lng); }
                     selectElement.appendChild(option);
                 });
                 selectElement.disabled = false;
             }
         }
 
-        // Expose loaders to window for Edit Mode
-        window.loadRegions = async function(countryId) {
-             const response = await fetchLocations(`/admin/locations/regions/${countryId}`);
-             populateSelect(regionSelect, response.regions || [], "@lang('admin.select_region')");
-             citySelect.innerHTML = '<option value="">@lang('admin.select_city')</option>'; citySelect.disabled = true;
-             districtSelect.innerHTML = '<option value="">@lang('admin.select_district')</option>'; districtSelect.disabled = true;
-        }
-
-        window.loadCities = async function(regionId) {
-             const response = await fetchLocations(`/admin/locations/cities/${regionId}`);
-             populateSelect(citySelect, response.cities || [], "@lang('admin.select_city')");
-             districtSelect.innerHTML = '<option value="">@lang('admin.select_district')</option>'; districtSelect.disabled = true;
-        }
-
-        window.loadDistricts = async function(cityId) {
-             const response = await fetchLocations(`/admin/locations/districts/${cityId}`);
-             populateSelect(districtSelect, response.districts || [], "@lang('admin.select_district')");
-        }
-
-        let currentReferenceLayer = null;
+        window.loadRegions = async function(countryId) { const response = await fetchLocations(`{{ url('admin/locations/regions') }}/${countryId}`); populateSelect(regionSelect, response.regions || [], "@lang('admin.select_region')"); citySelect.innerHTML = '<option value="">@lang('admin.select_city')</option>'; citySelect.disabled = true; districtSelect.innerHTML = '<option value="">@lang('admin.select_district')</option>'; districtSelect.disabled = true; }
+        window.loadCities = async function(regionId) { const response = await fetchLocations(`{{ url('admin/locations/cities') }}/${regionId}`); populateSelect(citySelect, response.cities || [], "@lang('admin.select_city')"); districtSelect.innerHTML = '<option value="">@lang('admin.select_district')</option>'; districtSelect.disabled = true; }
+        window.loadDistricts = async function(cityId) { const response = await fetchLocations(`{{ url('admin/locations/districts') }}/${cityId}`); populateSelect(districtSelect, response.districts || [], "@lang('admin.select_district')"); }
 
         function updateMapBoundary(level, id) {
             const mapInstance = window['map_featured-places-map'];
             if (!mapInstance || !id) return;
 
-            // Remove previous reference layer if exists
-            if (currentReferenceLayer) {
-                mapInstance.removeLayer(currentReferenceLayer);
-                currentReferenceLayer = null;
-            }
-
-            // Fetch polygon for the selected location
-            fetch(`{{ url('admin/location-polygons') }}?level=${level}&id=${id}`)
+            // Use apiPolygonUrl from config if possible, but here we construct it manually
+            // relying on the component logic to expose map.setPolygon and map.showReferenceBoundary
+            fetch(`{{ route('admin.location-polygons') }}?level=${level}&id=${id}`)
                 .then(response => response.json())
                 .then(data => {
-                    // Response structure: { regions: [ ... ], ... }
                     const key = level === 'region' ? 'regions' : (level === 'city' ? 'cities' : 'districts');
                     if (data[key] && data[key].length > 0) {
                         const item = data[key][0];
-
-                        // Priority 1: If polygon exists, draw it and fit bounds
-                        if (item.polygon) {
-                            currentReferenceLayer = L.geoJSON(item.polygon, {
-                                style: {
-                                    color: '#3388ff',
-                                    weight: 2,
-                                    opacity: 0.6,
-                                    fillOpacity: 0.1,
-                                    dashArray: '5, 5' // Dashed line to indicate reference
-                                },
-                                interactive: false // Don't block clicks
-                            }).addTo(mapInstance);
-
-                            mapInstance.fitBounds(currentReferenceLayer.getBounds());
-                        }
-                        // Priority 2: If no polygon but lat/lng exists, fly to point
-                        else if (item.lat != null && item.lng != null) {
+                        if (item.polygon && mapInstance.showReferenceBoundary) {
+                            mapInstance.showReferenceBoundary(item.polygon);
+                        } else if (item.lat != null && item.lng != null) {
                             const zoom = level === 'region' ? 9 : (level === 'city' ? 11 : 13);
-                            mapInstance.flyTo([item.lat, item.lng], zoom);
+                            if(mapInstance.flyToLocation) mapInstance.flyToLocation(item.lat, item.lng, zoom);
+                            else mapInstance.flyTo([item.lat, item.lng], zoom);
                         }
                     }
                 })
                 .catch(err => console.error("Error fetching location polygon:", err));
         }
 
-        // Map Interaction Hook
         function flyToSelected(selectElement, level) {
              const selectedOption = selectElement.options[selectElement.selectedIndex];
              const lat = selectedOption.getAttribute('data-lat');
              const lng = selectedOption.getAttribute('data-lng');
              const mapInstance = window['map_featured-places-map'];
              const id = selectElement.value;
-
-             // Always try to fetch and show boundary first
-             if (id && level) {
-                 updateMapBoundary(level, id);
-             }
-             // Fallback to simple flyTo if logic requires (though updateMapBoundary handles this too)
+             if (id && level) { updateMapBoundary(level, id); }
              else if (lat && lng && mapInstance) {
-                 mapInstance.flyTo([lat, lng], 12);
+                 if(mapInstance.flyToLocation) mapInstance.flyToLocation(lat, lng, 12);
+                 else mapInstance.flyTo([lat, lng], 12);
              }
         }
 
-        // Event Listeners
-        countrySelect.addEventListener('change', async function() {
-            if(this.value) {
-                await window.loadRegions(this.value);
-                flyToSelected(this, null); // Country has no boundary API usually here, or handled differently
-            } else {
-                regionSelect.innerHTML = '<option value="">@lang('admin.select_region')</option>'; regionSelect.disabled = true;
-                citySelect.innerHTML = '<option value="">@lang('admin.select_city')</option>'; citySelect.disabled = true;
-                districtSelect.innerHTML = '<option value="">@lang('admin.select_district')</option>'; districtSelect.disabled = true;
-            }
-        });
-
-        regionSelect.addEventListener('change', async function() {
-            if(this.value) {
-                await window.loadCities(this.value);
-                flyToSelected(this, 'region');
-            } else {
-                citySelect.innerHTML = '<option value="">@lang('admin.select_city')</option>'; citySelect.disabled = true;
-                districtSelect.innerHTML = '<option value="">@lang('admin.select_district')</option>'; districtSelect.disabled = true;
-            }
-        });
-
-        citySelect.addEventListener('change', async function() {
-            if(this.value) {
-                await window.loadDistricts(this.value);
-                flyToSelected(this, 'city');
-            } else {
-                districtSelect.innerHTML = '<option value="">@lang('admin.select_district')</option>'; districtSelect.disabled = true;
-            }
-        });
-
-        districtSelect.addEventListener('change', function() {
-             flyToSelected(this, 'district');
-        });
+        countrySelect.addEventListener('change', async function() { if(this.value) { await window.loadRegions(this.value); flyToSelected(this, null); } else { regionSelect.innerHTML = '<option value="">@lang('admin.select_region')</option>'; regionSelect.disabled = true; citySelect.innerHTML = '<option value="">@lang('admin.select_city')</option>'; citySelect.disabled = true; districtSelect.innerHTML = '<option value="">@lang('admin.select_district')</option>'; districtSelect.disabled = true; } });
+        regionSelect.addEventListener('change', async function() { if(this.value) { await window.loadCities(this.value); flyToSelected(this, 'region'); } else { citySelect.innerHTML = '<option value="">@lang('admin.select_city')</option>'; citySelect.disabled = true; districtSelect.innerHTML = '<option value="">@lang('admin.select_district')</option>'; districtSelect.disabled = true; } });
+        citySelect.addEventListener('change', async function() { if(this.value) { await window.loadDistricts(this.value); flyToSelected(this, 'city'); } else { districtSelect.innerHTML = '<option value="">@lang('admin.select_district')</option>'; districtSelect.disabled = true; } });
+        districtSelect.addEventListener('change', function() { flyToSelected(this, 'district'); });
     });
 </script>
 @endpush
