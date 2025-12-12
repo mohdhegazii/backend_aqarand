@@ -73,7 +73,7 @@
                     this.isLoading = true;
                     this.currentPage = page;
 
-                    let url = `{{ route('media.index') }}?page=${page}`;
+                    let url = `{{ localized_route('admin.media.index') }}?page=${page}`;
                     if (this.searchQuery) {
                         url += `&search=${encodeURIComponent(this.searchQuery)}`;
                     }
@@ -170,7 +170,7 @@
                     const token = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
 
                     try {
-                        const response = await fetch('{{ route('media.upload') }}', {
+                        const response = await fetch('{{ localized_route('admin.media.upload') }}', {
                             method: 'POST',
                             headers: {
                                 'X-CSRF-TOKEN': token,

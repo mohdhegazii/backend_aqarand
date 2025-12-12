@@ -178,7 +178,7 @@
                     this.isLoading = true;
                     this.currentPage = page;
 
-                    let url = `{{ route('media.index') }}?page=${page}`;
+                    let url = `{{ localized_route('admin.media.index') }}?page=${page}`;
                     if (this.searchQuery) url += `&search=${encodeURIComponent(this.searchQuery)}`;
                     if (this.filterType) url += `&type=${this.filterType}`;
 
@@ -229,7 +229,7 @@
                     const token = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
 
                     try {
-                        const response = await fetch('{{ route('media.upload') }}', {
+                        const response = await fetch('{{ localized_route('admin.media.upload') }}', {
                             method: 'POST',
                             headers: { 'X-CSRF-TOKEN': token, 'Accept': 'application/json' },
                             body: formData
@@ -252,7 +252,10 @@
 
                     const token = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
                     try {
-                        const response = await fetch(`{{ url('/admin/media') }}/${item.id}`, {
+                        // We use a placeholder '0' and replace it with the item ID
+                        const url = '{{ localized_route('admin.media.destroy', '0') }}'.replace('/0', '/' + item.id);
+
+                        const response = await fetch(url, {
                             method: 'DELETE',
                             headers: { 'X-CSRF-TOKEN': token, 'Accept': 'application/json' }
                         });
