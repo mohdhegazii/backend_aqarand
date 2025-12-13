@@ -60,8 +60,12 @@
                     if (!this.galleryMeta[media.id]) {
                         this.galleryMeta[media.id] = {
                             alt_text: media.alt_text || '',
-                            description: media.caption || media.description || ''
                         };
+                    }
+
+                    // Auto-select featured if none set
+                    if (!this.featuredMediaId) {
+                        this.featuredMediaId = media.id;
                     }
                 },
 
@@ -88,32 +92,37 @@
                 <template x-for="id in galleryMediaIds" :key="'meta-'+id">
                     <div>
                         <input type="hidden" :name="'gallery_alt_texts['+id+']'" :value="galleryMeta[id]?.alt_text || ''">
-                        <input type="hidden" :name="'gallery_descriptions['+id+']'" :value="galleryMeta[id]?.description || ''">
                     </div>
                 </template>
                 <input type="hidden" name="featured_media_id" :value="featuredMediaId ?? ''">
 
                 {{-- Gallery List (Responsive) --}}
-                <div class="space-y-4 mb-4">
+                <div class="grid grid-cols-3 gap-4 mb-4">
                     <template x-for="(item, index) in previews" :key="item.id">
-                        <div class="flex flex-col md:flex-row gap-4 p-4 border rounded-lg bg-white shadow-sm transition-all duration-200"
+                        <div class="flex flex-col gap-4 p-4 border rounded-lg bg-white shadow-sm transition-all duration-200"
                              :class="featuredMediaId === item.id ? 'border-indigo-500 ring-1 ring-indigo-500 bg-indigo-50' : 'border-gray-200'">
 
                             {{-- Image Preview & Actions --}}
-                            <div class="flex-shrink-0 w-full md:w-48 flex flex-col gap-2">
-                                <div class="relative w-full aspect-video md:aspect-square rounded-lg overflow-hidden bg-gray-100 border border-gray-200">
+                            <div class="flex-shrink-0 w-full flex flex-col gap-2">
+                                <div class="relative w-full aspect-square rounded-lg overflow-hidden bg-gray-100 border border-gray-200">
                                     <img :src="item.url" class="w-full h-full object-cover">
 
                                     {{-- Badge --}}
                                     <div x-show="featuredMediaId === item.id"
                                          class="absolute top-2 left-2 bg-indigo-600 text-white text-[10px] font-bold px-2 py-1 rounded shadow-sm z-10">
-                                        FEATURED
+                                        {{ __('FEATURED') }}
+                                    </div>
+
+                                    {{-- Clickable Overlay to Set Featured --}}
+                                    <div class="absolute inset-0 bg-black bg-opacity-0 hover:bg-opacity-10 transition-opacity cursor-pointer z-0"
+                                         @click="setFeatured(item.id)"
+                                         title="{{ __('Click to set as featured') }}">
                                     </div>
                                 </div>
 
-                                <div class="grid grid-cols-2 md:grid-cols-1 gap-2">
+                                <div class="grid grid-cols-2 gap-2">
                                     <button type="button"
-                                            class="text-xs px-2 py-1.5 rounded border font-medium transition-colors text-center w-full shadow-sm"
+                                            class="text-xs px-2 py-1.5 rounded border font-medium transition-colors text-center w-full shadow-sm z-10 relative"
                                             :class="featuredMediaId === item.id ? 'bg-indigo-600 text-white border-indigo-600 hover:bg-indigo-700' : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'"
                                             @click="setFeatured(item.id)">
                                         <i class="bi bi-star-fill me-1" x-show="featuredMediaId === item.id"></i>
@@ -130,27 +139,17 @@
 
                             {{-- Metadata Inputs --}}
                             <div class="flex-grow">
-                                <div class="grid grid-cols-1 md:grid-cols-2 gap-3 h-full">
+                                <div class="grid grid-cols-1 gap-3 h-full">
                                     <div class="flex flex-col">
                                         <label class="block text-xs font-medium text-gray-700 mb-1">
-                                            {{ __('Alt Text') }} <span class="text-red-600">*</span>
+                                            {{ __('Alt Text (required – used for SEO)') }} <span class="text-red-600">*</span>
                                         </label>
                                         <input class="w-full border-gray-300 rounded-md shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm px-3 py-2"
                                                type="text"
                                                x-model="galleryMeta[item.id].alt_text"
-                                               placeholder="Image description for SEO"
+                                               placeholder="{{ __('Image Alt Text') }}"
                                                required />
-                                        <p class="text-[10px] text-gray-400 mt-1">Required for SEO accessiblity.</p>
-                                    </div>
-
-                                    <div class="flex flex-col">
-                                        <label class="block text-xs font-medium text-gray-700 mb-1">
-                                            {{ __('Description') }}
-                                        </label>
-                                        <textarea class="w-full border-gray-300 rounded-md shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm px-3 py-2 flex-grow"
-                                               rows="3"
-                                               x-model="galleryMeta[item.id].description"
-                                               placeholder="Caption displayed to users"></textarea>
+                                        <p class="text-[10px] text-red-500 mt-1" x-show="!galleryMeta[item.id].alt_text">{{ __('Alt text is required.') }}</p>
                                     </div>
                                 </div>
                             </div>
