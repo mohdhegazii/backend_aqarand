@@ -14,9 +14,13 @@ use Illuminate\Support\Facades\Log;
 
 class MediaApiController extends Controller
 {
+    /**
+     * Handle media upload.
+     * Supports both single file ('file') and multiple files ('files[]').
+     */
     public function upload(MediaUploadRequest $request, MediaDiskResolver $diskResolver)
     {
-        // Gather files (normalize to array)
+        // Gather files (normalize to array to support multiple uploads)
         $files = [];
         if ($request->hasFile('files')) {
             $files = $request->file('files');
