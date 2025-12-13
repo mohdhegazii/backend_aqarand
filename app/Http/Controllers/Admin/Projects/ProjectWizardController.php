@@ -196,7 +196,18 @@ class ProjectWizardController extends Controller
         $featuredMedia = $project->featuredMedia();
         $featuredMediaId = $featuredMedia ? $featuredMedia->id : null;
 
-        return view('admin.projects.steps.media', compact('project', 'galleryMedia', 'brochureMediaFile', 'featuredMediaId'));
+        $initialGalleryMedia = $galleryMedia->map(function ($m) {
+            return [
+                'id' => $m->id,
+                'url' => $m->url,
+                'original_name' => $m->original_name ?? $m->original_filename,
+                'alt_text' => $m->alt_text,
+                'caption' => $m->caption,
+                'variants' => $m->variants,
+            ];
+        })->values();
+
+        return view('admin.projects.steps.media', compact('project', 'galleryMedia', 'brochureMediaFile', 'featuredMediaId', 'initialGalleryMedia'));
     }
 
     /**
