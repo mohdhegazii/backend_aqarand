@@ -25,15 +25,24 @@
         window.addEventListener('media-selected', (e) => {
             if (e.detail.inputName === '{{ $name }}') {
                 if (this.multiple) {
-                    const id = e.detail.media.id;
-                    if (!this.galleryMediaIds.includes(id)) {
-                        this.galleryMediaIds.push(id);
-                        this.addPreview(e.detail.media);
-                    }
+                    // Handle array of media items (new behavior) or single item (legacy)
+                    const items = Array.isArray(e.detail.media) ? e.detail.media : [e.detail.media];
+
+                    items.forEach(mediaItem => {
+                        const id = mediaItem.id;
+                        if (!this.galleryMediaIds.includes(id)) {
+                            this.galleryMediaIds.push(id);
+                            this.addPreview(mediaItem);
+                        }
+                    });
                 } else {
-                    this.mediaId = e.detail.media.id;
-                    this.previews = []; // Clear previous
-                    this.addPreview(e.detail.media);
+                    // Single mode
+                    const mediaItem = Array.isArray(e.detail.media) ? e.detail.media[0] : e.detail.media;
+                    if (mediaItem) {
+                        this.mediaId = mediaItem.id;
+                        this.previews = []; // Clear previous
+                        this.addPreview(mediaItem);
+                    }
                 }
             }
         });
@@ -154,6 +163,7 @@
              <x-admin.media-manager-modal
                  inputName="{{ $name }}"
                  allowedType="{{ $acceptedFileTypes }}"
+                 :multiple="$multiple"
                  label="{{ $value ? __('Change Media') : __('Choose Media') }}">
 
                 <button type="button" @click="openMediaModal" class="inline-flex items-center px-4 py-2 bg-white border border-gray-300 rounded-md font-semibold text-xs text-gray-700 uppercase tracking-widest shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition ease-in-out duration-150">

@@ -1,4 +1,4 @@
-@props(['inputName', 'label' => 'Choose Media', 'allowedType' => 'image', 'value' => null])
+@props(['inputName', 'label' => 'Choose Media', 'allowedType' => 'image', 'value' => null, 'multiple' => false])
 
 {{-- Button to trigger the modal --}}
 <div x-data="{
@@ -7,7 +7,8 @@
         window.dispatchEvent(new CustomEvent('open-media-manager', {
             detail: {
                 inputName: '{{ $inputName }}',
-                allowedType: '{{ $allowedType }}'
+                allowedType: '{{ $allowedType }}',
+                multiple: {{ $multiple ? 'true' : 'false' }}
             }
         }));
     }
@@ -32,6 +33,7 @@
                 activeTab: 'library', // library, upload
                 targetInputName: null,
                 allowedType: 'image',
+                multiple: false,
 
                 // Library State
                 mediaItems: [],
@@ -39,10 +41,11 @@
                 searchQuery: '',
                 currentPage: 1,
                 lastPage: 1,
-                selectedItem: null,
+                selectedItem: null, // For single selection
+                selectedItems: [], // For multiple selection (array of objects)
 
                 // Upload State
-                uploadFiles: [], // Changed from uploadFile to uploadFiles array
+                uploadFiles: [],
                 uploadAlt: '',
                 isUploading: false,
                 uploadProgress: 0,
@@ -52,7 +55,13 @@
                     window.addEventListener('open-media-manager', (e) => {
                         this.targetInputName = e.detail.inputName;
                         this.allowedType = e.detail.allowedType || 'image';
+                        this.multiple = e.detail.multiple || false;
                         this.isOpen = true;
+
+                        // Reset selection
+                        this.selectedItem = null;
+                        this.selectedItems = [];
+
                         this.fetchMedia();
                     });
                 },
@@ -61,6 +70,7 @@
                     this.isOpen = false;
                     this.resetUpload();
                     this.selectedItem = null;
+                    this.selectedItems = [];
                 },
 
                 setTab(tab) {
@@ -100,20 +110,45 @@
                 },
 
                 selectItem(item) {
-                    this.selectedItem = item;
+                    if (this.multiple) {
+                        // Toggle selection
+                        const index = this.selectedItems.findIndex(i => i.id === item.id);
+                        if (index > -1) {
+                            this.selectedItems.splice(index, 1);
+                        } else {
+                            this.selectedItems.push(item);
+                        }
+                    } else {
+                        // Single selection
+                        this.selectedItem = item;
+                    }
+                },
+
+                isSelected(item) {
+                    if (this.multiple) {
+                        return this.selectedItems.some(i => i.id === item.id);
+                    }
+                    return this.selectedItem && this.selectedItem.id === item.id;
+                },
+
+                clearSelection() {
+                    this.selectedItem = null;
+                    this.selectedItems = [];
                 },
 
                 confirmSelection() {
-                    if (!this.selectedItem || !this.targetInputName) return;
+                    if (this.multiple && this.selectedItems.length === 0) return;
+                    if (!this.multiple && !this.selectedItem) return;
+                    if (!this.targetInputName) return;
 
-                    // Note: We don't update input value here because media-picker listens to the event
-                    // and handles the value update (supporting both single and multiple selection)
+                    // Prepare payload
+                    const mediaPayload = this.multiple ? this.selectedItems : this.selectedItem;
 
                     // Dispatch a custom event for other listeners
                     window.dispatchEvent(new CustomEvent('media-selected', {
                         detail: {
                             inputName: this.targetInputName,
-                            media: this.selectedItem
+                            media: mediaPayload
                         }
                     }));
 
@@ -186,33 +221,34 @@
                         }
 
                         // Success
-                        // Do NOT close modal, but switch to library
+                        // Switch to library
                         this.activeTab = 'library';
-                        this.resetUpload(); // clears file input but we want to reload library
+                        this.resetUpload();
 
                         // Refresh library
                         await this.fetchMedia(1);
 
-                        // Handle multiple uploaded items
+                        // Handle uploaded items selection
                         if (result.uploaded && Array.isArray(result.uploaded)) {
-                            result.uploaded.forEach(item => {
-                                // Dispatch event for each uploaded item to add to gallery
-                                window.dispatchEvent(new CustomEvent('media-selected', {
-                                    detail: {
-                                        inputName: this.targetInputName,
-                                        media: item
-                                    }
-                                }));
-                            });
+                            // If multiple mode, select all uploaded
+                            // If single mode, select the last one
 
-                            // Select the last item if multiple, or the single item
-                            if (result.uploaded.length > 0) {
-                                // Find the last uploaded item in current page (it should be there if sorted by created desc)
-                                const lastId = result.uploaded[0].id; // Uploaded returns array, assuming first index is one of them. Wait, api returns array order?
-                                // Let's just select the first one in the list which matches
-                                const uploadedItem = this.mediaItems.find(i => i.id === lastId);
-                                if (uploadedItem) {
-                                    this.selectedItem = uploadedItem;
+                            const uploadedIds = result.uploaded.map(u => u.id);
+
+                            // Find them in the newly fetched items
+                            const newItems = this.mediaItems.filter(item => uploadedIds.includes(item.id));
+
+                            if (this.multiple) {
+                                // Add to selection
+                                newItems.forEach(item => {
+                                    if (!this.selectedItems.some(si => si.id === item.id)) {
+                                        this.selectedItems.push(item);
+                                    }
+                                });
+                            } else {
+                                // Select the first one found (usually latest)
+                                if (newItems.length > 0) {
+                                    this.selectedItem = newItems[0];
                                 }
                             }
                         }
@@ -220,13 +256,13 @@
                         else if (result.media_id) {
                              const uploadedItem = this.mediaItems.find(i => i.id === result.media_id);
                              if (uploadedItem) {
-                                 this.selectedItem = uploadedItem;
-                                 window.dispatchEvent(new CustomEvent('media-selected', {
-                                     detail: {
-                                         inputName: this.targetInputName,
-                                         media: uploadedItem
-                                     }
-                                 }));
+                                 if (this.multiple) {
+                                    if (!this.selectedItems.some(si => si.id === uploadedItem.id)) {
+                                        this.selectedItems.push(uploadedItem);
+                                    }
+                                 } else {
+                                     this.selectedItem = uploadedItem;
+                                 }
                              }
                         }
 
@@ -349,7 +385,7 @@
                         <div x-show="!isLoading && mediaItems.length > 0" class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4">
                             <template x-for="item in mediaItems" :key="item.id">
                                 <div @click="selectItem(item)"
-                                     :class="selectedItem && selectedItem.id === item.id ? 'ring-2 ring-indigo-500 border-indigo-500' : 'border-gray-200 hover:border-gray-300'"
+                                     :class="isSelected(item) ? 'ring-2 ring-indigo-500 border-indigo-500' : 'border-gray-200 hover:border-gray-300'"
                                      class="relative group cursor-pointer bg-white border rounded-lg overflow-hidden aspect-square flex items-center justify-center">
 
                                     {{-- Image --}}
@@ -367,11 +403,18 @@
                                     </template>
 
                                     {{-- Selected Overlay --}}
-                                    <div x-show="selectedItem && selectedItem.id === item.id" class="absolute inset-0 bg-indigo-500 bg-opacity-10 flex items-center justify-center">
+                                    <div x-show="isSelected(item)" class="absolute inset-0 bg-indigo-500 bg-opacity-10 flex items-center justify-center">
                                         <div class="bg-indigo-500 text-white rounded-full p-1">
                                             <i class="bi bi-check-lg"></i>
                                         </div>
                                     </div>
+
+                                    {{-- Selection Order (Multi only) --}}
+                                    <template x-if="multiple && isSelected(item)">
+                                        <div class="absolute top-1 right-1 bg-indigo-600 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center shadow-sm">
+                                            <span x-text="selectedItems.findIndex(i => i.id === item.id) + 1"></span>
+                                        </div>
+                                    </template>
 
                                     {{-- Hover info --}}
                                     <div class="absolute bottom-0 inset-x-0 bg-black bg-opacity-50 text-white text-[10px] p-1 truncate opacity-0 group-hover:opacity-100 transition-opacity">
@@ -459,10 +502,18 @@
                 <div class="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse border-t border-gray-100" x-show="activeTab === 'library'">
                     <button type="button"
                             @click="confirmSelection"
-                            :disabled="!selectedItem"
+                            :disabled="(multiple && selectedItems.length === 0) || (!multiple && !selectedItem)"
                             class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-indigo-600 text-base font-medium text-white hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:ml-3 sm:w-auto sm:text-sm disabled:opacity-50 disabled:cursor-not-allowed">
-                        {{ __('Use Selected') }}
+                        <span x-text="multiple && selectedItems.length > 0 ? '{{ __('Use Selected') }} (' + selectedItems.length + ')' : '{{ __('Use Selected') }}'"></span>
                     </button>
+
+                     <button type="button"
+                             x-show="multiple && selectedItems.length > 0"
+                            @click="clearSelection"
+                            class="mt-3 w-full inline-flex justify-center rounded-md border border-red-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-red-700 hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm">
+                        {{ __('Clear Selection') }}
+                    </button>
+
                     <button type="button"
                             @click="closeModal"
                             class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm">
