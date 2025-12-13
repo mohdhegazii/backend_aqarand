@@ -62,11 +62,42 @@ class MediaUploadRequest extends FormRequest
             $fileValidationClosure,
         ];
 
+        // Ensure alts array matches files array if necessary
+        $altsValidationClosure = function ($attribute, $value, $fail) {
+             $files = [];
+            if ($this->hasFile('files')) {
+                $files = $this->file('files');
+            } elseif ($this->hasFile('file')) {
+                $files = [$this->file('file')];
+            }
+
+            if (is_array($value) && count($value) !== count($files)) {
+                $fail("The number of alt text entries must match the number of uploaded files.");
+            }
+        };
+
         $rules = [
+            'alts' => [
+                'nullable', // Changed to nullable for backward compatibility
+                'array',
+                $altsValidationClosure
+            ],
+            'alts.*' => [
+                'required_with:alts', // Only required if alts array is present
+                'string',
+                'max:255'
+            ],
+            // Legacy single alt_text fallback
+            // Ensure logic: if images uploaded, either alts or alt_text is required
             'alt_text' => [
                 'nullable',
                 'string',
-                function ($attribute, $value, $fail) {
+                 function ($attribute, $value, $fail) {
+                    // If alts array is present and valid, we don't need alt_text
+                    if ($this->filled('alts') && is_array($this->input('alts'))) {
+                        return;
+                    }
+
                     // Normalize files input
                     $files = [];
                     if ($this->hasFile('files')) {
@@ -78,14 +109,16 @@ class MediaUploadRequest extends FormRequest
                     foreach ($files as $file) {
                         if ($file && $file->isValid()) {
                             $mime = $file->getMimeType();
+                            // If it's an image and no alt_text provided (and alts is empty), fail
                             if (str_starts_with($mime, 'image/') && empty($value)) {
-                                $fail('The alt text field is required for images.');
+                                $fail('The alt text field is required for images (or provide alts array).');
                                 return;
                             }
                         }
                     }
                 },
             ],
+
             'entity_type' => 'nullable|string',
             'entity_id'   => 'nullable|integer',
             'country'     => 'nullable|string',

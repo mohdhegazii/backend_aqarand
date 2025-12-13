@@ -37,7 +37,15 @@ class MediaApiController extends Controller
              $disk = 'public';
         }
 
-        foreach ($files as $file) {
+        // Get alts array, or create one from single alt_text if present (legacy fallback)
+        $alts = $request->input('alts', []);
+        if (empty($alts) && $request->filled('alt_text')) {
+             $legacyAlt = $request->input('alt_text');
+             // Fill array with same alt for all files
+             $alts = array_fill(0, count($files), $legacyAlt);
+        }
+
+        foreach ($files as $index => $file) {
             // Determine type
             $mime = $file->getMimeType();
             $type = 'other';
@@ -59,6 +67,9 @@ class MediaApiController extends Controller
             }
             $seoSlug = Str::slug($slugBase);
 
+            // Get specific alt text for this file
+            $altText = $alts[$index] ?? $nameWithoutExt; // Fallback to filename if missing
+
             // Store directly to permanent disk
             $uploadPath = 'media/' . date('Y/m');
             try {
@@ -76,7 +87,7 @@ class MediaApiController extends Controller
                     'type' => $type,
                     'seo_slug' => $seoSlug,
                     'uploaded_by_id' => auth()->id(),
-                    'alt_text' => $request->input('alt_text'), // Will apply to all if multiple
+                    'alt_text' => $altText,
                     'disk' => $disk,
                     'path' => $path,
                     'size_bytes' => $file->getSize(),
@@ -111,6 +122,7 @@ class MediaApiController extends Controller
                     'type' => $type,
                     'original_name' => $mediaFile->original_name,
                     'seo_slug' => $mediaFile->seo_slug,
+                    'alt_text' => $mediaFile->alt_text,
                     'url' => $mediaFile->url,
                     'thumb_url' => $mediaFile->url,
                 ];

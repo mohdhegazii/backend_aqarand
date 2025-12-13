@@ -46,7 +46,7 @@
 
                 // Upload State
                 uploadFiles: [],
-                uploadAlt: '',
+                fileMeta: [], // Array of { name: string, alt_text: string }
                 isUploading: false,
                 uploadProgress: 0,
                 uploadError: null,
@@ -157,22 +157,29 @@
 
                 // --- Upload Methods ---
 
+                suggestAltFromFilename(name) {
+                    return name
+                        .replace(/\.[^/.]+$/, '')         // remove extension
+                        .replace(/[-_]+/g, ' ')
+                        .trim();
+                },
+
                 handleFileSelect(event) {
                     const files = Array.from(event.target.files || []);
                     if (files.length > 0) {
                         this.uploadFiles = files;
 
-                        // Auto-fill alt text with first filename if empty
-                        if (!this.uploadAlt && files[0]) {
-                            const name = files[0].name.split('.').slice(0, -1).join('.');
-                            this.uploadAlt = name.replace(/[-_]/g, ' ');
-                        }
+                        // Build meta array based on files
+                        this.fileMeta = files.map(f => ({
+                            name: f.name,
+                            alt_text: this.suggestAltFromFilename(f.name),
+                        }));
                     }
                 },
 
                 resetUpload() {
                     this.uploadFiles = [];
-                    this.uploadAlt = '';
+                    this.fileMeta = [];
                     this.isUploading = false;
                     this.uploadError = null;
                     if (this.$refs.fileInput) {
@@ -182,9 +189,14 @@
 
                 async uploadMedia() {
                     if (!this.uploadFiles.length) return;
-                    if (this.allowedType === 'image' && !this.uploadAlt) {
-                        this.uploadError = 'Alt text is required for images.';
-                        return;
+
+                    // Client-side validation: check if alt texts are present
+                    if (this.allowedType === 'image') {
+                        const missing = this.fileMeta.some(x => !x.alt_text || !x.alt_text.trim());
+                        if (missing) {
+                            this.uploadError = 'Alt Text is required for all files.';
+                            return;
+                        }
                     }
 
                     this.isUploading = true;
@@ -193,13 +205,11 @@
                     const formData = new FormData();
 
                     // Append all files as 'files[]'
-                    this.uploadFiles.forEach(file => {
+                    this.uploadFiles.forEach((file, i) => {
                         formData.append('files[]', file);
+                        // Append corresponding alt text
+                        formData.append(`alts[${i}]`, this.fileMeta[i]?.alt_text ?? '');
                     });
-
-                    if (this.uploadAlt) {
-                        formData.append('alt_text', this.uploadAlt);
-                    }
 
                     // Add CSRF token
                     const token = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
@@ -474,11 +484,37 @@
                                 </button>
                             </div>
 
-                            {{-- Alt Text --}}
+                            {{-- Alt Text Loop --}}
                             <div x-show="uploadFiles.length > 0">
-                                <label class="block text-sm font-medium text-gray-700">{{ __('Alt Text / Description') }} <span class="text-red-500">*</span></label>
-                                <input type="text" x-model="uploadAlt" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
-                                <p class="mt-1 text-xs text-gray-500">{{ __('Required for SEO and accessibility. Applies to all uploaded files.') }}</p>
+                                <template x-if="uploadFiles.length === 0">
+                                    <p class="text-sm text-gray-500">{{ __('Choose files to see Alt Text fields.') }}</p>
+                                </template>
+
+                                <template x-if="uploadFiles.length > 0">
+                                    <div class="space-y-3 max-h-60 overflow-y-auto pr-1">
+                                        <p class="text-sm text-gray-600" x-text="uploadFiles.length + ' {{ __('files selected') }}'"></p>
+
+                                        <template x-for="(meta, idx) in fileMeta" :key="meta.name + idx">
+                                            <div class="border rounded p-3 bg-gray-50">
+                                                <div class="text-xs text-gray-600 mb-2 truncate" :title="meta.name">
+                                                    <span x-text="(idx+1) + ') ' + meta.name"></span>
+                                                </div>
+
+                                                <label class="block text-sm font-medium mb-1">
+                                                    {{ __('Alt Text') }} <span class="text-red-600">*</span>
+                                                </label>
+
+                                                <input
+                                                    type="text"
+                                                    class="w-full border rounded px-3 py-2 text-sm"
+                                                    x-model="fileMeta[idx].alt_text"
+                                                    :placeholder="'Alt text for ' + meta.name"
+                                                    required
+                                                />
+                                            </div>
+                                        </template>
+                                    </div>
+                                </template>
                             </div>
 
                             {{-- Error Message --}}
