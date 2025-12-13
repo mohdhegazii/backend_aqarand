@@ -28,6 +28,11 @@
             margin-right: auto;
             margin-left: 0;
         }
+
+        /* Fallback for modal if Tailwind fails */
+        .modal-overlay{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;z-index:9999}
+        .modal-backdrop{position:absolute;inset:0;background:rgba(0,0,0,.5)}
+        .modal-card{position:relative;background:#fff;border-radius:14px;width:95vw;max-width:980px;max-height:90vh;overflow:hidden;box-shadow:0 10px 40px rgba(0,0,0,.25)}
     </style>
 
     <!-- Leaflet CSS -->

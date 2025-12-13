@@ -308,69 +308,64 @@
     <div x-data="mediaManagerModal"
          x-show="isOpen"
          style="display: none;"
-         class="fixed inset-0 z-[60] overflow-y-auto"
+         class="fixed inset-0 z-50 flex items-center justify-center modal-overlay"
          aria-labelledby="modal-title"
          role="dialog"
          aria-modal="true">
 
-        <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
-            {{-- Background backdrop --}}
-            <div x-show="isOpen"
-                 x-transition:enter="ease-out duration-300"
-                 x-transition:enter-start="opacity-0"
-                 x-transition:enter-end="opacity-100"
-                 x-transition:leave="ease-in duration-200"
-                 x-transition:leave-start="opacity-100"
-                 x-transition:leave-end="opacity-0"
-                 class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity"
-                 @click="closeModal"
-                 aria-hidden="true"></div>
+        {{-- Background backdrop --}}
+        <div x-show="isOpen"
+             x-transition:enter="ease-out duration-300"
+             x-transition:enter-start="opacity-0"
+             x-transition:enter-end="opacity-100"
+             x-transition:leave="ease-in duration-200"
+             x-transition:leave-start="opacity-100"
+             x-transition:leave-end="opacity-0"
+             class="fixed inset-0 bg-black/50 transition-opacity modal-backdrop"
+             @click="closeModal"
+             aria-hidden="true"></div>
 
-            <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
+        {{-- Modal Panel --}}
+        <div x-show="isOpen"
+             x-transition:enter="ease-out duration-300"
+             x-transition:enter-start="opacity-0 scale-95"
+             x-transition:enter-end="opacity-100 scale-100"
+             x-transition:leave="ease-in duration-200"
+             x-transition:leave-start="opacity-100 scale-100"
+             x-transition:leave-end="opacity-0 scale-95"
+             class="relative bg-white rounded-xl shadow-xl w-[95vw] max-w-5xl max-h-[90vh] overflow-hidden flex flex-col modal-card">
 
-            {{-- Modal Panel --}}
-            <div x-show="isOpen"
-                 x-transition:enter="ease-out duration-300"
-                 x-transition:enter-start="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
-                 x-transition:enter-end="opacity-100 translate-y-0 sm:scale-100"
-                 x-transition:leave="ease-in duration-200"
-                 x-transition:leave-start="opacity-100 translate-y-0 sm:scale-100"
-                 x-transition:leave-end="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
-                 class="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-4xl sm:w-full">
+            {{-- Modal Header --}}
+            <div class="flex items-center justify-between px-6 py-4 border-b border-gray-100 bg-white">
+                <h3 class="text-lg font-semibold text-gray-900" id="modal-title">
+                    {{ __('Media Manager') }}
+                </h3>
+                <button type="button" @click="closeModal" class="text-gray-400 hover:text-gray-600 transition-colors focus:outline-none">
+                    <span class="sr-only">Close</span>
+                    <i class="bi bi-x-lg text-lg"></i>
+                </button>
+            </div>
 
-                {{-- Modal Header --}}
-                <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4 border-b border-gray-100">
-                    <div class="sm:flex sm:items-start sm:justify-between">
-                        <h3 class="text-lg leading-6 font-medium text-gray-900" id="modal-title">
-                            {{ __('Media Manager') }}
-                        </h3>
-                        <button type="button" @click="closeModal" class="text-gray-400 hover:text-gray-500 focus:outline-none">
-                            <span class="sr-only">Close</span>
-                            <i class="bi bi-x-lg text-xl"></i>
-                        </button>
-                    </div>
+            {{-- Tabs --}}
+            <div class="px-6 border-b border-gray-200 bg-white">
+                <nav class="-mb-px flex space-x-6" aria-label="Tabs">
+                    <button type="button" @click="setTab('library')"
+                            :class="activeTab === 'library' ? 'border-indigo-500 text-indigo-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'"
+                            class="whitespace-nowrap py-3 px-1 border-b-2 font-medium text-sm transition-colors">
+                        {{ __('Media Library') }}
+                    </button>
+                    <button type="button" @click="setTab('upload')"
+                            :class="activeTab === 'upload' ? 'border-indigo-500 text-indigo-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'"
+                            class="whitespace-nowrap py-3 px-1 border-b-2 font-medium text-sm transition-colors">
+                        {{ __('Upload New') }}
+                    </button>
+                </nav>
+            </div>
 
-                    {{-- Tabs --}}
-                    <div class="mt-4 border-b border-gray-200">
-                        <nav class="-mb-px flex space-x-8" aria-label="Tabs">
-                            <button type="button" @click="setTab('library')"
-                                    :class="activeTab === 'library' ? 'border-indigo-500 text-indigo-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'"
-                                    class="whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm">
-                                {{ __('Media Library') }}
-                            </button>
-                            <button type="button" @click="setTab('upload')"
-                                    :class="activeTab === 'upload' ? 'border-indigo-500 text-indigo-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'"
-                                    class="whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm">
-                                {{ __('Upload New') }}
-                            </button>
-                        </nav>
-                    </div>
-                </div>
+            {{-- Modal Body --}}
+            <div class="flex-1 overflow-auto bg-gray-50 p-6 min-h-[300px]">
 
-                {{-- Modal Body --}}
-                <div class="bg-gray-50 px-4 py-5 sm:p-6 min-h-[400px]">
-
-                    {{-- Library Tab --}}
+                {{-- Library Tab --}}
                     <div x-show="activeTab === 'library'">
                         <div class="flex flex-col sm:flex-row justify-between mb-4 gap-2">
                             <input type="text"
