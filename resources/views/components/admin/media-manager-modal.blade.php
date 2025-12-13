@@ -42,7 +42,7 @@
                 selectedItem: null,
 
                 // Upload State
-                uploadFile: null,
+                uploadFiles: [], // Changed from uploadFile to uploadFiles array
                 uploadAlt: '',
                 isUploading: false,
                 uploadProgress: 0,
@@ -123,19 +123,20 @@
                 // --- Upload Methods ---
 
                 handleFileSelect(event) {
-                    const file = event.target.files[0];
-                    if (file) {
-                        this.uploadFile = file;
-                        // Auto-fill alt text with filename if empty
-                        if (!this.uploadAlt) {
-                            const name = file.name.split('.').slice(0, -1).join('.');
+                    const files = Array.from(event.target.files || []);
+                    if (files.length > 0) {
+                        this.uploadFiles = files;
+
+                        // Auto-fill alt text with first filename if empty
+                        if (!this.uploadAlt && files[0]) {
+                            const name = files[0].name.split('.').slice(0, -1).join('.');
                             this.uploadAlt = name.replace(/[-_]/g, ' ');
                         }
                     }
                 },
 
                 resetUpload() {
-                    this.uploadFile = null;
+                    this.uploadFiles = [];
                     this.uploadAlt = '';
                     this.isUploading = false;
                     this.uploadError = null;
@@ -145,7 +146,7 @@
                 },
 
                 async uploadMedia() {
-                    if (!this.uploadFile) return;
+                    if (!this.uploadFiles.length) return;
                     if (this.allowedType === 'image' && !this.uploadAlt) {
                         this.uploadError = 'Alt text is required for images.';
                         return;
@@ -155,7 +156,12 @@
                     this.uploadError = null;
 
                     const formData = new FormData();
-                    formData.append('file', this.uploadFile);
+
+                    // Append all files as 'files[]'
+                    this.uploadFiles.forEach(file => {
+                        formData.append('files[]', file);
+                    });
+
                     if (this.uploadAlt) {
                         formData.append('alt_text', this.uploadAlt);
                     }
@@ -180,31 +186,48 @@
                         }
 
                         // Success
-                        // Do NOT close modal, but switch to library and select the item
-
+                        // Do NOT close modal, but switch to library
                         this.activeTab = 'library';
                         this.resetUpload(); // clears file input but we want to reload library
 
                         // Refresh library
                         await this.fetchMedia(1);
 
-                        // If the uploaded item is in the list (it should be if order by created_desc), select it.
-                        if (result.media_id) {
-                            // Find it in mediaItems
-                            const uploadedItem = this.mediaItems.find(i => i.id === result.media_id);
-                            if (uploadedItem) {
-                                this.selectedItem = uploadedItem;
-                            }
-
-                            // Auto-add to gallery (dispatch event immediately)
-                            if (uploadedItem) {
+                        // Handle multiple uploaded items
+                        if (result.uploaded && Array.isArray(result.uploaded)) {
+                            result.uploaded.forEach(item => {
+                                // Dispatch event for each uploaded item to add to gallery
                                 window.dispatchEvent(new CustomEvent('media-selected', {
                                     detail: {
                                         inputName: this.targetInputName,
-                                        media: uploadedItem
+                                        media: item
                                     }
                                 }));
+                            });
+
+                            // Select the last item if multiple, or the single item
+                            if (result.uploaded.length > 0) {
+                                // Find the last uploaded item in current page (it should be there if sorted by created desc)
+                                const lastId = result.uploaded[0].id; // Uploaded returns array, assuming first index is one of them. Wait, api returns array order?
+                                // Let's just select the first one in the list which matches
+                                const uploadedItem = this.mediaItems.find(i => i.id === lastId);
+                                if (uploadedItem) {
+                                    this.selectedItem = uploadedItem;
+                                }
                             }
+                        }
+                        // Fallback for legacy single response
+                        else if (result.media_id) {
+                             const uploadedItem = this.mediaItems.find(i => i.id === result.media_id);
+                             if (uploadedItem) {
+                                 this.selectedItem = uploadedItem;
+                                 window.dispatchEvent(new CustomEvent('media-selected', {
+                                     detail: {
+                                         inputName: this.targetInputName,
+                                         media: uploadedItem
+                                     }
+                                 }));
+                             }
                         }
 
                     } catch (error) {
@@ -382,27 +405,37 @@
                                        x-ref="fileInput"
                                        @change="handleFileSelect"
                                        class="hidden"
+                                       multiple
                                        :accept="allowedType === 'image' ? 'image/*' : (allowedType === 'pdf' ? 'application/pdf' : '*/*')">
 
                                 <div class="cursor-pointer" @click="$refs.fileInput.click()">
                                     <i class="bi bi-cloud-upload text-4xl text-gray-400"></i>
-                                    <p class="mt-2 text-sm text-gray-600" x-show="!uploadFile">{{ __('Click to select a file') }}</p>
 
-                                    {{-- Safe guard for uploadFile name --}}
-                                    <template x-if="uploadFile">
-                                        <p class="mt-2 text-sm text-indigo-600 font-semibold" x-text="uploadFile.name"></p>
+                                    {{-- Display count or file name --}}
+                                    <template x-if="uploadFiles.length === 0">
+                                        <p class="mt-2 text-sm text-gray-600">{{ __('Click to select files') }}</p>
+                                    </template>
+
+                                    <template x-if="uploadFiles.length === 1">
+                                        <p class="mt-2 text-sm text-indigo-600 font-semibold" x-text="uploadFiles[0].name"></p>
+                                    </template>
+
+                                    <template x-if="uploadFiles.length > 1">
+                                        <p class="mt-2 text-sm text-indigo-600 font-semibold">
+                                            <span x-text="uploadFiles.length"></span> {{ __('files selected') }}
+                                        </p>
                                     </template>
                                 </div>
                                 <button type="button" @click="$refs.fileInput.click()" class="mt-3 inline-flex items-center px-3 py-1 bg-gray-100 border border-gray-300 rounded-md font-semibold text-xs text-gray-700 uppercase tracking-widest hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 disabled:opacity-25 transition ease-in-out duration-150">
-                                    {{ __('Choose File') }}
+                                    {{ __('Choose Files') }}
                                 </button>
                             </div>
 
                             {{-- Alt Text --}}
-                            <div x-show="uploadFile">
+                            <div x-show="uploadFiles.length > 0">
                                 <label class="block text-sm font-medium text-gray-700">{{ __('Alt Text / Description') }} <span class="text-red-500">*</span></label>
                                 <input type="text" x-model="uploadAlt" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
-                                <p class="mt-1 text-xs text-gray-500">{{ __('Required for SEO and accessibility.') }}</p>
+                                <p class="mt-1 text-xs text-gray-500">{{ __('Required for SEO and accessibility. Applies to all uploaded files.') }}</p>
                             </div>
 
                             {{-- Error Message --}}
@@ -413,7 +446,7 @@
                             {{-- Upload Button --}}
                             <button type="button"
                                     @click="uploadMedia"
-                                    :disabled="!uploadFile || isUploading"
+                                    :disabled="uploadFiles.length === 0 || isUploading"
                                     class="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50">
                                 <span x-show="isUploading" class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
                                 <span x-text="isUploading ? '{{ __('Uploading...') }}' : '{{ __('Upload') }}'"></span>

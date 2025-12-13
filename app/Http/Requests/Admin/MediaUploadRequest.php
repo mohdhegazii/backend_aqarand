@@ -37,38 +37,51 @@ class MediaUploadRequest extends FormRequest
         $maxPdfKb = $pdfMaxMb * 1024;
         $overallMaxKb = max($maxImageKb, $maxPdfKb);
 
-        return [
-            'file' => [
-                'required',
-                'file',
-                'mimes:jpeg,png,webp,pdf',
-                "max:{$overallMaxKb}",
-                function ($attribute, $value, $fail) use ($maxImageKb, $maxPdfKb) {
-                    if (!$value || !$value->isValid()) return;
+        // Validation logic for a single file instance
+        $fileValidationClosure = function ($attribute, $value, $fail) use ($maxImageKb, $maxPdfKb) {
+            if (!$value || !$value->isValid()) return;
 
-                    $mime = $value->getMimeType();
-                    $sizeKb = $value->getSize() / 1024;
+            $mime = $value->getMimeType();
+            $sizeKb = $value->getSize() / 1024;
 
-                    if (str_starts_with($mime, 'image/')) {
-                        if ($sizeKb > $maxImageKb) {
-                            $fail("The image may not be greater than {$maxImageKb} KB (checking against {$this->formatBytes($maxImageKb * 1024)}).");
-                        }
-                    } elseif ($mime === 'application/pdf') {
-                        if ($sizeKb > $maxPdfKb) {
-                            $fail("The PDF may not be greater than {$maxPdfKb} KB (checking against {$this->formatBytes($maxPdfKb * 1024)}).");
-                        }
-                    }
-                },
-            ],
+            if (str_starts_with($mime, 'image/')) {
+                if ($sizeKb > $maxImageKb) {
+                    $fail("The image may not be greater than {$maxImageKb} KB (checking against {$this->formatBytes($maxImageKb * 1024)}).");
+                }
+            } elseif ($mime === 'application/pdf') {
+                if ($sizeKb > $maxPdfKb) {
+                    $fail("The PDF may not be greater than {$maxPdfKb} KB (checking against {$this->formatBytes($maxPdfKb * 1024)}).");
+                }
+            }
+        };
+
+        $baseFileRules = [
+            'file',
+            'mimes:jpeg,png,webp,pdf',
+            "max:{$overallMaxKb}",
+            $fileValidationClosure,
+        ];
+
+        $rules = [
             'alt_text' => [
                 'nullable',
                 'string',
                 function ($attribute, $value, $fail) {
-                    $file = $this->file('file');
-                    if ($file && $file->isValid()) {
-                        $mime = $file->getMimeType();
-                        if (str_starts_with($mime, 'image/') && empty($value)) {
-                            $fail('The alt text field is required for images.');
+                    // Normalize files input
+                    $files = [];
+                    if ($this->hasFile('files')) {
+                        $files = $this->file('files');
+                    } elseif ($this->hasFile('file')) {
+                        $files = [$this->file('file')];
+                    }
+
+                    foreach ($files as $file) {
+                        if ($file && $file->isValid()) {
+                            $mime = $file->getMimeType();
+                            if (str_starts_with($mime, 'image/') && empty($value)) {
+                                $fail('The alt text field is required for images.');
+                                return;
+                            }
                         }
                     }
                 },
@@ -78,7 +91,19 @@ class MediaUploadRequest extends FormRequest
             'country'     => 'nullable|string',
             'city'        => 'nullable|string',
             'slug'        => 'nullable|string',
+            'is_private'  => 'nullable|boolean',
         ];
+
+        if ($this->hasFile('files')) {
+            $rules['files'] = ['required', 'array', 'min:1'];
+            // Apply file rules to each item in the array
+            $rules['files.*'] = array_merge(['required'], $baseFileRules);
+        } else {
+            // Fallback to legacy single file
+            $rules['file'] = array_merge(['required'], $baseFileRules);
+        }
+
+        return $rules;
     }
 
     private function formatBytes($bytes, $precision = 2)
