@@ -105,43 +105,52 @@
                         </div>
 
                         {{-- Upload Modal (Inline reuse logic) --}}
-                        <div x-show="showUploadModal" style="display: none;" class="fixed inset-0 z-[70] overflow-y-auto" role="dialog" aria-modal="true">
-                            <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
-                                <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" @click="showUploadModal = false"></div>
-                                <span class="hidden sm:inline-block sm:align-middle sm:h-screen">&#8203;</span>
-                                <div class="inline-block align-bottom bg-white rounded-lg px-4 pt-5 pb-4 text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full sm:p-6">
-                                    <div class="sm:flex sm:items-start">
-                                        <div class="mx-auto flex-shrink-0 flex items-center justify-center h-12 w-12 rounded-full bg-indigo-100 sm:mx-0 sm:h-10 sm:w-10">
-                                            <i class="bi bi-cloud-upload text-indigo-600 text-lg"></i>
+                        <div x-show="showUploadModal" style="display: none;" class="fixed inset-0 z-50 flex items-center justify-center modal-overlay" role="dialog" aria-modal="true">
+                            <!-- Backdrop -->
+                            <div class="fixed inset-0 bg-black/50 transition-opacity modal-backdrop" @click="showUploadModal = false"></div>
+
+                            <!-- Panel -->
+                            <div class="relative bg-white rounded-xl shadow-xl w-full max-w-lg mx-4 overflow-hidden transform transition-all modal-card">
+                                <div class="px-6 py-4 border-b border-gray-100 flex justify-between items-center">
+                                    <div class="flex items-center gap-3">
+                                        <div class="flex-shrink-0 flex items-center justify-center h-8 w-8 rounded-full bg-indigo-100">
+                                            <i class="bi bi-cloud-upload text-indigo-600 text-sm"></i>
                                         </div>
-                                        <div class="mt-3 text-center sm:mt-0 sm:ltr:ml-4 sm:rtl:mr-4 sm:text-left w-full">
-                                            <h3 class="text-lg leading-6 font-medium text-gray-900">{{ __('Upload Media') }}</h3>
-                                            <div class="mt-4 space-y-4">
-                                                <div class="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-indigo-500 transition-colors bg-gray-50 cursor-pointer" @click="$refs.pageFileInput.click()">
-                                                    <input type="file" x-ref="pageFileInput" @change="handleFileSelect" class="hidden">
-                                                    <i class="bi bi-cloud-arrow-up text-3xl text-gray-400"></i>
-                                                    <p class="mt-2 text-sm text-gray-600" x-show="!uploadFile">{{ __('Click to select file') }}</p>
-                                                    <p class="mt-2 text-sm text-indigo-600 font-semibold" x-show="uploadFile" x-text="uploadFile.name"></p>
-                                                </div>
-                                                <div x-show="uploadFile">
-                                                    <label class="block text-sm font-medium text-gray-700 text-left">{{ __('Alt Text') }} <span class="text-red-500">*</span></label>
-                                                    <input type="text" x-model="uploadAlt" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
-                                                </div>
-                                                <div x-show="uploadError" class="text-sm text-red-600 text-left">
-                                                    <i class="bi bi-exclamation-circle me-1"></i> <span x-text="uploadError"></span>
-                                                </div>
-                                            </div>
+                                        <h3 class="text-lg font-medium text-gray-900">{{ __('Upload Media') }}</h3>
+                                    </div>
+                                    <button type="button" @click="showUploadModal = false" class="text-gray-400 hover:text-gray-500">
+                                        <i class="bi bi-x-lg text-lg"></i>
+                                    </button>
+                                </div>
+
+                                <div class="p-6">
+                                    <div class="space-y-4">
+                                        <div class="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-indigo-500 transition-colors bg-gray-50 cursor-pointer" @click="$refs.pageFileInput.click()">
+                                            <input type="file" x-ref="pageFileInput" @change="handleFileSelect" class="hidden">
+                                            <i class="bi bi-cloud-arrow-up text-3xl text-gray-400"></i>
+                                            <p class="mt-2 text-sm text-gray-600" x-show="!uploadFile">{{ __('Click to select file') }}</p>
+                                            <p class="mt-2 text-sm text-indigo-600 font-semibold" x-show="uploadFile" x-text="uploadFile.name"></p>
+                                        </div>
+                                        <div x-show="uploadFile">
+                                            <label class="block text-sm font-medium text-gray-700 text-left">{{ __('Alt Text') }} <span class="text-red-500">*</span></label>
+                                            <input type="text" x-model="uploadAlt" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
+                                        </div>
+                                        <div x-show="uploadError" class="text-sm text-red-600 text-left">
+                                            <i class="bi bi-exclamation-circle me-1"></i> <span x-text="uploadError"></span>
                                         </div>
                                     </div>
-                                    <div class="mt-5 sm:mt-4 sm:flex sm:flex-row-reverse">
-                                        <button type="button" @click="uploadMedia" :disabled="!uploadFile || isUploading" class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-indigo-600 text-base font-medium text-white hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:ml-3 sm:w-auto sm:text-sm disabled:opacity-50">
-                                            <span x-show="isUploading" class="spinner-border spinner-border-sm me-2"></span>
-                                            {{ __('Upload') }}
-                                        </button>
-                                        <button type="button" @click="showUploadModal = false; resetUpload()" class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:mt-0 sm:w-auto sm:text-sm">
-                                            {{ __('Cancel') }}
-                                        </button>
-                                    </div>
+                                </div>
+
+                                <div class="bg-gray-50 px-6 py-3 flex flex-row-reverse gap-2">
+                                    <button type="button" @click="uploadMedia" :disabled="!uploadFile || isUploading" class="inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-indigo-600 text-base font-medium text-white hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:text-sm disabled:opacity-50">
+                                        <span x-show="isUploading" class="animate-spin -ml-1 mr-2 h-4 w-4 text-white inline-block">
+                                            <svg class="opacity-75" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+                                        </span>
+                                        {{ __('Upload') }}
+                                    </button>
+                                    <button type="button" @click="showUploadModal = false; resetUpload()" class="inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:text-sm">
+                                        {{ __('Cancel') }}
+                                    </button>
                                 </div>
                             </div>
                         </div>
