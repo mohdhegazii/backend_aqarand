@@ -27,16 +27,7 @@
                 previews: [],
 
                 init() {
-                    const initialMedia = @json($galleryMedia->map(function($m) {
-                        return [
-                            'id' => $m->id,
-                            'url' => $m->url,
-                            'original_name' => $m->original_name ?? $m->original_filename,
-                            'alt_text' => $m->alt_text,
-                            'caption' => $m->caption,
-                            'variants' => $m->variants // Ensure variants are available if needed
-                        ];
-                    }));
+                    const initialMedia = @json($initialGalleryMedia);
 
                     if (Array.isArray(initialMedia)) {
                         initialMedia.forEach(item => {
