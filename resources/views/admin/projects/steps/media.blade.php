@@ -26,6 +26,19 @@
                 featuredMediaId: {{ $featuredMediaId ?? 'null' }},
                 previews: [],
 
+                get denseMode() {
+                    return this.previews.length >= 6;
+                },
+
+                get galleryGridStyle() {
+                    const count = this.previews.length;
+                    // If count >= 6, we allow shrinking to fit 6 (approx 16.66%)
+                    // Otherwise we prefer larger cards (20% = 5 items)
+                    const percent = count >= 6 ? '16.66%' : '20%';
+                    // Clamp keeps it from getting too small (150px) or too huge (280px)
+                    return `grid-template-columns: repeat(auto-fit, minmax(clamp(150px, ${percent}, 280px), 1fr))`;
+                },
+
                 init() {
                     const initialMedia = @json($initialGalleryMedia);
 
@@ -96,11 +109,14 @@
                 </template>
                 <input type="hidden" name="featured_media_id" :value="featuredMediaId ?? ''">
 
-                {{-- Gallery List (Responsive) --}}
-                <div class="grid grid-cols-3 gap-4 mb-4">
+                {{-- Gallery List (Responsive Dynamic Grid) --}}
+                <div class="grid gap-4 mb-4" :style="galleryGridStyle">
                     <template x-for="(item, index) in previews" :key="item.id">
-                        <div class="flex flex-col gap-4 p-4 border rounded-lg bg-white shadow-sm transition-all duration-200"
-                             :class="featuredMediaId === item.id ? 'border-indigo-500 ring-1 ring-indigo-500 bg-indigo-50' : 'border-gray-200'">
+                        <div class="flex flex-col border rounded-lg bg-white shadow-sm transition-all duration-200"
+                             :class="[
+                                 featuredMediaId === item.id ? 'border-indigo-500 ring-1 ring-indigo-500 bg-indigo-50' : 'border-gray-200',
+                                 denseMode ? 'p-2 gap-2' : 'p-4 gap-4'
+                             ]">
 
                             {{-- Image Preview & Actions --}}
                             <div class="flex-shrink-0 w-full flex flex-col gap-2">
@@ -109,7 +125,8 @@
 
                                     {{-- Badge --}}
                                     <div x-show="featuredMediaId === item.id"
-                                         class="absolute top-2 left-2 bg-indigo-600 text-white text-[10px] font-bold px-2 py-1 rounded shadow-sm z-10">
+                                         class="absolute top-2 left-2 bg-indigo-600 text-white font-bold rounded shadow-sm z-10"
+                                         :class="denseMode ? 'text-[9px] px-1.5 py-0.5' : 'text-[10px] px-2 py-1'">
                                         {{ __('FEATURED') }}
                                     </div>
 
@@ -122,8 +139,11 @@
 
                                 <div class="grid grid-cols-2 gap-2">
                                     <button type="button"
-                                            class="text-xs px-2 py-1.5 rounded border font-medium transition-colors text-center w-full shadow-sm z-10 relative"
-                                            :class="featuredMediaId === item.id ? 'bg-indigo-600 text-white border-indigo-600 hover:bg-indigo-700' : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'"
+                                            class="text-xs rounded border font-medium transition-colors text-center w-full shadow-sm z-10 relative"
+                                            :class="[
+                                                featuredMediaId === item.id ? 'bg-indigo-600 text-white border-indigo-600 hover:bg-indigo-700' : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50',
+                                                denseMode ? 'px-2 py-1' : 'px-2 py-1.5'
+                                            ]"
                                             @click="setFeatured(item.id)">
                                         <i class="bi bi-star-fill me-1" x-show="featuredMediaId === item.id"></i>
                                         <span x-text="featuredMediaId === item.id ? '{{ __('Featured') }}' : '{{ __('Set as Featured') }}'"></span>
@@ -131,7 +151,8 @@
 
                                     <button type="button"
                                             @click="removeMedia(item.id)"
-                                            class="text-xs px-2 py-1.5 rounded border border-red-200 text-red-600 bg-red-50 hover:bg-red-100 font-medium text-center w-full shadow-sm flex justify-center items-center">
+                                            class="text-xs rounded border border-red-200 text-red-600 bg-red-50 hover:bg-red-100 font-medium text-center w-full shadow-sm flex justify-center items-center"
+                                            :class="denseMode ? 'px-2 py-1' : 'px-2 py-1.5'">
                                         <i class="bi bi-trash me-1"></i> {{ __('Remove') }}
                                     </button>
                                 </div>
@@ -144,7 +165,8 @@
                                         <label class="block text-xs font-medium text-gray-700 mb-1">
                                             {{ __('Alt Text (required – used for SEO)') }} <span class="text-red-600">*</span>
                                         </label>
-                                        <input class="w-full border-gray-300 rounded-md shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm px-3 py-2"
+                                        <input class="w-full border-gray-300 rounded-md shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                                               :class="denseMode ? 'text-xs px-2 py-1.5' : 'text-sm px-3 py-2'"
                                                type="text"
                                                x-model="galleryMeta[item.id].alt_text"
                                                placeholder="{{ __('Image Alt Text') }}"
