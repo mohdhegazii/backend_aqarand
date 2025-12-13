@@ -27,7 +27,7 @@
                 <x-admin.media-picker
                     name="gallery_media_ids"
                     :value="$galleryMedia"
-                    multiple="true"
+                    :multiple="true"
                 />
                 <p class="mt-2 text-xs text-gray-400">
                     {{ __('admin.supported_formats') }}: JPG, PNG, WEBP.
