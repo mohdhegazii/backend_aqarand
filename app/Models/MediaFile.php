@@ -90,14 +90,16 @@ class MediaFile extends Model
             return asset('admin/placeholders/media-missing.svg');
         }
 
-        // Note: We avoid running Storage::exists() here for performance reasons
-        // as this attribute is accessed frequently in loops.
-        // However, we ensure the path is normalized.
+        // Clean path: remove leading slash or 'storage/' prefix if present in the raw path
+        // This handles legacy data where full paths might have been stored
+        $path = $this->path;
+        $path = ltrim($path, '/');
+        if (str_starts_with($path, 'storage/')) {
+             $path = substr($path, 8);
+        }
 
-        // If the file is on the simulated S3 local disk, ensure we don't return 404
-        // if the symlink or folder structure isn't perfect, but at least return a valid URL structure.
-
-        return Storage::disk($this->disk)->url($this->path);
+        // Return URL via disk driver
+        return Storage::disk($this->disk)->url($path);
     }
 
     /**
