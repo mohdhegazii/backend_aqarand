@@ -154,7 +154,8 @@
                 </div>
              </template>
              <div x-show="previews.length > 0">
-                 <p class="text-sm text-gray-600 mb-2 truncate" x-text="previews[0].name"></p>
+                 {{-- Fix: Check if previews exists and has elements using optional chaining or just trusting x-show guard --}}
+                 <p class="text-sm text-gray-600 mb-2 truncate" x-text="previews?.[0]?.name || ''"></p>
              </div>
         </div>
 
