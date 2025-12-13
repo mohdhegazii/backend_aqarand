@@ -44,6 +44,10 @@
                 selectedItem: null, // For single selection
                 selectedItems: [], // For multiple selection (array of objects)
 
+                // New fields for Featured + Alt
+                featuredId: null,
+                altMap: {},
+
                 // Upload State
                 uploadFiles: [],
                 fileMeta: [], // Array of { name: string, alt_text: string }
@@ -61,6 +65,8 @@
                         // Reset selection
                         this.selectedItem = null;
                         this.selectedItems = [];
+                        this.featuredId = null;
+                        this.altMap = {};
 
                         this.fetchMedia();
                     });
@@ -71,6 +77,8 @@
                     this.resetUpload();
                     this.selectedItem = null;
                     this.selectedItems = [];
+                    this.featuredId = null;
+                    this.altMap = {};
                 },
 
                 setTab(tab) {
@@ -102,6 +110,8 @@
 
                         this.mediaItems = result.data;
                         this.lastPage = result.meta.last_page;
+
+                        this.ensureDefaultFeatured();
                     } catch (error) {
                         console.error('Error fetching media:', error);
                     } finally {
@@ -115,12 +125,42 @@
                         const index = this.selectedItems.findIndex(i => i.id === item.id);
                         if (index > -1) {
                             this.selectedItems.splice(index, 1);
+                            // If removed item was featured, reset featuredId so ensureDefaultFeatured can pick a new one
+                            if (this.featuredId === item.id) {
+                                this.featuredId = null;
+                            }
                         } else {
                             this.selectedItems.push(item);
                         }
                     } else {
                         // Single selection
                         this.selectedItem = item;
+                        // For single selection, the selected item is naturally the "featured" one
+                        this.featuredId = item.id;
+                    }
+
+                    this.ensureDefaultFeatured();
+                },
+
+                setFeatured(item) {
+                    this.featuredId = item.id;
+                },
+
+                ensureDefaultFeatured() {
+                    if (!this.featuredId) {
+                        // Prefer first selected item (if any), else first item in grid
+                        let first = null;
+                        if (this.multiple) {
+                            first = (this.selectedItems && this.selectedItems.length > 0)
+                                ? this.selectedItems[0]
+                                : (this.mediaItems && this.mediaItems.length > 0 ? this.mediaItems[0] : null);
+                        } else {
+                            first = this.selectedItem
+                                ? this.selectedItem
+                                : (this.mediaItems && this.mediaItems.length > 0 ? this.mediaItems[0] : null);
+                        }
+
+                        if (first?.id) this.featuredId = first.id;
                     }
                 },
 
@@ -134,6 +174,9 @@
                 clearSelection() {
                     this.selectedItem = null;
                     this.selectedItems = [];
+                    this.featuredId = null;
+                    // Re-run default logic (will pick first in grid)
+                    this.ensureDefaultFeatured();
                 },
 
                 confirmSelection() {
@@ -142,13 +185,34 @@
                     if (!this.targetInputName) return;
 
                     // Prepare payload
+                    const ids = this.multiple ? this.selectedItems.map(i => i.id) : [this.selectedItem.id];
+
+                    // Clean alt map for selected items
+                    const cleanAlt = {};
+                    const itemsToProcess = this.multiple ? this.selectedItems : [this.selectedItem];
+
+                    itemsToProcess.forEach(item => {
+                         // User edited value OR existing value OR empty
+                         cleanAlt[item.id] = (this.altMap[item.id] ?? item.alt_text ?? '').trim();
+                    });
+
+                    // Default featured must exist if we have items
+                    if (!this.featuredId && ids.length > 0) {
+                        this.featuredId = ids[0];
+                    }
+
                     const mediaPayload = this.multiple ? this.selectedItems : this.selectedItem;
 
                     // Dispatch a custom event for other listeners
                     window.dispatchEvent(new CustomEvent('media-selected', {
                         detail: {
                             inputName: this.targetInputName,
-                            media: mediaPayload
+                            media: mediaPayload,
+                            // Extended payload
+                            ids: ids,
+                            featured_id: this.featuredId,
+                            alt_map: cleanAlt,
+                            items: itemsToProcess
                         }
                     }));
 
@@ -240,9 +304,6 @@
 
                         // Handle uploaded items selection
                         if (result.uploaded && Array.isArray(result.uploaded)) {
-                            // If multiple mode, select all uploaded
-                            // If single mode, select the last one
-
                             const uploadedIds = result.uploaded.map(u => u.id);
 
                             // Find them in the newly fetched items
@@ -259,6 +320,7 @@
                                 // Select the first one found (usually latest)
                                 if (newItems.length > 0) {
                                     this.selectedItem = newItems[0];
+                                    this.featuredId = newItems[0].id;
                                 }
                             }
                         }
@@ -272,9 +334,12 @@
                                     }
                                  } else {
                                      this.selectedItem = uploadedItem;
+                                     this.featuredId = uploadedItem.id;
                                  }
                              }
                         }
+
+                        this.ensureDefaultFeatured();
 
                     } catch (error) {
                         console.error('Upload error:', error);
@@ -389,46 +454,71 @@
                             <p class="mt-2 text-sm text-gray-500">No media found.</p>
                         </div>
 
-                        <div x-show="!isLoading && mediaItems.length > 0" class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4">
+                        <div x-show="!isLoading && mediaItems.length > 0" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-2">
                             <template x-for="item in mediaItems" :key="item.id">
-                                <div @click="selectItem(item)"
-                                     :class="isSelected(item) ? 'ring-2 ring-indigo-500 border-indigo-500' : 'border-gray-200 hover:border-gray-300'"
-                                     class="relative group cursor-pointer bg-white border rounded-lg overflow-hidden aspect-square flex items-center justify-center">
+                                <div class="group bg-white border rounded-md overflow-hidden"
+                                     :class="featuredId === item.id ? 'ring-2 ring-amber-500 border-amber-500' : (isSelected(item) ? 'ring-2 ring-indigo-500 border-indigo-500' : 'border-gray-200 hover:border-gray-300')">
 
-                                    {{-- Image with Fallback --}}
-                                    <template x-if="item.type === 'image'">
-                                        <img :src="getThumbnail(item) || item.url"
-                                             :alt="item.alt_text"
-                                             class="w-full h-full object-cover"
-                                             onerror="this.onerror=null; this.src='/admin-assets/placeholders/media-missing.svg';">
-                                    </template>
+                                    <!-- Clickable preview area -->
+                                    <div class="relative cursor-pointer aspect-square flex items-center justify-center"
+                                         @click="selectItem(item)">
 
-                                    {{-- PDF/Other --}}
-                                    <template x-if="item.type !== 'image'">
-                                        <div class="text-center p-2">
-                                            <i class="bi bi-file-earmark-pdf text-red-500 text-4xl" x-show="item.type === 'pdf'"></i>
-                                            <i class="bi bi-file-earmark text-gray-500 text-4xl" x-show="item.type !== 'pdf'"></i>
-                                            <p class="mt-1 text-xs text-gray-600 truncate w-full" x-text="item.original_name"></p>
-                                        </div>
-                                    </template>
+                                        <template x-if="item.type === 'image'">
+                                          <img :src="getThumbnail(item) || item.url"
+                                               :alt="altMap[item.id] ?? item.alt_text"
+                                               class="w-full h-full object-cover"
+                                               onerror="this.onerror=null; this.src='/admin-assets/placeholders/media-missing.svg';">
+                                        </template>
 
-                                    {{-- Selected Overlay --}}
-                                    <div x-show="isSelected(item)" class="absolute inset-0 bg-indigo-500 bg-opacity-10 flex items-center justify-center">
-                                        <div class="bg-indigo-500 text-white rounded-full p-1">
+                                        <template x-if="item.type !== 'image'">
+                                          <div class="text-center p-2">
+                                            <i class="bi bi-file-earmark-pdf text-red-500 text-3xl" x-show="item.type === 'pdf'"></i>
+                                            <i class="bi bi-file-earmark text-gray-500 text-3xl" x-show="item.type !== 'pdf'"></i>
+                                            <p class="mt-1 text-[10px] text-gray-600 truncate w-full" x-text="item.original_name"></p>
+                                          </div>
+                                        </template>
+
+                                        <!-- Selected overlay -->
+                                        <div x-show="isSelected(item)"
+                                             class="absolute inset-0 bg-indigo-500/10 flex items-center justify-center">
+                                          <div class="bg-indigo-500 text-white rounded-full p-1">
                                             <i class="bi bi-check-lg"></i>
+                                          </div>
                                         </div>
+
+                                        <!-- Multi select order badge -->
+                                        <template x-if="multiple && isSelected(item)">
+                                          <div class="absolute top-1 right-1 bg-indigo-600 text-white text-[10px] rounded-full h-5 w-5 flex items-center justify-center shadow-sm">
+                                            <span x-text="selectedItems.findIndex(i => i.id === item.id) + 1"></span>
+                                          </div>
+                                        </template>
+
+                                        <!-- Featured badge -->
+                                        <div x-show="featuredId === item.id"
+                                             class="absolute top-1 left-1 bg-amber-500 text-white text-[10px] font-bold px-2 py-1 rounded shadow">
+                                          FEATURED
+                                        </div>
+
                                     </div>
 
-                                    {{-- Selection Order (Multi only) --}}
-                                    <template x-if="multiple && isSelected(item)">
-                                        <div class="absolute top-1 right-1 bg-indigo-600 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center shadow-sm">
-                                            <span x-text="selectedItems.findIndex(i => i.id === item.id) + 1"></span>
-                                        </div>
-                                    </template>
+                                    <!-- Controls under image -->
+                                    <div class="p-2 space-y-2">
+                                        <!-- Alt Text -->
+                                        <input type="text"
+                                               class="w-full border rounded px-2 py-1 text-[11px]"
+                                               placeholder="Alt text"
+                                               :value="altMap[item.id] ?? item.alt_text ?? ''"
+                                               @input="altMap[item.id] = $event.target.value"
+                                               @click.stop
+                                        />
 
-                                    {{-- Hover info --}}
-                                    <div class="absolute bottom-0 inset-x-0 bg-black bg-opacity-50 text-white text-[10px] p-1 truncate opacity-0 group-hover:opacity-100 transition-opacity">
-                                        <span x-text="item.original_name"></span>
+                                        <!-- Featured button -->
+                                        <button type="button"
+                                                class="w-full text-[11px] px-2 py-1 rounded border"
+                                                :class="featuredId === item.id ? 'bg-amber-500 text-white border-amber-500' : 'bg-white hover:bg-gray-50'"
+                                                @click.stop="setFeatured(item)">
+                                          Set as Featured
+                                        </button>
                                     </div>
                                 </div>
                             </template>
