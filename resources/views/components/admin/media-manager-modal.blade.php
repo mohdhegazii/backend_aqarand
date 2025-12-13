@@ -405,7 +405,7 @@
                                         <img :src="getThumbnail(item) || item.url"
                                              :alt="item.alt_text"
                                              class="w-full h-full object-cover"
-                                             onerror="this.onerror=null; this.src='/admin/placeholders/media-missing.svg';">
+                                             onerror="this.onerror=null; this.src='/admin-assets/placeholders/media-missing.svg';">
                                     </template>
 
                                     {{-- PDF/Other --}}
