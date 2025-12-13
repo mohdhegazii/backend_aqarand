@@ -307,219 +307,260 @@
     {{-- Modal HTML --}}
     <div x-data="mediaManagerModal"
          x-show="isOpen"
-         x-cloak
-         class="fixed inset-0 z-[9999]"
+         style="display: none;"
+         class="fixed inset-0 z-50 flex items-center justify-center modal-overlay"
          aria-labelledby="modal-title"
          role="dialog"
          aria-modal="true">
 
-        {{-- Overlay --}}
-        <div class="absolute inset-0 bg-black/60 transition-opacity"
+        {{-- Background backdrop --}}
+        <div x-show="isOpen"
+             x-transition:enter="ease-out duration-300"
+             x-transition:enter-start="opacity-0"
+             x-transition:enter-end="opacity-100"
+             x-transition:leave="ease-in duration-200"
+             x-transition:leave-start="opacity-100"
+             x-transition:leave-end="opacity-0"
+             class="fixed inset-0 bg-black/50 transition-opacity modal-backdrop"
              @click="closeModal"
              aria-hidden="true"></div>
 
-        {{-- Panel --}}
-        <div class="relative mx-auto mt-10 w-[95vw] max-w-6xl bg-white rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
+        {{-- Modal Panel --}}
+        <div x-show="isOpen"
+             x-transition:enter="ease-out duration-300"
+             x-transition:enter-start="opacity-0 scale-95"
+             x-transition:enter-end="opacity-100 scale-100"
+             x-transition:leave="ease-in duration-200"
+             x-transition:leave-start="opacity-100 scale-100"
+             x-transition:leave-end="opacity-0 scale-95"
+             class="relative bg-white rounded-xl shadow-xl w-[95vw] max-w-5xl max-h-[90vh] overflow-hidden flex flex-col modal-card">
 
-            {{-- Header --}}
-            <div class="flex items-center justify-between px-5 py-4 border-b bg-gray-50 flex-shrink-0">
+            {{-- Modal Header --}}
+            <div class="flex items-center justify-between px-6 py-4 border-b border-gray-100 bg-white">
                 <h3 class="text-lg font-semibold text-gray-900" id="modal-title">
                     {{ __('Media Manager') }}
                 </h3>
-                <button type="button" class="p-2 rounded hover:bg-gray-200 text-gray-500 hover:text-gray-700" @click="closeModal">
+                <button type="button" @click="closeModal" class="text-gray-400 hover:text-gray-600 transition-colors focus:outline-none">
                     <span class="sr-only">Close</span>
                     <i class="bi bi-x-lg text-lg"></i>
                 </button>
             </div>
 
-            {{-- Body --}}
-            <div class="p-5 overflow-auto flex-1 min-h-[400px]">
+            {{-- Tabs --}}
+            <div class="px-6 border-b border-gray-200 bg-white">
+                <nav class="-mb-px flex space-x-6" aria-label="Tabs">
+                    <button type="button" @click="setTab('library')"
+                            :class="activeTab === 'library' ? 'border-indigo-500 text-indigo-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'"
+                            class="whitespace-nowrap py-3 px-1 border-b-2 font-medium text-sm transition-colors">
+                        {{ __('Media Library') }}
+                    </button>
+                    <button type="button" @click="setTab('upload')"
+                            :class="activeTab === 'upload' ? 'border-indigo-500 text-indigo-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'"
+                            class="whitespace-nowrap py-3 px-1 border-b-2 font-medium text-sm transition-colors">
+                        {{ __('Upload New') }}
+                    </button>
+                </nav>
+            </div>
 
-                {{-- Tabs --}}
-                <div class="mb-5 border-b border-gray-200">
-                    <nav class="-mb-px flex space-x-6" aria-label="Tabs">
-                        <button type="button" @click="setTab('library')"
-                                :class="activeTab === 'library' ? 'border-indigo-500 text-indigo-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'"
-                                class="whitespace-nowrap py-3 px-1 border-b-2 font-medium text-sm transition-colors">
-                            {{ __('Media Library') }}
-                        </button>
-                        <button type="button" @click="setTab('upload')"
-                                :class="activeTab === 'upload' ? 'border-indigo-500 text-indigo-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'"
-                                class="whitespace-nowrap py-3 px-1 border-b-2 font-medium text-sm transition-colors">
-                            {{ __('Upload New') }}
-                        </button>
-                    </nav>
-                </div>
+            {{-- Modal Body --}}
+            <div class="flex-1 overflow-auto bg-gray-50 p-6 min-h-[300px]">
 
                 {{-- Library Tab --}}
-                <div x-show="activeTab === 'library'">
-                    <div class="flex flex-col sm:flex-row justify-between mb-4 gap-2">
-                        <input type="text"
-                               x-model.debounce.500ms="searchQuery"
-                               @input="fetchMedia(1)"
-                               placeholder="{{ __('Search media...') }}"
-                               class="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:w-1/3 sm:text-sm border-gray-300 rounded-md">
-                    </div>
-
-                    <div x-show="isLoading" class="text-center py-10">
-                        <svg class="animate-spin h-10 w-10 text-indigo-600 mx-auto" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                        </svg>
-                        <p class="mt-2 text-sm text-gray-500">Loading media...</p>
-                    </div>
-
-                    <div x-show="!isLoading && mediaItems.length === 0" class="text-center py-10">
-                        <i class="bi bi-images text-4xl text-gray-300"></i>
-                        <p class="mt-2 text-sm text-gray-500">No media found.</p>
-                    </div>
-
-                    {{-- Responsive Grid: Up to 8 columns on XL screens --}}
-                    <div x-show="!isLoading && mediaItems.length > 0"
-                         class="grid gap-3 grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 xl:grid-cols-8">
-                        <template x-for="item in mediaItems" :key="item.id">
-                            <div @click="selectItem(item)"
-                                 :class="isSelected(item) ? 'ring-2 ring-indigo-500 border-indigo-500' : 'border-gray-200 hover:border-gray-300'"
-                                 class="relative group cursor-pointer bg-white border rounded-lg overflow-hidden aspect-square flex items-center justify-center">
-
-                                <template x-if="item.type === 'image'">
-                                    <img :src="getThumbnail(item) || item.url"
-                                         :alt="item.alt_text"
-                                         class="w-full h-full object-cover"
-                                         onerror="this.onerror=null; this.src='/admin-assets/placeholders/media-missing.svg';">
-                                </template>
-
-                                <template x-if="item.type !== 'image'">
-                                    <div class="text-center p-2">
-                                        <i class="bi bi-file-earmark-pdf text-red-500 text-4xl" x-show="item.type === 'pdf'"></i>
-                                        <i class="bi bi-file-earmark text-gray-500 text-4xl" x-show="item.type !== 'pdf'"></i>
-                                        <p class="mt-1 text-xs text-gray-600 truncate w-full" x-text="item.original_name"></p>
-                                    </div>
-                                </template>
-
-                                <div x-show="isSelected(item)" class="absolute inset-0 bg-indigo-500 bg-opacity-10 flex items-center justify-center">
-                                    <div class="bg-indigo-500 text-white rounded-full p-1">
-                                        <i class="bi bi-check-lg"></i>
-                                    </div>
-                                </div>
-
-                                <template x-if="multiple && isSelected(item)">
-                                    <div class="absolute top-1 right-1 bg-indigo-600 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center shadow-sm">
-                                        <span x-text="selectedItems.findIndex(i => i.id === item.id) + 1"></span>
-                                    </div>
-                                </template>
-
-                                <div class="absolute bottom-0 inset-x-0 bg-black bg-opacity-50 text-white text-[10px] p-1 truncate opacity-0 group-hover:opacity-100 transition-opacity">
-                                    <span x-text="item.original_name"></span>
-                                </div>
-                            </div>
-                        </template>
-                    </div>
-
-                    <div class="mt-4 flex items-center justify-between" x-show="!isLoading && mediaItems.length > 0">
-                        <button type="button" @click="fetchMedia(currentPage - 1)" :disabled="currentPage <= 1" class="text-sm text-gray-600 hover:text-indigo-600 disabled:opacity-50 disabled:cursor-not-allowed">
-                            &laquo; {{ __('Previous') }}
-                        </button>
-                        <span class="text-sm text-gray-500">
-                            {{ __('Page') }} <span x-text="currentPage"></span> / <span x-text="lastPage"></span>
-                        </span>
-                        <button type="button" @click="fetchMedia(currentPage + 1)" :disabled="currentPage >= lastPage" class="text-sm text-gray-600 hover:text-indigo-600 disabled:opacity-50 disabled:cursor-not-allowed">
-                            {{ __('Next') }} &raquo;
-                        </button>
-                    </div>
-                </div>
-
-                {{-- Upload Tab --}}
-                <div x-show="activeTab === 'upload'" class="max-w-lg mx-auto">
-                    <div class="space-y-4">
-                        <div class="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-indigo-500 transition-colors bg-white">
-                            <input type="file"
-                                   x-ref="fileInput"
-                                   @change="handleFileSelect"
-                                   class="hidden"
-                                   multiple
-                                   :accept="allowedType === 'image' ? 'image/*' : (allowedType === 'pdf' ? 'application/pdf' : '*/*')">
-
-                            <div class="cursor-pointer" @click="$refs.fileInput.click()">
-                                <i class="bi bi-cloud-upload text-4xl text-gray-400"></i>
-                                <template x-if="uploadFiles.length === 0">
-                                    <p class="mt-2 text-sm text-gray-600">{{ __('Click to select files') }}</p>
-                                </template>
-                                <template x-if="uploadFiles.length === 1">
-                                    <p class="mt-2 text-sm text-indigo-600 font-semibold" x-text="uploadFiles[0].name"></p>
-                                </template>
-                                <template x-if="uploadFiles.length > 1">
-                                    <p class="mt-2 text-sm text-indigo-600 font-semibold">
-                                        <span x-text="uploadFiles.length"></span> {{ __('files selected') }}
-                                    </p>
-                                </template>
-                            </div>
-                            <button type="button" @click="$refs.fileInput.click()" class="mt-3 inline-flex items-center px-3 py-1 bg-gray-100 border border-gray-300 rounded-md font-semibold text-xs text-gray-700 uppercase tracking-widest hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 disabled:opacity-25 transition ease-in-out duration-150">
-                                {{ __('Choose Files') }}
-                            </button>
+                    <div x-show="activeTab === 'library'">
+                        <div class="flex flex-col sm:flex-row justify-between mb-4 gap-2">
+                            <input type="text"
+                                   x-model.debounce.500ms="searchQuery"
+                                   @input="fetchMedia(1)"
+                                   placeholder="{{ __('Search media...') }}"
+                                   class="shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:w-1/3 sm:text-sm border-gray-300 rounded-md">
                         </div>
 
-                        <div x-show="uploadFiles.length > 0">
-                            <template x-if="uploadFiles.length === 0">
-                                <p class="text-sm text-gray-500">{{ __('Choose files to see Alt Text fields.') }}</p>
-                            </template>
-                            <template x-if="uploadFiles.length > 0">
-                                <div class="space-y-3 max-h-60 overflow-y-auto pr-1">
-                                    <p class="text-sm text-gray-600" x-text="uploadFiles.length + ' {{ __('files selected') }}'"></p>
-                                    <template x-for="(meta, idx) in fileMeta" :key="meta.name + idx">
-                                        <div class="border rounded p-3 bg-gray-50">
-                                            <div class="text-xs text-gray-600 mb-2 truncate" :title="meta.name">
-                                                <span x-text="(idx+1) + ') ' + meta.name"></span>
-                                            </div>
-                                            <label class="block text-sm font-medium mb-1">
-                                                {{ __('Alt Text') }} <span class="text-red-600">*</span>
-                                            </label>
-                                            <input
-                                                type="text"
-                                                class="w-full border rounded px-3 py-2 text-sm"
-                                                x-model="fileMeta[idx].alt_text"
-                                                :placeholder="'Alt text for ' + meta.name"
-                                                required
-                                            />
+                        <div x-show="isLoading" class="text-center py-10">
+                            {{-- Tailwind Spinner --}}
+                            <svg class="animate-spin h-10 w-10 text-indigo-600 mx-auto" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                              <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                            </svg>
+                            <p class="mt-2 text-sm text-gray-500">Loading media...</p>
+                        </div>
+
+                        <div x-show="!isLoading && mediaItems.length === 0" class="text-center py-10">
+                            <i class="bi bi-images text-4xl text-gray-300"></i>
+                            <p class="mt-2 text-sm text-gray-500">No media found.</p>
+                        </div>
+
+                        <div x-show="!isLoading && mediaItems.length > 0" class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4">
+                            <template x-for="item in mediaItems" :key="item.id">
+                                <div @click="selectItem(item)"
+                                     :class="isSelected(item) ? 'ring-2 ring-indigo-500 border-indigo-500' : 'border-gray-200 hover:border-gray-300'"
+                                     class="relative group cursor-pointer bg-white border rounded-lg overflow-hidden aspect-square flex items-center justify-center">
+
+                                    {{-- Image with Fallback --}}
+                                    <template x-if="item.type === 'image'">
+                                        <img :src="getThumbnail(item) || item.url"
+                                             :alt="item.alt_text"
+                                             class="w-full h-full object-cover"
+                                             onerror="this.onerror=null; this.src='/admin-assets/placeholders/media-missing.svg';">
+                                    </template>
+
+                                    {{-- PDF/Other --}}
+                                    <template x-if="item.type !== 'image'">
+                                        <div class="text-center p-2">
+                                            <i class="bi bi-file-earmark-pdf text-red-500 text-4xl" x-show="item.type === 'pdf'"></i>
+                                            <i class="bi bi-file-earmark text-gray-500 text-4xl" x-show="item.type !== 'pdf'"></i>
+                                            <p class="mt-1 text-xs text-gray-600 truncate w-full" x-text="item.original_name"></p>
                                         </div>
                                     </template>
+
+                                    {{-- Selected Overlay --}}
+                                    <div x-show="isSelected(item)" class="absolute inset-0 bg-indigo-500 bg-opacity-10 flex items-center justify-center">
+                                        <div class="bg-indigo-500 text-white rounded-full p-1">
+                                            <i class="bi bi-check-lg"></i>
+                                        </div>
+                                    </div>
+
+                                    {{-- Selection Order (Multi only) --}}
+                                    <template x-if="multiple && isSelected(item)">
+                                        <div class="absolute top-1 right-1 bg-indigo-600 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center shadow-sm">
+                                            <span x-text="selectedItems.findIndex(i => i.id === item.id) + 1"></span>
+                                        </div>
+                                    </template>
+
+                                    {{-- Hover info --}}
+                                    <div class="absolute bottom-0 inset-x-0 bg-black bg-opacity-50 text-white text-[10px] p-1 truncate opacity-0 group-hover:opacity-100 transition-opacity">
+                                        <span x-text="item.original_name"></span>
+                                    </div>
                                 </div>
                             </template>
                         </div>
 
-                        <div x-show="uploadError" class="text-sm text-red-600">
-                            <i class="bi bi-exclamation-circle me-1"></i> <span x-text="uploadError"></span>
+                        {{-- Pagination --}}
+                        <div class="mt-4 flex items-center justify-between" x-show="!isLoading && mediaItems.length > 0">
+                            <button type="button" @click="fetchMedia(currentPage - 1)" :disabled="currentPage <= 1" class="text-sm text-gray-600 hover:text-indigo-600 disabled:opacity-50 disabled:cursor-not-allowed">
+                                &laquo; {{ __('Previous') }}
+                            </button>
+                            <span class="text-sm text-gray-500">
+                                {{ __('Page') }} <span x-text="currentPage"></span> / <span x-text="lastPage"></span>
+                            </span>
+                            <button type="button" @click="fetchMedia(currentPage + 1)" :disabled="currentPage >= lastPage" class="text-sm text-gray-600 hover:text-indigo-600 disabled:opacity-50 disabled:cursor-not-allowed">
+                                {{ __('Next') }} &raquo;
+                            </button>
                         </div>
+                    </div>
 
-                        <button type="button"
-                                @click="uploadMedia"
-                                :disabled="uploadFiles.length === 0 || isUploading"
-                                class="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50">
-                            <svg x-show="isUploading" class="animate-spin -ml-1 mr-3 h-5 w-5 text-white inline" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                            </svg>
-                            <span x-text="isUploading ? '{{ __('Uploading...') }}' : '{{ __('Upload') }}'"></span>
-                        </button>
+                    {{-- Upload Tab --}}
+                    <div x-show="activeTab === 'upload'" class="max-w-lg mx-auto">
+                        <div class="space-y-4">
+
+                            {{-- Drop Zone / File Input --}}
+                            <div class="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-indigo-500 transition-colors bg-white">
+                                <input type="file"
+                                       x-ref="fileInput"
+                                       @change="handleFileSelect"
+                                       class="hidden"
+                                       multiple
+                                       :accept="allowedType === 'image' ? 'image/*' : (allowedType === 'pdf' ? 'application/pdf' : '*/*')">
+
+                                <div class="cursor-pointer" @click="$refs.fileInput.click()">
+                                    <i class="bi bi-cloud-upload text-4xl text-gray-400"></i>
+
+                                    {{-- Display count or file name --}}
+                                    <template x-if="uploadFiles.length === 0">
+                                        <p class="mt-2 text-sm text-gray-600">{{ __('Click to select files') }}</p>
+                                    </template>
+
+                                    <template x-if="uploadFiles.length === 1">
+                                        <p class="mt-2 text-sm text-indigo-600 font-semibold" x-text="uploadFiles[0].name"></p>
+                                    </template>
+
+                                    <template x-if="uploadFiles.length > 1">
+                                        <p class="mt-2 text-sm text-indigo-600 font-semibold">
+                                            <span x-text="uploadFiles.length"></span> {{ __('files selected') }}
+                                        </p>
+                                    </template>
+                                </div>
+                                <button type="button" @click="$refs.fileInput.click()" class="mt-3 inline-flex items-center px-3 py-1 bg-gray-100 border border-gray-300 rounded-md font-semibold text-xs text-gray-700 uppercase tracking-widest hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 disabled:opacity-25 transition ease-in-out duration-150">
+                                    {{ __('Choose Files') }}
+                                </button>
+                            </div>
+
+                            {{-- Alt Text Loop --}}
+                            <div x-show="uploadFiles.length > 0">
+                                <template x-if="uploadFiles.length === 0">
+                                    <p class="text-sm text-gray-500">{{ __('Choose files to see Alt Text fields.') }}</p>
+                                </template>
+
+                                <template x-if="uploadFiles.length > 0">
+                                    <div class="space-y-3 max-h-60 overflow-y-auto pr-1">
+                                        <p class="text-sm text-gray-600" x-text="uploadFiles.length + ' {{ __('files selected') }}'"></p>
+
+                                        <template x-for="(meta, idx) in fileMeta" :key="meta.name + idx">
+                                            <div class="border rounded p-3 bg-gray-50">
+                                                <div class="text-xs text-gray-600 mb-2 truncate" :title="meta.name">
+                                                    <span x-text="(idx+1) + ') ' + meta.name"></span>
+                                                </div>
+
+                                                <label class="block text-sm font-medium mb-1">
+                                                    {{ __('Alt Text') }} <span class="text-red-600">*</span>
+                                                </label>
+
+                                                <input
+                                                    type="text"
+                                                    class="w-full border rounded px-3 py-2 text-sm"
+                                                    x-model="fileMeta[idx].alt_text"
+                                                    :placeholder="'Alt text for ' + meta.name"
+                                                    required
+                                                />
+                                            </div>
+                                        </template>
+                                    </div>
+                                </template>
+                            </div>
+
+                            {{-- Error Message --}}
+                            <div x-show="uploadError" class="text-sm text-red-600">
+                                <i class="bi bi-exclamation-circle me-1"></i> <span x-text="uploadError"></span>
+                            </div>
+
+                            {{-- Upload Button --}}
+                            <button type="button"
+                                    @click="uploadMedia"
+                                    :disabled="uploadFiles.length === 0 || isUploading"
+                                    class="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50">
+                                {{-- Tailwind Spinner Small --}}
+                                <svg x-show="isUploading" class="animate-spin -ml-1 mr-3 h-5 w-5 text-white inline" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                  <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                  <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                </svg>
+                                <span x-text="isUploading ? '{{ __('Uploading...') }}' : '{{ __('Upload') }}'"></span>
+                            </button>
+                        </div>
                     </div>
                 </div>
 
-            </div>
+                {{-- Modal Footer --}}
+                <div class="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse border-t border-gray-100" x-show="activeTab === 'library'">
+                    <button type="button"
+                            @click="confirmSelection"
+                            :disabled="(multiple && selectedItems.length === 0) || (!multiple && !selectedItem)"
+                            class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-indigo-600 text-base font-medium text-white hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:ml-3 sm:w-auto sm:text-sm disabled:opacity-50 disabled:cursor-not-allowed">
+                        <span x-text="multiple && selectedItems.length > 0 ? '{{ __('Use Selected') }} (' + selectedItems.length + ')' : '{{ __('Use Selected') }}'"></span>
+                    </button>
 
-            {{-- Footer --}}
-            <div class="flex items-center justify-between px-5 py-4 border-t bg-gray-50 flex-shrink-0">
-                <div class="text-sm text-gray-600">
-                    <span x-show="multiple" x-text="selectedItems.length ? `Selected: ${selectedItems.length}` : 'No selection'"></span>
-                    <span x-show="!multiple" x-text="selectedItem ? 'Selected: 1' : 'No selection'"></span>
-                </div>
-                <div class="flex gap-2">
-                    <button type="button" class="px-4 py-2 rounded border border-gray-300 bg-white text-gray-700 hover:bg-gray-50" @click="closeModal">{{ __('Cancel') }}</button>
-                    <button type="button" class="px-4 py-2 rounded bg-indigo-600 text-white disabled:opacity-50"
-                            :disabled="(multiple && selectedItems.length===0) || (!multiple && !selectedItem)"
-                            @click="confirmSelection">{{ __('Use Selected') }}</button>
+                     <button type="button"
+                             x-show="multiple && selectedItems.length > 0"
+                            @click="clearSelection"
+                            class="mt-3 w-full inline-flex justify-center rounded-md border border-red-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-red-700 hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm">
+                        {{ __('Clear Selection') }}
+                    </button>
+
+                    <button type="button"
+                            @click="closeModal"
+                            class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm">
+                        {{ __('Cancel') }}
+                    </button>
                 </div>
             </div>
-
         </div>
     </div>
 @endonce

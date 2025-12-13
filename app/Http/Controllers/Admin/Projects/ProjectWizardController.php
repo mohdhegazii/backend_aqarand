@@ -217,10 +217,8 @@ class ProjectWizardController extends Controller
     {
         $project = Project::findOrFail($id);
 
-        // ---------------------------------------------------------------------
-        // 1. Decode JSON inputs
-        // ---------------------------------------------------------------------
-        // 'gallery_media_ids' might be a JSON string (from new media-picker) or array.
+        // Pre-processing: Decode JSON string for gallery_media_ids if necessary
+        // This addresses the issue where the frontend might send a JSON string instead of an array
         if ($request->has('gallery_media_ids') && is_string($request->input('gallery_media_ids'))) {
             $decoded = json_decode($request->input('gallery_media_ids'), true);
             if (is_array($decoded)) {
@@ -228,57 +226,46 @@ class ProjectWizardController extends Controller
             }
         }
 
-        // 'gallery_alt_map' is a JSON string: { "id": "alt_text", ... }
-        if ($request->has('gallery_alt_map') && is_string($request->input('gallery_alt_map'))) {
-            $decodedAlts = json_decode($request->input('gallery_alt_map'), true);
-            if (is_array($decodedAlts)) {
-                $request->merge(['gallery_alt_map' => $decodedAlts]);
-            }
-        }
-
-        // ---------------------------------------------------------------------
-        // 2. Validation
-        // ---------------------------------------------------------------------
         $request->validate([
             'gallery_media_ids' => 'nullable|array',
             'gallery_media_ids.*' => 'integer|exists:media_files,id',
-            'gallery_alt_map' => 'nullable|array', // Keys are IDs, values are strings
+            'gallery_alt_texts' => 'nullable|array',
+            'gallery_alt_texts.*' => 'nullable|string|max:255',
+            'gallery_descriptions' => 'nullable|array',
+            'gallery_descriptions.*' => 'nullable|string|max:500',
             'featured_media_id' => 'nullable|integer|exists:media_files,id',
             'brochure_media_id' => 'nullable|integer|exists:media_files,id',
         ]);
 
-        // ---------------------------------------------------------------------
-        // 3. Update Alt Texts
-        // ---------------------------------------------------------------------
-        if ($request->has('gallery_alt_map')) {
-            $altMap = $request->input('gallery_alt_map', []);
-            foreach ($altMap as $mediaId => $altText) {
-                if ($mediaId && is_string($altText)) {
-                    \App\Models\MediaFile::where('id', $mediaId)->update(['alt_text' => trim($altText)]);
+        // 1. Update Metadata (Alt/Description)
+        if ($request->has('gallery_media_ids')) {
+            $ids = $request->input('gallery_media_ids', []);
+            $alts = $request->input('gallery_alt_texts', []);
+            $descs = $request->input('gallery_descriptions', []);
+
+            foreach ($ids as $mediaId) {
+                // Ensure we have data for this ID
+                $data = [];
+                if (isset($alts[$mediaId])) {
+                    $data['alt_text'] = $alts[$mediaId];
+                }
+                if (isset($descs[$mediaId])) {
+                    $data['caption'] = $descs[$mediaId];
+                }
+
+                if (!empty($data)) {
+                    \App\Models\MediaFile::where('id', $mediaId)->update($data);
                 }
             }
         }
 
-        // ---------------------------------------------------------------------
-        // 4. Sync Gallery
-        // ---------------------------------------------------------------------
-        // The input 'gallery_media_ids' contains IDs in the desired order.
+        // 2. Sync Gallery
+        // The input 'gallery_media_ids' should contain IDs in the desired order.
         if ($request->has('gallery_media_ids')) {
              $project->syncMedia($request->input('gallery_media_ids', []), 'gallery');
-        } else {
-             // If not present (empty), clear gallery?
-             // Be careful: if field is missing from request, it might mean "no change" or "empty".
-             // With JSON input hidden field, an empty list sends "[]", which is parsed to empty array.
-             // If the input was completely missing, $request->has() would be false.
-             // Given the form implementation, it sends "[]" if empty.
-             if ($request->filled('gallery_media_ids') === false && $request->has('gallery_media_ids')) {
-                  $project->detachMedia('gallery');
-             }
         }
 
-        // ---------------------------------------------------------------------
-        // 5. Sync Featured
-        // ---------------------------------------------------------------------
+        // 3. Sync Featured
         if ($request->has('featured_media_id')) {
             $featuredId = $request->input('featured_media_id');
             if ($featuredId) {
@@ -288,9 +275,7 @@ class ProjectWizardController extends Controller
             }
         }
 
-        // ---------------------------------------------------------------------
-        // 6. Sync Brochure
-        // ---------------------------------------------------------------------
+        // 4. Sync Brochure
         if ($request->has('brochure_media_id')) {
             $brochureId = $request->input('brochure_media_id');
             if ($brochureId) {
