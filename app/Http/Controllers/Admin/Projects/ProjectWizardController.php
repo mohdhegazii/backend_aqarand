@@ -192,7 +192,11 @@ class ProjectWizardController extends Controller
             ->first();
         $brochureMediaFile = $brochureMedia ? $brochureMedia->mediaFile : null;
 
-        return view('admin.projects.steps.media', compact('project', 'galleryMedia', 'brochureMediaFile'));
+        // Featured
+        $featuredMedia = $project->featuredMedia();
+        $featuredMediaId = $featuredMedia ? $featuredMedia->id : null;
+
+        return view('admin.projects.steps.media', compact('project', 'galleryMedia', 'brochureMediaFile', 'featuredMediaId'));
     }
 
     /**
@@ -214,16 +218,53 @@ class ProjectWizardController extends Controller
         $request->validate([
             'gallery_media_ids' => 'nullable|array',
             'gallery_media_ids.*' => 'integer|exists:media_files,id',
+            'gallery_alt_texts' => 'nullable|array',
+            'gallery_alt_texts.*' => 'nullable|string|max:255',
+            'gallery_descriptions' => 'nullable|array',
+            'gallery_descriptions.*' => 'nullable|string|max:500',
+            'featured_media_id' => 'nullable|integer|exists:media_files,id',
             'brochure_media_id' => 'nullable|integer|exists:media_files,id',
         ]);
 
-        // Sync Gallery
+        // 1. Update Metadata (Alt/Description)
+        if ($request->has('gallery_media_ids')) {
+            $ids = $request->input('gallery_media_ids', []);
+            $alts = $request->input('gallery_alt_texts', []);
+            $descs = $request->input('gallery_descriptions', []);
+
+            foreach ($ids as $mediaId) {
+                // Ensure we have data for this ID
+                $data = [];
+                if (isset($alts[$mediaId])) {
+                    $data['alt_text'] = $alts[$mediaId];
+                }
+                if (isset($descs[$mediaId])) {
+                    $data['caption'] = $descs[$mediaId];
+                }
+
+                if (!empty($data)) {
+                    \App\Models\MediaFile::where('id', $mediaId)->update($data);
+                }
+            }
+        }
+
+        // 2. Sync Gallery
         // The input 'gallery_media_ids' should contain IDs in the desired order.
         if ($request->has('gallery_media_ids')) {
              $project->syncMedia($request->input('gallery_media_ids', []), 'gallery');
         }
 
-        // Sync Brochure
+        // 3. Sync Featured
+        if ($request->has('featured_media_id')) {
+            $featuredId = $request->input('featured_media_id');
+            if ($featuredId) {
+                $project->syncMedia($featuredId, 'featured');
+            } else {
+                $project->detachMedia('featured');
+            }
+        }
+
+        // 4. Sync Brochure
         if ($request->has('brochure_media_id')) {
             $brochureId = $request->input('brochure_media_id');
             if ($brochureId) {
